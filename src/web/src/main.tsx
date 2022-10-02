@@ -1,10 +1,12 @@
+import { createWSClient, wsLink } from '@trpc/client/links/wsLink';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { createWSClient, wsLink } from '@trpc/client/links/wsLink';
+
+import App from './App';
 import { trpc } from './utils/trpc';
+
+import './index.css';
 
 const queryClient = new QueryClient();
 

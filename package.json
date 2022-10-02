@@ -9,7 +9,8 @@
   "license": "MIT",
   "scripts": {
     "web": "cd src/web && yarn",
-    "server": "cd src/server && yarn"
+    "server": "cd src/server && yarn",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.38.1",

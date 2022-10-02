@@ -1,11 +1,11 @@
 import * as trpc from '@trpc/server';
-import { z } from 'zod';
 import * as trpcExpress from '@trpc/server/adapters/express';
-import express from 'express';
-import cors from 'cors';
-import ws from 'ws';
-import EventEmitter from 'events';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
+import cors from 'cors';
+import EventEmitter from 'events';
+import express from 'express';
+import ws from 'ws';
+import { z } from 'zod';
 
 const ee = new EventEmitter();
 
@@ -46,7 +46,9 @@ const appRouter = trpc
   })
   .query('getUser', {
     input: (val: unknown) => {
-      if (typeof val === 'string') return val;
+      if (typeof val === 'string') {
+        return val;
+      }
       throw new Error(`Invalid input: ${typeof val}`);
     },
     async resolve(req) {

@@ -4,20 +4,28 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node src/server.ts"
+    "start": "ts-node src/server.ts",
+    "prisma": "dotenv -e ../../.env -- prisma"
   },
   "dependencies": {
+    "@prisma/client": "^4.4.0",
     "@trpc/server": "^9.27.2",
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.14",
     "@types/node": "^18.7.23",
     "@types/ws": "^8.5.3",
     "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.1",
+    "nanoid": "^3.3.4",
     "ts-node": "^10.9.1",
     "tsc": "^2.0.4",
     "typescript": "^4.8.4",
     "ws": "^8.9.0",
     "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^6.0.0",
+    "prisma": "^4.4.0"
   }
 }

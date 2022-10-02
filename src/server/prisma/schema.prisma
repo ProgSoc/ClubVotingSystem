@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id       String @id @default(cuid())
+  shortId  String @unique
+  adminKey String
+  name     String
+
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+
+  users RoomUser[]
+}
+
+model RoomUser {
+  id           String       @id @default(cuid())
+  studentEmail String
+  location     Location
+  state        WaitingState
+
+  roomId String
+  room   Room?  @relation(fields: [roomId], references: [id])
+
+  voterId String? @unique
+  voter   Voter?  @relation(fields: [voterId], references: [id])
+}
+
+model Voter {
+  id    String          @id @default(cuid())
+  votes CandidateVote[]
+
+  user RoomUser?
+}
+
+model Question {
+  id         String              @id @default(cuid())
+  question   String
+  maxChoices Int
+  candidates QuestionCandidate[]
+}
+
+model QuestionCandidate {
+  id    String          @id @default(cuid())
+  name  String
+  votes CandidateVote[]
+
+  question   Question? @relation(fields: [questionId], references: [id])
+  questionId String?
+}
+
+model CandidateVote {
+  candidateId String
+  candidate   QuestionCandidate @relation(fields: [candidateId], references: [id])
+
+  voterId String
+  voter   Voter  @relation(fields: [voterId], references: [id])
+
+  @@id([candidateId, voterId])
+}
+
+enum Location {
+  InPerson
+  Online
+}
+
+enum WaitingState {
+  Waiting
+  Admitted
+  Declined
+}
