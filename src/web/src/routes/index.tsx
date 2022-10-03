@@ -5,10 +5,12 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
 import { CreateRoomPage } from '../pages/CreateRoomPage';
 import { WaitingRoomManagementPage } from '../pages/room/admin/WaitingRoomManagemenentPage';
+import { BoardPage } from '../pages/room/BoardPage';
 import { JoinWaitingRoomPage } from '../pages/room/JoinWaitingRoomPage';
 import { VotingRoomPage } from '../pages/room/VotingRoomPage';
 import { WaitingRoomPage } from '../pages/room/WaitingRoomPage';
 import { ShortRedirectPage } from '../pages/ShortRedirectPage';
+import { withRoomFetched } from '../utils/withRoomData';
 import { buildBuilders, buildRoutes, path, route } from './routeBuilder';
 
 const routes = {
@@ -18,7 +20,11 @@ const routes = {
   }),
   manageWaitingRoom: route({
     path: path`/room/${'roomId'}/admin/${'adminKey'}`,
-    component: WaitingRoomManagementPage,
+    component: withRoomFetched(WaitingRoomManagementPage),
+  }),
+  viewRoomBoard: route({
+    path: path`/room/${'roomId'}/board`,
+    component: BoardPage,
   }),
   joinRoom: route({
     path: path`/join/${'roomId'}`,
@@ -26,19 +32,19 @@ const routes = {
   }),
   waitInWaitingRoom: route({
     path: path`/room/${'roomId'}/wait/${'userId'}`,
-    component: WaitingRoomPage,
+    component: withRoomFetched(WaitingRoomPage),
   }),
   votingRoom: route({
     path: path`/room/${'roomId'}/vote/${'voterId'}`,
     component: VotingRoomPage,
   }),
   shortView: route({
-    path: path`/v/${'shortId'}`,
-    component: ShortRedirectPage('room'),
+    path: path`/b/${'shortId'}`,
+    component: ShortRedirectPage((roomId) => `/room/${roomId}/board`),
   }),
   shortJoin: route({
     path: path`/j/${'shortId'}`,
-    component: ShortRedirectPage('join'),
+    component: ShortRedirectPage((roomId) => `/join/${roomId}`),
   }),
 };
 

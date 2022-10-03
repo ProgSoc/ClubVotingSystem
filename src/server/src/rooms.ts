@@ -1,3 +1,5 @@
+import type { Room } from '@prisma/client';
+
 import { prisma } from '../prisma';
 import { LiveRoom } from './live-room';
 
@@ -12,6 +14,21 @@ async function initLiveRooms() {
 
 const liveRoomPromise = initLiveRooms();
 
+export interface PublicStaticRoomData {
+  id: string;
+  shortId: string;
+  name: string;
+  createdAt: string;
+}
+
+function mapRoomToPublicData(room: Room): PublicStaticRoomData {
+  return {
+    id: room.id,
+    shortId: room.shortId,
+    name: room.name,
+    createdAt: room.createdAt.toISOString(),
+  };
+}
 export async function getLiveRoom(id: string): Promise<LiveRoom | null> {
   await liveRoomPromise;
   const room = liveRooms.get(id);
@@ -29,12 +46,20 @@ export async function getLiveRoomOrError(id: string): Promise<LiveRoom> {
   return room;
 }
 
-export async function getRoomIdByShortId(shortId: string): Promise<string | null> {
+export async function getRoomByShortId(shortId: string): Promise<PublicStaticRoomData | null> {
   const room = await prisma.room.findUnique({ where: { shortId } });
   if (!room) {
     return null;
   }
-  return room.id;
+  return mapRoomToPublicData(room);
+}
+
+export async function getRoomById(id: string): Promise<PublicStaticRoomData | null> {
+  const room = await prisma.room.findUnique({ where: { id } });
+  if (!room) {
+    return null;
+  }
+  return mapRoomToPublicData(room);
 }
 
 export async function createLiveRoom(name: string): Promise<LiveRoom> {

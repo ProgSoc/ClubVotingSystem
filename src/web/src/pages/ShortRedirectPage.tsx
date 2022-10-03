@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 
 import { trpc } from '../utils/trpc';
+import { cacheFetchedRoom } from '../utils/withRoomData';
 
 interface ShortRedirectPageProps {
-  newRoot: string;
+  makePath: (roomId: string) => string;
   shortId: string;
 }
 
@@ -12,18 +13,19 @@ export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
 
   const roomQuery = trpc.useQuery(['room.getRoomByShortId', { shortId: props.shortId }]);
 
-  if (roomQuery.data?.roomId) {
-    navigate(`/${props.newRoot}/${roomQuery.data.roomId}`);
+  if (roomQuery.data?.id) {
+    cacheFetchedRoom(roomQuery.data);
+    navigate(props.makePath(roomQuery.data.id));
   }
 
   return (
     <div>
       <h1>Redirecting...</h1>
-      {roomQuery.data && !roomQuery.data.roomId && <p>Room not found</p>}
+      {roomQuery.data && !roomQuery.data.id && <p>Room not found</p>}
     </div>
   );
 }
 
-export function ShortRedirectPage(newRoot: string) {
-  return (props: { shortId: string }) => <ShortRedirectPageInner {...props} newRoot={newRoot} />;
+export function ShortRedirectPage(makePath: ShortRedirectPageProps['makePath']) {
+  return (props: { shortId: string }) => <ShortRedirectPageInner {...props} makePath={makePath} />;
 }

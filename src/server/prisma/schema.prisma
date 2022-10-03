@@ -17,12 +17,13 @@ model Room {
   name     String
 
   // Short id having short join URLs
-  shortId  String @unique
+  shortId String @unique
 
   createdAt DateTime  @default(now())
   closedAt  DateTime?
 
-  users RoomUser[]
+  users     RoomUser[]
+  questions Question[]
 }
 
 model RoomUser {
@@ -50,6 +51,12 @@ model Question {
   question   String
   maxChoices Int
   candidates QuestionCandidate[]
+
+  roomId String
+  room   Room?  @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+  closed    Boolean  @default(false)
 }
 
 model QuestionCandidate {

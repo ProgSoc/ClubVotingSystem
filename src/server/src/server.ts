@@ -7,7 +7,6 @@ import express from 'express';
 import ws from 'ws';
 import { z } from 'zod';
 
-import { publicRouter } from './routers/public';
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
 import { roomWaitingListRouter } from './routers/room-waiting';
@@ -19,10 +18,9 @@ type Post = {
 
 const appRouter = trpc
   .router()
-  .merge(publicRouter)
   .merge('room.', roomRouter)
   .merge('waitingRoom.', roomWaitingListRouter)
-  .merge('roomAdmin.', roomAdminRouter)
+  .merge('admin.', roomAdminRouter)
 
   .subscription('onAdd', {
     resolve({ ctx }) {

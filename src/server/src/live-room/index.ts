@@ -6,38 +6,68 @@ import { prisma } from '../../prisma';
 import type { JoinWaitingRoomParams } from './inputs';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
-import type { ProjectorState, QuestionSetterState, VoterState } from './question-states';
+import type { CreateQuestionParams, RoomQuestion } from './question';
+import {
+  closeQuestion,
+  createNewQuestion,
+  mapPrismaQuestionInclude,
+  prismaQuestionInclude,
+  voteForQuestion,
+} from './question';
+import type {
+  BoardState,
+  CandidateWithoutVotes,
+  CandidateWithVotes,
+  PartialLiveQuestionMetadata,
+  QuestionSetterState,
+  VoterState,
+} from './question-states';
+import { QuestionState } from './question-states';
 import type {
   AdmittedRoomUser,
+  AdmittedRoomUserWithDetails,
   DeclinedRoomUser,
   RoomUserAdmitDecline,
+  RoomUsersList,
   WaitingRoomUser,
   WaitingRoomUserWithDetails,
 } from './user';
 import { declineWaitingRoomUser } from './user';
 import { admitWaitingRoomUser, createWaitingRoomUser, getRoomUser } from './user';
 
-const makeAdminKeyId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 32);
+const makeAdminKeyId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 48);
 
 // Although this is short, it will support having over 1 million rooms
 const makePublicShortId = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 4);
 
 export class LiveRoom {
   questionSetterAdminListeners: Listeners<QuestionSetterState> = new Listeners();
-  waitingRoomAdminListeners: Listeners<WaitingRoomUserWithDetails[]> = new Listeners();
-  projectorListeners: Listeners<ProjectorState> = new Listeners();
+  waitingRoomAdminListeners: Listeners<RoomUsersList> = new Listeners();
+  boardListeners: Listeners<BoardState> = new Listeners();
 
   waitingRoom: WithWaiters<WaitingRoomUserWithDetails, RoomUserAdmitDecline>[];
-  voters: WithListeners<AdmittedRoomUser, VoterState>[] = [];
 
-  private constructor(readonly room: Room, waitingUsers: WaitingRoomUserWithDetails[], voters: AdmittedRoomUser[]) {
+  // Voters listeners are stored in an array rather than a single listener so that individual
+  // voters can get kicked in the future.
+  voters: WithListeners<AdmittedRoomUserWithDetails, VoterState>[] = [];
+
+  questions: RoomQuestion[];
+
+  roomQuestionLock?: Promise<any>;
+
+  private constructor(
+    readonly room: Room,
+    waitingUsers: WaitingRoomUserWithDetails[],
+    voters: AdmittedRoomUserWithDetails[],
+    questions: RoomQuestion[]
+  ) {
     this.waitingRoom = waitingUsers.map((user) => new WithWaiters(user));
     this.voters = voters.map((user) => new WithListeners(user));
+    this.questions = questions;
 
     // Call the notify function so that the initial admin state is loaded up
     void this.notifyAdminsOfUsersChange();
-
-    // FIXME: Also notify about the initial projector/question state
+    void this.notifyEveryoneOfStateChange();
   }
 
   //
@@ -55,7 +85,7 @@ export class LiveRoom {
         },
       });
 
-      return new LiveRoom(room, [], []);
+      return new LiveRoom(room, [], [], []);
     }
 
     throw new Error('Unexpected error: Failed to create a new room');
@@ -72,6 +102,10 @@ export class LiveRoom {
             voter: true,
           },
         },
+        questions: {
+          orderBy: { createdAt: 'asc' },
+          include: prismaQuestionInclude,
+        },
       },
     });
 
@@ -80,15 +114,22 @@ export class LiveRoom {
         .filter((user) => user.state === WaitingState.Waiting)
         .map<WaitingRoomUserWithDetails>((user) => ({
           id: user.id,
-          location: user.location,
-          studentEmail: user.studentEmail,
+          state: WaitingState.Waiting,
+          details: {
+            location: user.location,
+            studentEmail: user.studentEmail,
+          },
         }));
 
       const roomVoters = room.users
         .filter((user) => user.state === WaitingState.Admitted && user.voterId)
-        .map<AdmittedRoomUser>((user) => ({
+        .map<AdmittedRoomUserWithDetails>((user) => ({
           id: user.id,
           state: WaitingState.Admitted,
+          details: {
+            location: user.location,
+            studentEmail: user.studentEmail,
+          },
           voterId: user.voterId!,
         }));
 
@@ -102,7 +143,8 @@ export class LiveRoom {
           createdAt: room.createdAt,
         },
         waitingRoomUsers,
-        roomVoters
+        roomVoters,
+        room.questions.map((question) => mapPrismaQuestionInclude(question))
       );
     });
   }
@@ -115,6 +157,7 @@ export class LiveRoom {
 
   /** Join a user to the waiting room, notify admins that the list has updated, return the waiting user */
   async joinWaitingRoom(params: JoinWaitingRoomParams): Promise<WaitingRoomUser> {
+    this.assertRoomNotClosed();
     const user = await createWaitingRoomUser(this.id, params);
 
     await this.addUserToList(user);
@@ -127,6 +170,7 @@ export class LiveRoom {
 
   /** Admit a user as a voter, notify the admins that the list has updated, return the admitted user (with voter id) */
   async admitWaitingRoomUser(userId: string): Promise<AdmittedRoomUser | null> {
+    this.assertRoomNotClosed();
     const user = await prisma.roomUser.findUnique({ where: { id: userId } });
     if (!user || user.roomId !== this.id || user.state !== WaitingState.Waiting) {
       return null;
@@ -151,6 +195,7 @@ export class LiveRoom {
 
   /** Decline a user, notify the admins that the list has updated */
   async declineWaitingRoomUser(userId: string): Promise<DeclinedRoomUser | null> {
+    this.assertRoomNotClosed();
     const user = await prisma.roomUser.findUnique({ where: { id: userId } });
     if (!user || user.roomId !== this.id || user.state !== WaitingState.Waiting) {
       return null;
@@ -170,6 +215,81 @@ export class LiveRoom {
     await this.removeUserFromList(userId);
 
     return declined;
+  }
+
+  /** Cast a vote on a question, notify everyone of the current question state change */
+  async castVote(questionId: string, voterId: string, candidateIds: string[]): Promise<boolean> {
+    return this.withQuestionLock(async () => {
+      this.assertRoomNotClosed();
+      const voter = this.getVoterListener(voterId);
+      if (!voter) {
+        return false;
+      }
+
+      const question = this.currentQuestion;
+      if (!question || question.closed) {
+        return false;
+      }
+
+      const updatedQuestion = await voteForQuestion(questionId, voterId, candidateIds);
+      if (!updatedQuestion) {
+        return false;
+      }
+
+      this.updateCurrentQuestion(updatedQuestion);
+      await this.notifyEveryoneOfStateChange();
+
+      return true;
+    });
+  }
+
+  async closeCurrentQuestion(questionId: string): Promise<void> {
+    return this.withQuestionLock(async () => {
+      this.assertRoomNotClosed();
+      const question = this.currentQuestion;
+      if (!question || question.closed || question.id !== questionId) {
+        throw new Error("Failed to close question: Question doesn't exist or is already closed");
+      }
+
+      const updatedQuestion = await closeQuestion(questionId);
+
+      this.updateCurrentQuestion(updatedQuestion);
+      await this.notifyEveryoneOfStateChange();
+    });
+  }
+
+  async startNewQuestion(params: CreateQuestionParams): Promise<void> {
+    return this.withQuestionLock(async () => {
+      this.assertRoomNotClosed();
+      const question = this.currentQuestion;
+      if (question && !question.closed) {
+        throw new Error('Failed to start new question: Another question is currently open');
+      }
+
+      const newQuestion = await createNewQuestion(this.id, params);
+
+      this.questions.push(newQuestion);
+      await this.notifyEveryoneOfStateChange();
+    });
+  }
+
+  async closeRoom(): Promise<void> {
+    return this.withQuestionLock(async () => {
+      this.assertRoomNotClosed();
+
+      if (this.currentQuestion && !this.currentQuestion.closed) {
+        throw new Error('Failed to close room: A question is currently open');
+      }
+
+      const closedAt = new Date();
+      await prisma.room.update({
+        where: { id: this.id },
+        data: { closedAt },
+      });
+
+      this.room.closedAt = closedAt;
+      await this.notifyEveryoneOfStateChange();
+    });
   }
 
   // #endregion
@@ -198,7 +318,6 @@ export class LiveRoom {
 
     return new Promise((res) =>
       userListener.wait((value) => {
-        console.log('waiting room listener resolved', value);
         res(value);
       })
     );
@@ -214,7 +333,7 @@ export class LiveRoom {
     return unsubscribe;
   }
 
-  async listenWaitingRoomAdmin(listener: ListenerNotifyFn<WaitingRoomUserWithDetails[]>) {
+  async listenWaitingRoomAdmin(listener: ListenerNotifyFn<RoomUsersList>) {
     const unsubscribe = await this.waitingRoomAdminListeners.listen(listener);
     return unsubscribe;
   }
@@ -224,8 +343,8 @@ export class LiveRoom {
     return unsubscribe;
   }
 
-  async listenProjector(listener: ListenerNotifyFn<ProjectorState>) {
-    const unsubscribe = await this.projectorListeners.listen(listener);
+  async listenBoard(listener: ListenerNotifyFn<BoardState>) {
+    const unsubscribe = await this.boardListeners.listen(listener);
     return unsubscribe;
   }
 
@@ -255,14 +374,95 @@ export class LiveRoom {
     return waiter;
   }
 
-  private async notifyAdminsOfUsersChange() {
-    await this.waitingRoomAdminListeners.notify(this.waitingRoom.map((wr) => wr.val));
+  private async addVoterToList(voter: AdmittedRoomUserWithDetails) {
+    const listener = new WithListeners<AdmittedRoomUserWithDetails, VoterState>(voter);
+    this.voters.push(listener);
+    await this.notifyAdminsOfUsersChange();
+    await this.notifyEveryoneOfStateChange();
+    return listener;
   }
 
-  private async addVoterToList(voter: AdmittedRoomUser) {
-    const listener = new WithListeners<AdmittedRoomUser, VoterState>(voter);
-    this.voters.push(listener);
-    return listener;
+  private async notifyAdminsOfUsersChange() {
+    await this.waitingRoomAdminListeners.notify({
+      waiting: this.waitingRoom.map((wr) => wr.val),
+      admitted: this.voters.map((v) => v.val),
+    });
+  }
+
+  private async notifyEveryoneOfStateChange() {
+    const question = this.currentQuestion;
+
+    const notifyEveryone = async (state: BoardState) => {
+      await Promise.all([this.boardListeners.notify(state), Promise.all(this.voters.map((v) => v.notify(state)))]);
+    };
+
+    if (this.closedAt) {
+      await notifyEveryone({
+        state: QuestionState.Ended,
+      });
+      return;
+    }
+
+    if (!question) {
+      await notifyEveryone({
+        state: QuestionState.Blank,
+      });
+      return;
+    }
+
+    const liveData: PartialLiveQuestionMetadata = {
+      questionId: question.id,
+      question: question.question,
+      maxChoices: question.maxChoices,
+      peopleVoted: question.totalVoters,
+      totalPeople: this.voters.length,
+    };
+
+    if (!question.closed) {
+      // Don't send candidate vote counts while the question is still open
+      await notifyEveryone({
+        state: QuestionState.ShowingQuestion,
+        candidates: question.candidates.map<CandidateWithoutVotes>((q) => ({
+          id: q.id,
+          name: q.name,
+        })),
+        ...liveData,
+      });
+    } else {
+      await notifyEveryone({
+        state: QuestionState.ShowingResults,
+        candidates: question.candidates.map<CandidateWithVotes>((q) => ({
+          id: q.id,
+          votes: q.votes,
+          name: q.name,
+        })),
+        ...liveData,
+      });
+    }
+  }
+
+  private updateCurrentQuestion(question: RoomQuestion) {
+    if (this.questions.length === 0) {
+      throw new Error('Cannot update current question when there are no questions');
+    }
+    this.questions[this.questions.length - 1] = question;
+  }
+
+  private assertRoomNotClosed() {
+    if (this.closedAt) {
+      throw new Error('Room is closed');
+    }
+  }
+
+  private async withQuestionLock<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.roomQuestionLock) {
+      const newPromise = this.roomQuestionLock.then(fn);
+      this.roomQuestionLock = newPromise;
+      return newPromise;
+    } else {
+      this.roomQuestionLock = fn();
+      return this.roomQuestionLock;
+    }
   }
 
   // #endregion
@@ -293,6 +493,13 @@ export class LiveRoom {
 
   get createdAt() {
     return this.room.createdAt;
+  }
+
+  get currentQuestion() {
+    if (this.questions.length === 0) {
+      return null;
+    }
+    return this.questions[this.questions.length - 1];
   }
 
   // #endregion

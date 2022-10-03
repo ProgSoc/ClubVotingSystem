@@ -1,34 +1,47 @@
-interface CandidateWithVotes {
-  candidate: string;
+export interface CandidateWithVotes {
+  id: string;
+  name: string;
   votes: number;
 }
 
+export interface CandidateWithoutVotes {
+  id: string;
+  name: string;
+}
+
+export enum QuestionState {
+  Blank = 'Blank',
+  ShowingQuestion = 'ShowingQuestion',
+  ShowingResults = 'ShowingResults',
+  Ended = 'Ended',
+}
+
 interface BlankState {
-  state: 'blank';
+  state: QuestionState.Blank;
 }
 
-interface ShowingQuestionState {
-  state: 'showing-question';
+export interface PartialLiveQuestionMetadata {
+  questionId: string;
   question: string;
-  candidates: string[];
-  allowedVotes: number;
+  maxChoices: number;
   peopleVoted: number;
   totalPeople: number;
 }
 
-interface ShowingResultsState {
-  state: 'showing-results';
-  question: string;
+interface ShowingQuestionState extends PartialLiveQuestionMetadata {
+  state: QuestionState.ShowingQuestion;
+  candidates: CandidateWithoutVotes[];
+}
+
+interface ShowingResultsState extends PartialLiveQuestionMetadata {
+  state: QuestionState.ShowingResults;
   candidates: CandidateWithVotes[];
-  allowedVotes: number;
-  peopleVoted: number;
-  totalPeople: number;
 }
 
 interface EndedState {
-  state: 'ended';
+  state: QuestionState.Ended;
 }
 
 export type QuestionSetterState = BlankState | ShowingQuestionState | ShowingResultsState | EndedState;
-export type VoterState = BlankState | ShowingQuestionState | ShowingResultsState | EndedState;
-export type ProjectorState = BlankState | ShowingQuestionState | ShowingResultsState | EndedState;
+export type BoardState = BlankState | ShowingQuestionState | ShowingResultsState | EndedState;
+export type VoterState = BoardState;

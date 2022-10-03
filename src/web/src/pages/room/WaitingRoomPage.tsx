@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import type { PublicStaticRoomData } from '../../../../server/src/rooms';
 import { trpc } from '../../utils/trpc';
 
-export function WaitingRoomPage(props: { roomId: string; userId: string }) {
+export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: string; userId: string }) {
   const navigate = useNavigate();
 
   const [declined, setDeclined] = useState(false);

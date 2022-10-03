@@ -93,7 +93,7 @@ export class WithListeners<Val, Event> {
     this.val = val;
   }
 
-  async send(event: Event) {
+  async notify(event: Event) {
     return this.listeners.notify(event);
   }
 

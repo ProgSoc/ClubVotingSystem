@@ -9,16 +9,23 @@ export interface WaitingRoomUser {
   state: typeof WaitingState['Waiting'];
 }
 
-export interface WaitingRoomUserWithDetails {
-  id: string;
+interface UserPrivateDetails {
   studentEmail: string;
   location: Location;
+}
+
+export interface WaitingRoomUserWithDetails extends WaitingRoomUser {
+  details: UserPrivateDetails;
 }
 
 export interface AdmittedRoomUser {
   id: string;
   state: typeof WaitingState['Admitted'];
   voterId: string;
+}
+
+export interface AdmittedRoomUserWithDetails extends AdmittedRoomUser {
+  details: UserPrivateDetails;
 }
 
 export interface DeclinedRoomUser {
@@ -28,6 +35,11 @@ export interface DeclinedRoomUser {
 
 export type RoomUserAdmitDecline = AdmittedRoomUser | DeclinedRoomUser;
 export type RoomUserState = WaitingRoomUser | AdmittedRoomUser | DeclinedRoomUser;
+
+export interface RoomUsersList {
+  waiting: WaitingRoomUserWithDetails[];
+  admitted: AdmittedRoomUserWithDetails[];
+}
 
 export async function createWaitingRoomUser(
   roomId: string,
@@ -44,13 +56,16 @@ export async function createWaitingRoomUser(
 
   return {
     id: waitingRoomUser.id,
-    studentEmail: waitingRoomUser.studentEmail,
-    location: waitingRoomUser.location,
+    state: WaitingState.Waiting,
+    details: {
+      studentEmail: waitingRoomUser.studentEmail,
+      location: waitingRoomUser.location,
+    },
   };
 }
 
-export async function admitWaitingRoomUser(userId: string): Promise<AdmittedRoomUser | null> {
-  return prisma.$transaction(async (prisma): Promise<AdmittedRoomUser | null> => {
+export async function admitWaitingRoomUser(userId: string): Promise<AdmittedRoomUserWithDetails | null> {
+  return prisma.$transaction(async (prisma): Promise<AdmittedRoomUserWithDetails | null> => {
     const user = await prisma.roomUser.findUnique({
       where: {
         id: userId,
@@ -77,6 +92,10 @@ export async function admitWaitingRoomUser(userId: string): Promise<AdmittedRoom
       id: waitingRoomUser.id,
       state: WaitingState.Admitted,
       voterId: waitingRoomUser.voterId!,
+      details: {
+        studentEmail: waitingRoomUser.studentEmail,
+        location: waitingRoomUser.location,
+      },
     };
   });
 }
@@ -151,7 +170,10 @@ export async function getWaitingRoomUsersList(roomId: string): Promise<WaitingRo
 
   return waitingRoomUsers.map((user) => ({
     id: user.id,
-    studentEmail: user.studentEmail,
-    location: user.location,
+    state: WaitingState.Waiting,
+    details: {
+      studentEmail: user.studentEmail,
+      location: user.location,
+    },
   }));
 }
