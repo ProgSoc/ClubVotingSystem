@@ -15,10 +15,6 @@ export interface WaitingRoomUserWithDetails {
   location: Location;
 }
 
-export interface WaitingRoomWaitingWithUnsubscribe extends WaitingRoomUser {
-  unsubscribe: () => void;
-}
-
 export interface AdmittedRoomUser {
   id: string;
   state: typeof WaitingState['Admitted'];
@@ -30,8 +26,8 @@ export interface DeclinedRoomUser {
   state: typeof WaitingState['Declined'];
 }
 
+export type RoomUserAdmitDecline = AdmittedRoomUser | DeclinedRoomUser;
 export type RoomUserState = WaitingRoomUser | AdmittedRoomUser | DeclinedRoomUser;
-export type UserListeningToWaitingRoomState = WaitingRoomWaitingWithUnsubscribe | AdmittedRoomUser | DeclinedRoomUser;
 
 export async function createWaitingRoomUser(
   roomId: string,
@@ -85,7 +81,7 @@ export async function admitWaitingRoomUser(userId: string): Promise<AdmittedRoom
   });
 }
 
-export async function declineUser(userId: string): Promise<DeclinedRoomUser | null> {
+export async function declineWaitingRoomUser(userId: string): Promise<DeclinedRoomUser | null> {
   return prisma.$transaction(async (prisma): Promise<DeclinedRoomUser | null> => {
     const user = await prisma.roomUser.findUnique({
       where: {

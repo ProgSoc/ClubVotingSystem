@@ -7,7 +7,10 @@ import express from 'express';
 import ws from 'ws';
 import { z } from 'zod';
 
-const ee = new EventEmitter();
+import { publicRouter } from './routers/public';
+import { roomRouter } from './routers/room';
+import { roomAdminRouter } from './routers/room-admin';
+import { roomWaitingListRouter } from './routers/room-waiting';
 
 type Post = {
   id: number;
@@ -16,6 +19,11 @@ type Post = {
 
 const appRouter = trpc
   .router()
+  .merge(publicRouter)
+  .merge('room.', roomRouter)
+  .merge('waitingRoom.', roomWaitingListRouter)
+  .merge('roomAdmin.', roomAdminRouter)
+
   .subscription('onAdd', {
     resolve({ ctx }) {
       // `resolve()` is triggered for each client when they start subscribing `onAdd`
@@ -69,6 +77,7 @@ const appRouter = trpc
   });
 
 export type AppRouter = typeof appRouter;
+const ee = new EventEmitter();
 
 const app = express();
 

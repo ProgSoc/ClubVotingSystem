@@ -2,8 +2,9 @@ import { createWSClient, wsLink } from '@trpc/client/links/wsLink';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { RouterProvider } from 'react-router-dom';
 
-import App from './App';
+import { browserRouter } from './routes';
 import { trpc } from './utils/trpc';
 
 import './index.css';
@@ -25,7 +26,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <RouterProvider router={browserRouter} />
       </QueryClientProvider>
     </trpc.Provider>
   </React.StrictMode>
