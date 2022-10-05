@@ -1,7 +1,9 @@
+import { Heading } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { PublicStaticRoomData } from '../../../../server/src/rooms';
+import { RoomContainer } from '../../components/styles';
 import { trpc } from '../../utils/trpc';
 
 export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: string; userId: string }) {
@@ -30,12 +32,16 @@ export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: str
   }, [response.data]);
 
   if (!declined) {
-    return <h1>Waiting...</h1>;
+    return (
+      <RoomContainer>
+        <Heading>Waiting to be accepted...</Heading>
+      </RoomContainer>
+    );
   } else {
     return (
-      <div>
-        <h1>Sorry, you were declined.</h1>
-      </div>
+      <RoomContainer>
+        <Heading>Sorry, you were declined.</Heading>
+      </RoomContainer>
     );
   }
 }

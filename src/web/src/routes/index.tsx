@@ -1,3 +1,5 @@
+import { ClassNames, css, keyframes } from '@emotion/react';
+import styled from '@emotion/styled';
 import type { RefObject } from 'react';
 import { createRef } from 'react';
 import { createBrowserRouter, useLocation, useOutlet } from 'react-router-dom';
@@ -69,6 +71,59 @@ const refs: Record<string, RefObject<HTMLDivElement>> = Object.fromEntries(
   browserRoutes.map((route) => [route.path, createRef()])
 );
 
+// Wait 50% then slide in from the right
+const enterAnimation = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateX(100vw);
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+`;
+
+// Slide out to the left
+const exitAnimation = keyframes`
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100vw);
+  }
+`;
+
+const AnimationContainer = styled(TransitionGroup)`
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+`;
+
+const PageContainer = styled.div`
+  position: absolute;
+  height: 100%;
+`;
+
+const enteringStyle = css`
+  animation: ${enterAnimation} 0.3s ease-out;
+`;
+
+const exitingStyle = css`
+  opacity: 0;
+  animation: ${exitAnimation} 0.3s ease-in;
+`;
+
+const exitedStyle = css`
+  opacity: 0;
+`;
+
 // FIXME: Actually get this working properly
 function AnimationRouter() {
   const location = useLocation();
@@ -76,16 +131,33 @@ function AnimationRouter() {
   const nodeRef = refs[location.pathname];
 
   return (
-    <>
-      <TransitionGroup>
-        <CSSTransition key={location.pathname} nodeRef={nodeRef} timeout={0} classNames="page" unmountOnExit={true}>
-          {(state) => (
-            <div ref={nodeRef} className="page">
-              {currentOutlet}
-            </div>
-          )}
-        </CSSTransition>
-      </TransitionGroup>
-    </>
+    <AnimationContainer>
+      <CSSTransition key={location.pathname} nodeRef={nodeRef} timeout={300} unmountOnExit={true}>
+        {(state) => {
+          const style =
+            state === 'entering'
+              ? enteringStyle
+              : state === 'exiting'
+              ? exitingStyle
+              : state === 'exited'
+              ? exitedStyle
+              : undefined;
+          return (
+            <ClassNames>
+              {({ css, cx }) => (
+                <PageContainer
+                  ref={nodeRef}
+                  className={css`
+                    ${style}
+                  `}
+                >
+                  {currentOutlet}
+                </PageContainer>
+              )}
+            </ClassNames>
+          );
+        }}
+      </CSSTransition>
+    </AnimationContainer>
   );
 }

@@ -1,4 +1,4 @@
-import type { Location } from '@prisma/client';
+import type { UserLocation } from '@prisma/client';
 import { WaitingState } from '@prisma/client';
 
 import { prisma } from '../../prisma';
@@ -11,7 +11,7 @@ export interface WaitingRoomUser {
 
 interface UserPrivateDetails {
   studentEmail: string;
-  location: Location;
+  location: UserLocation;
 }
 
 export interface WaitingRoomUserWithDetails extends WaitingRoomUser {

@@ -5,7 +5,6 @@ import cors from 'cors';
 import EventEmitter from 'events';
 import express from 'express';
 import ws from 'ws';
-import { z } from 'zod';
 
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
@@ -20,59 +19,7 @@ const appRouter = trpc
   .router()
   .merge('room.', roomRouter)
   .merge('waitingRoom.', roomWaitingListRouter)
-  .merge('admin.', roomAdminRouter)
-
-  .subscription('onAdd', {
-    resolve({ ctx }) {
-      // `resolve()` is triggered for each client when they start subscribing `onAdd`
-      // return a `Subscription` with a callback which is triggered immediately
-      return new trpc.Subscription<Post>((emit) => {
-        emit.data({
-          id: -1,
-          title: 'hello',
-        });
-        setInterval(() => {
-          emit.data({
-            id: Math.random(),
-            title: 'hello',
-          });
-        }, 10000000);
-        const onAdd = (data: Post) => {
-          // emit data to client
-          emit.data(data);
-        };
-        // trigger `onAdd()` when `add` is triggered in our event emitter
-        ee.on('add', onAdd);
-        // unsubscribe function when client disconnects or stops subscribing
-        return () => {
-          ee.off('add', onAdd);
-        };
-      });
-    },
-  })
-  .query('getUser', {
-    input: (val: unknown) => {
-      if (typeof val === 'string') {
-        return val;
-      }
-      throw new Error(`Invalid input: ${typeof val}`);
-    },
-    async resolve(req) {
-      req.input; // string
-      return { id: req.input, name: 'Bilbo' };
-    },
-  })
-  .mutation('createUser', {
-    // validate input with Zod
-    input: z.object({ name: z.string().min(5) }),
-    async resolve(req) {
-      // use your ORM of choice
-      return {
-        test: 1,
-        foo: 'a',
-      };
-    },
-  });
+  .merge('admin.', roomAdminRouter);
 
 export type AppRouter = typeof appRouter;
 const ee = new EventEmitter();

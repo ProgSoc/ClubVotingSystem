@@ -12,17 +12,18 @@
     "@chakra-ui/react": "^2.3.5",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
-    "@hookform/resolvers": "^2.9.8",
     "@trpc/client": "^9.27.4",
     "@trpc/react": "^9.27.4",
     "@types/react-transition-group": "^4.4.5",
+    "formik": "^2.2.9",
     "framer-motion": "^7.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hook-form": "^7.36.1",
     "react-query": "^3.39.2",
     "react-router-dom": "^6.4.1",
-    "react-transition-group": "^4.4.5"
+    "react-transition-group": "^4.4.5",
+    "use-breakpoint": "^3.0.3",
+    "zod-formik-adapter": "^1.1.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.17",

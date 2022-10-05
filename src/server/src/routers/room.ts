@@ -1,4 +1,4 @@
-import { Location } from '@prisma/client';
+import { UserLocation } from '@prisma/client';
 import * as trpc from '@trpc/server';
 import { z } from 'zod';
 
@@ -48,7 +48,7 @@ export const roomRouter = trpc
     input: z.object({
       roomId: z.string(),
       studentEmail: z.string().refine((s) => s.length > 0, { message: 'Email must not be empty' }),
-      location: z.nativeEnum(Location),
+      location: z.nativeEnum(UserLocation),
     }),
     async resolve({ input }) {
       const room = await getLiveRoomOrError(input.roomId);
