@@ -65,7 +65,7 @@ const roomQuestionsAdminRouter = trpc
     input: z.object({
       roomId: z.string(),
       adminKey: z.string(),
-      question: z.string().refine((s) => s.length > 0, { message: 'Question must not be empty' }),
+      question: z.string().min(1),
       details: z.union([
         z.object({
           type: z.literal(QuestionType.SingleVote),
@@ -76,9 +76,7 @@ const roomQuestionsAdminRouter = trpc
           type: z.literal(QuestionType.SingleVote),
         }),
       ]),
-      candidates: z
-        .array(z.string().refine((s) => s.length > 0, { message: 'Candidate must not be empty' }))
-        .refine((arr) => arr.length > 1, { message: 'Must have at least 2 candidates' }),
+      candidates: z.array(z.string().min(1)).min(1),
     }),
     async resolve({ input }) {
       const room = await getLiveRoomOrError(input.roomId);

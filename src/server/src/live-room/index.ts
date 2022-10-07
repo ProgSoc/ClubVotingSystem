@@ -14,14 +14,7 @@ import {
   prismaQuestionInclude,
   voteForQuestion,
 } from './question';
-import type {
-  BoardState,
-  CandidateWithoutVotes,
-  CandidateWithVotes,
-  PartialLiveQuestionMetadata,
-  QuestionSetterState,
-  VoterState,
-} from './question-states';
+import type { BoardState, PartialLiveQuestionMetadata, QuestionSetterState, VoterState } from './question-states';
 import { QuestionState } from './question-states';
 import type {
   AdmittedRoomUser,
@@ -423,20 +416,14 @@ export class LiveRoom {
       // Don't send candidate vote counts while the question is still open
       await notifyEveryone({
         state: QuestionState.ShowingQuestion,
-        candidates: question.candidates.map<CandidateWithoutVotes>((q) => ({
-          id: q.id,
-          name: q.name,
-        })),
+        candidates: question.candidates,
         ...liveData,
       });
     } else {
       await notifyEveryone({
         state: QuestionState.ShowingResults,
-        candidates: question.candidates.map<CandidateWithVotes>((q) => ({
-          id: q.id,
-          votes: q.votes,
-          name: q.name,
-        })),
+        candidates: question.candidates,
+        results: question.results,
         ...liveData,
       });
     }

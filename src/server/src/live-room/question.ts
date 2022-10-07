@@ -1,7 +1,9 @@
-import type { CandidateVote, Question, QuestionCandidate, QuestionType } from '@prisma/client';
+import type { CandidateVote, Question, QuestionCandidate } from '@prisma/client';
+import { QuestionType } from '@prisma/client';
 
 import { prisma } from '../../prisma';
 import { UnreachableError } from '../unreachableError';
+import type { ResultsView, VotingCandidate } from './question-states';
 
 export interface SingleVoteQuestionFormat {
   type: typeof QuestionType['SingleVote'];
@@ -33,7 +35,8 @@ export interface RoomQuestion {
   createdAt: Date;
   closed: boolean;
   totalVoters: number;
-  candidates: QuestionCandidateWithVotes[];
+  candidates: VotingCandidate[];
+  results: ResultsView;
 }
 
 export interface CreateQuestionParams {
@@ -64,22 +67,46 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
     });
   });
 
+  const makeDetails = (): QuestionFormatDetails => {
+    switch (question.format) {
+      case QuestionType.SingleVote:
+        return {
+          type: QuestionType.SingleVote,
+        };
+      default:
+        throw new UnreachableError(question.format);
+    }
+  };
+
+  const makeResukts = (): ResultsView => {
+    switch (question.format) {
+      case QuestionType.SingleVote:
+        return {
+          type: QuestionType.SingleVote,
+          results: question.candidates.map((candidate) => ({
+            id: candidate.id,
+            name: candidate.name,
+            votes: candidate.votes.length,
+          })),
+        };
+      default:
+        throw new UnreachableError(question.format);
+    }
+  };
+
   return {
     id: question.id,
     createdAt: question.createdAt,
     question: question.question,
     closed: question.closed,
 
-    // TODO: Abstract this when more question types are added
-    details: {
-      type: question.format,
-    },
+    details: makeDetails(),
+    results: makeResukts(),
 
     totalVoters: uniqueVoters.size,
     candidates: question.candidates.map((candidate) => ({
       id: candidate.id,
       name: candidate.name,
-      votes: candidate.votes.length,
     })),
   };
 }

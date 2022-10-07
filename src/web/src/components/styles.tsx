@@ -44,7 +44,7 @@ type ButtonProps = HTMLButtonProps & {
 };
 
 export const Button = ({ children, className, isLoading, loadingText, ...props }: BaseProps<ButtonProps>) => (
-  <button {...props} className={twMerge('btn btn-primary', className)}>
+  <button {...props} className={twMerge('btn', className)}>
     {!isLoading ? (
       children
     ) : loadingText ? (

@@ -6,7 +6,7 @@ export interface CandidateWithVotes {
   votes: number;
 }
 
-export interface CandidateWithoutVotes {
+export interface VotingCandidate {
   id: string;
   name: string;
 }
@@ -31,14 +31,23 @@ export interface PartialLiveQuestionMetadata {
   totalPeople: number;
 }
 
-interface ShowingQuestionState extends PartialLiveQuestionMetadata {
+export interface ShowingQuestionState extends PartialLiveQuestionMetadata {
   state: QuestionState.ShowingQuestion;
-  candidates: CandidateWithoutVotes[];
+  candidates: VotingCandidate[];
 }
+
+interface SingleVoteResultsView {
+  type: 'SingleVote';
+  results: CandidateWithVotes[];
+}
+
+// TODO: Add more types
+export type ResultsView = SingleVoteResultsView;
 
 interface ShowingResultsState extends PartialLiveQuestionMetadata {
   state: QuestionState.ShowingResults;
-  candidates: CandidateWithVotes[];
+  candidates: VotingCandidate[];
+  results: ResultsView;
 }
 
 interface EndedState {

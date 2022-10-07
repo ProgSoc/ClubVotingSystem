@@ -2,9 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 
-import type { QuestionFormatDetails } from '../../../../../server/src/live-room/question';
-import type { BoardState } from '../../../../../server/src/live-room/question-states';
-import { QuestionState } from '../../../../../server/src/live-room/question-states';
 import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '../../../../../server/src/live-room/user';
 import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
 import { AdminRouter } from '../../../components/adminRouter';
@@ -73,46 +70,6 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
   });
 
   return { users, voters, admitUser, declineUser };
-}
-
-function useQuestionSetter(props: { roomId: string; adminKey: string }) {
-  const [state, setState] = useState<BoardState | null>(null);
-
-  const createQuestionMutation = trpc.useMutation(['admin.questions.createQuestion']);
-  const closeQuestionMutation = trpc.useMutation(['admin.questions.closeQuestion']);
-
-  const createQuestion = (question: string, candidates: string[], details: QuestionFormatDetails) => {
-    if (state?.state === QuestionState.Blank || state?.state === QuestionState.ShowingResults) {
-      createQuestionMutation.mutate({
-        adminKey: props.adminKey,
-        roomId: props.roomId,
-        question,
-        candidates,
-        details,
-      });
-    }
-  };
-
-  const closeQuestion = () => {
-    if (state?.state === QuestionState.ShowingQuestion) {
-      closeQuestionMutation.mutate({
-        adminKey: props.adminKey,
-        roomId: props.roomId,
-        questionId: state.questionId,
-      });
-    }
-  };
-
-  trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
-    onNext: (data) => {
-      setState(data);
-    },
-    onError: (err) => {
-      console.error(err);
-    },
-  });
-
-  return { state, createQuestion, closeQuestion };
 }
 
 interface CreateQuestionData {
@@ -203,7 +160,6 @@ function Email(props: { email: string; className?: string }) {
 
 export function WaitingRoomManagementPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
   const { users, voters, admitUser, declineUser } = useUserWaitingRoom(props);
-  const { state, createQuestion, closeQuestion } = useQuestionSetter(props);
 
   return (
     <AdminPageContainer>
