@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { twMerge } from 'tailwind-merge';
 
 import type { BoardState } from '../../../../../server/src/live-room/question-states';
 import { QuestionState } from '../../../../../server/src/live-room/question-states';
 import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '../../../../../server/src/live-room/user';
 import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
-import { routeBuilders } from '../../../routes';
+import { AdminRouter } from '../../../components/adminRouter';
+import { AdminPageContainer, Button, Heading } from '../../../components/styles';
 import { trpc } from '../../../utils/trpc';
 
 // Waiting = waiting for an admin to do something
@@ -180,50 +182,88 @@ function QuestionBuilder(props: { onSubmit: (data: CreateQuestionData) => void }
   );
 }
 
+function Email(props: { email: string; className?: string }) {
+  // split email into name and url
+  const [name, url] = props.email.split('@');
+
+  const className = twMerge('text-info overflow-hidden overflow-ellipsis whitespace-nowrap', props.className);
+
+  if (!url) {
+    return <span className={className}>{props.email}</span>;
+  } else {
+    return (
+      <span className={className}>
+        {name}
+        <span className="opacity-20 overflow-hidden overflow-ellipsis whitespace-nowrap">@{url}</span>
+      </span>
+    );
+  }
+}
+
 export function WaitingRoomManagementPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
   const { users, voters, admitUser, declineUser } = useUserWaitingRoom(props);
   const { state, createQuestion, closeQuestion } = useQuestionSetter(props);
 
   return (
-    <div>
-      <div>
-        <p>
-          Join link: <a href={routeBuilders.joinRoom({ roomId: props.roomId })}>join</a>
-        </p>
-        <p>
-          Board link: <a href={routeBuilders.viewRoomBoard({ roomId: props.roomId })}>join</a>
-        </p>
-        <h1>Waiting Room</h1>
-        {users.map((user) => (
-          <div key={user.id}>
-            <div>{user.details.studentEmail}</div>
-            <div>{user.details.location}</div>
-            <div>
-              <button
-                onClick={async () => {
-                  admitUser(user.id);
-                }}
-              >
-                Admit
-              </button>
-              <button
+    <AdminPageContainer>
+      <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
+
+      <div className="flex flex-col items-center w-full gap-4">
+        <Heading>Waiting Room</Heading>
+        <div className="gap-2 flex flex-col">
+          TODO: Add confirmation popup
+          {users.map((user) => (
+            <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
+              <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
+              <div className="">{user.details.location}</div>
+              <div className="gap-4">
+                <Button
+                  onClick={async () => {
+                    if (user.uiLoadingState === UserState.Waiting) {
+                      admitUser(user.id);
+                    }
+                  }}
+                  isLoading={user.uiLoadingState === UserState.Admitting}
+                >
+                  Admit
+                </Button>
+                <Button
+                  className="btn-error"
+                  onClick={async () => {
+                    if (user.uiLoadingState === UserState.Waiting) {
+                      declineUser(user.id);
+                    }
+                  }}
+                  isLoading={user.uiLoadingState === UserState.Declining}
+                >
+                  Decline
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Heading>Voters</Heading>
+        TODO: Allow kicking voters
+        {voters.map((user) => (
+          <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
+            <div className="flex-1">
+              <Email email={user.details.studentEmail} className="ml-2 mr-auto" />
+              <div className="">{user.details.location}</div>
+            </div>
+            <div className="gap-4">
+              <Button
+                className="btn-error"
+                disabled={true}
                 onClick={async () => {
                   declineUser(user.id);
                 }}
               >
-                Decline
-              </button>
+                Kick
+              </Button>
             </div>
           </div>
         ))}
-        <h1>Voters:</h1>
-        {voters.map((user) => (
-          <div key={user.id}>
-            <div>{user.details.studentEmail}</div>
-            <div>{user.details.location}</div>
-          </div>
-        ))}
       </div>
-    </div>
+    </AdminPageContainer>
   );
 }

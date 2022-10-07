@@ -1,5 +1,3 @@
-import { ChakraProvider } from '@chakra-ui/react';
-import { type ThemeConfig, extendTheme } from '@chakra-ui/react';
 import { createWSClient, wsLink } from '@trpc/client/links/wsLink';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -24,19 +22,12 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-const theme: ThemeConfig = {
-  useSystemColorMode: false,
-  initialColorMode: 'dark',
-};
-
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <ChakraProvider theme={extendTheme(theme)}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={browserRouter} />
-        </QueryClientProvider>
-      </trpc.Provider>
-    </ChakraProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={browserRouter} />
+      </QueryClientProvider>
+    </trpc.Provider>
   </React.StrictMode>
 );

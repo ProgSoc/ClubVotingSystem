@@ -406,6 +406,7 @@ export class LiveRoom {
     if (!question) {
       await notifyEveryone({
         state: QuestionState.Blank,
+        totalPeople: this.voters.length,
       });
       return;
     }

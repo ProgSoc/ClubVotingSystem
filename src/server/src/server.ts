@@ -6,6 +6,7 @@ import EventEmitter from 'events';
 import express from 'express';
 import ws from 'ws';
 
+import { env } from './env';
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
 import { roomWaitingListRouter } from './routers/room-waiting';
@@ -17,6 +18,11 @@ type Post = {
 
 const appRouter = trpc
   .router()
+  .query('selfUrl', {
+    resolve: ({}) => {
+      return { url: env.selfUrl };
+    },
+  })
   .merge('room.', roomRouter)
   .merge('waitingRoom.', roomWaitingListRouter)
   .merge('admin.', roomAdminRouter);

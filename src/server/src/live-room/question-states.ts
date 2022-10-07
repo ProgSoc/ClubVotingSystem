@@ -18,6 +18,7 @@ export enum QuestionState {
 
 interface BlankState {
   state: QuestionState.Blank;
+  totalPeople: number;
 }
 
 export interface PartialLiveQuestionMetadata {

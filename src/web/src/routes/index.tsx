@@ -6,6 +6,8 @@ import { createBrowserRouter, useLocation, useOutlet } from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
 import { CreateRoomPage } from '../pages/CreateRoomPage';
+import { QuestionSettingPage } from '../pages/room/admin/QuestionSettingPage';
+import { RoomInfoPage } from '../pages/room/admin/RoomInfoPage';
 import { WaitingRoomManagementPage } from '../pages/room/admin/WaitingRoomManagemenentPage';
 import { BoardPage } from '../pages/room/BoardPage';
 import { JoinWaitingRoomPage } from '../pages/room/JoinWaitingRoomPage';
@@ -21,8 +23,16 @@ const routes = {
     component: CreateRoomPage,
   }),
   manageWaitingRoom: route({
-    path: path`/room/${'roomId'}/admin/${'adminKey'}`,
+    path: path`/room/${'roomId'}/admin/${'adminKey'}/waiting-room`,
     component: withRoomFetched(WaitingRoomManagementPage),
+  }),
+  manageRoomInfo: route({
+    path: path`/room/${'roomId'}/admin/${'adminKey'}`,
+    component: withRoomFetched(RoomInfoPage),
+  }),
+  setRoomQuestions: route({
+    path: path`/room/${'roomId'}/admin/${'adminKey'}/questions`,
+    component: withRoomFetched(QuestionSettingPage),
   }),
   viewRoomBoard: route({
     path: path`/room/${'roomId'}/board`,
@@ -117,7 +127,7 @@ const enteringStyle = css`
 
 const exitingStyle = css`
   opacity: 0;
-  animation: ${exitAnimation} 0.3s ease-in;
+  animation: ${exitAnimation} 0.3s cubic-bezier(0.86, 0.12, 0.91, 0.68);
 `;
 
 const exitedStyle = css`

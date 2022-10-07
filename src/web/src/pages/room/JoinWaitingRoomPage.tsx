@@ -1,12 +1,11 @@
-import { Button, Heading, Input, Radio, RadioGroup, Stack } from '@chakra-ui/react';
 import { UserLocation } from '@prisma/client';
-import { Form, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 
-import { RoomContainer } from '../../components/styles';
+import { Button, Heading, PageContainer } from '../../components/styles';
 import { routeBuilders } from '../../routes';
 import { trpc } from '../../utils/trpc';
 
@@ -38,69 +37,55 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
   };
 
   return (
-    <RoomContainer>
-      <Stack direction="column" spacing={4} align="center">
-        <Heading>Join voting room</Heading>
-        <fieldset disabled={disabled}>
-          <Formik<FormValues>
-            initialValues={{
-              studentEmail: '',
-              location: undefined as any,
-            }}
-            onSubmit={onSubmit}
-            validationSchema={toFormikValidationSchema(schema)}
-            isInitialValid={false}
-            initialErrors={{
-              studentEmail: 'Required',
-            }}
-          >
-            {(form) => (
-              <Form>
-                <Stack
-                  direction="column"
-                  spacing={2}
-                  align="center"
-                  css={{
-                    width: '100vw',
-                  }}
+    <PageContainer className="gap-4">
+      <Heading>Join voting room</Heading>
+      <fieldset className="w-full" disabled={disabled}>
+        <Formik<FormValues>
+          initialValues={{
+            studentEmail: '',
+            location: undefined as any,
+          }}
+          onSubmit={onSubmit}
+          validationSchema={toFormikValidationSchema(schema)}
+          isInitialValid={false}
+          initialErrors={{
+            studentEmail: 'Required',
+          }}
+        >
+          {(form) => (
+            <Form>
+              <div className="gap-4 w-full flex flex-col justify-center items-center">
+                <input
+                  className="input input-bordered w-full sm:w-96"
+                  placeholder="Student Email"
+                  type="email"
+                  name="studentEmail"
+                  value={form.values.studentEmail}
+                  onChange={form.handleChange}
+                />
+                <div className="flex items-center justify-center gap-4">
+                  <label className="flex items-center gap-2">
+                    <Field type="radio" name="location" value={UserLocation.InPerson} className="radio radio-primary" />
+                    <span className="label-text">In Person</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <Field type="radio" name="location" value={UserLocation.Online} className="radio radio-primary" />
+                    Online
+                  </label>
+                </div>
+                <Button
+                  className="w-32"
+                  type="submit"
+                  disabled={disabled || Object.values(form.errors).length > 0}
+                  isLoading={mutation.isLoading}
                 >
-                  <Input
-                    placeholder="Student Email"
-                    type="email"
-                    name="studentEmail"
-                    css={{
-                      width: '400px',
-                      maxWidth: 'calc(100vw - 32px)',
-                    }}
-                    value={form.values.studentEmail}
-                    onChange={form.handleChange}
-                  />
-                  <RadioGroup
-                    value={form.values.location}
-                    onChange={(value) => {
-                      form.setFieldValue('location', value as UserLocation);
-                    }}
-                  >
-                    <Stack direction="row">
-                      <Radio value={UserLocation.InPerson}>In Person</Radio>
-                      <Radio value={UserLocation.Online}>Online</Radio>
-                    </Stack>
-                  </RadioGroup>
-                  <Button
-                    colorScheme="blue"
-                    type="submit"
-                    disabled={disabled || Object.values(form.errors).length > 0}
-                    isLoading={mutation.isLoading}
-                    loadingText="Joining"
-                  >
-                    Join
-                  </Button>
-                </Stack>
-              </Form>
-            )}
-          </Formik>
-        </fieldset>
-      </Stack>
-    </RoomContainer>
+                  Join
+                </Button>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </fieldset>
+    </PageContainer>
   );
 }

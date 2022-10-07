@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
+import { Heading, PageContainer } from '../components/styles';
 import { trpc } from '../utils/trpc';
 import { cacheFetchedRoom } from '../utils/withRoomData';
 
@@ -19,10 +20,10 @@ export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
   }
 
   return (
-    <div>
-      <h1>Redirecting...</h1>
+    <PageContainer className="gap-2">
+      <Heading>Redirecting...</Heading>
       {roomQuery.data && !roomQuery.data.id && <p>Room not found</p>}
-    </div>
+    </PageContainer>
   );
 }
 
