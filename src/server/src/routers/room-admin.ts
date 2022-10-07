@@ -1,3 +1,4 @@
+import { QuestionType } from '@prisma/client';
 import * as trpc from '@trpc/server';
 import { z } from 'zod';
 
@@ -65,7 +66,16 @@ const roomQuestionsAdminRouter = trpc
       roomId: z.string(),
       adminKey: z.string(),
       question: z.string().refine((s) => s.length > 0, { message: 'Question must not be empty' }),
-      maxChoices: z.number().refine((n) => n > 0, { message: 'Max choices must be greater than 0' }),
+      details: z.union([
+        z.object({
+          type: z.literal(QuestionType.SingleVote),
+        }),
+
+        // TODO: Add more types. Having a duplicate here so that zod doesnt complain.
+        z.object({
+          type: z.literal(QuestionType.SingleVote),
+        }),
+      ]),
       candidates: z
         .array(z.string().refine((s) => s.length > 0, { message: 'Candidate must not be empty' }))
         .refine((arr) => arr.length > 1, { message: 'Must have at least 2 candidates' }),
@@ -76,7 +86,7 @@ const roomQuestionsAdminRouter = trpc
 
       await room.startNewQuestion({
         question: input.question,
-        maxChoices: input.maxChoices,
+        details: input.details,
         candidates: input.candidates,
       });
     },

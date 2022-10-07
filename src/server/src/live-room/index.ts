@@ -6,7 +6,7 @@ import { prisma } from '../../prisma';
 import type { JoinWaitingRoomParams } from './inputs';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
-import type { CreateQuestionParams, RoomQuestion } from './question';
+import type { CreateQuestionParams, QuestionResponse, RoomQuestion } from './question';
 import {
   closeQuestion,
   createNewQuestion,
@@ -218,7 +218,7 @@ export class LiveRoom {
   }
 
   /** Cast a vote on a question, notify everyone of the current question state change */
-  async castVote(questionId: string, voterId: string, candidateIds: string[]): Promise<boolean> {
+  async castVote(questionId: string, voterId: string, response: QuestionResponse): Promise<boolean> {
     return this.withQuestionLock(async () => {
       this.assertRoomNotClosed();
       const voter = this.getVoterListener(voterId);
@@ -231,7 +231,7 @@ export class LiveRoom {
         return false;
       }
 
-      const updatedQuestion = await voteForQuestion(questionId, voterId, candidateIds);
+      const updatedQuestion = await voteForQuestion(questionId, voterId, response);
       if (!updatedQuestion) {
         return false;
       }
@@ -414,8 +414,8 @@ export class LiveRoom {
     const liveData: PartialLiveQuestionMetadata = {
       questionId: question.id,
       question: question.question,
-      maxChoices: question.maxChoices,
       peopleVoted: question.totalVoters,
+      details: question.details,
       totalPeople: this.voters.length,
     };
 

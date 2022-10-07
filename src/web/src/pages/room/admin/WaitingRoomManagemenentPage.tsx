@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 
+import type { QuestionFormatDetails } from '../../../../../server/src/live-room/question';
 import type { BoardState } from '../../../../../server/src/live-room/question-states';
 import { QuestionState } from '../../../../../server/src/live-room/question-states';
 import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '../../../../../server/src/live-room/user';
@@ -80,14 +81,14 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }) {
   const createQuestionMutation = trpc.useMutation(['admin.questions.createQuestion']);
   const closeQuestionMutation = trpc.useMutation(['admin.questions.closeQuestion']);
 
-  const createQuestion = (question: string, candidates: string[], maxChoices: number) => {
+  const createQuestion = (question: string, candidates: string[], details: QuestionFormatDetails) => {
     if (state?.state === QuestionState.Blank || state?.state === QuestionState.ShowingResults) {
       createQuestionMutation.mutate({
         adminKey: props.adminKey,
         roomId: props.roomId,
         question,
         candidates,
-        maxChoices,
+        details,
       });
     }
   };

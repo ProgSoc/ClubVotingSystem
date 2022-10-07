@@ -49,7 +49,7 @@ model Voter {
 model Question {
   id         String              @id @default(cuid())
   question   String
-  maxChoices Int
+  format     QuestionType
   candidates QuestionCandidate[]
 
   roomId String
@@ -87,4 +87,8 @@ enum WaitingState {
   Waiting
   Admitted
   Declined
+}
+
+enum QuestionType {
+  SingleVote
 }

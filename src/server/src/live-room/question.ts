@@ -1,6 +1,24 @@
-import type { CandidateVote, Question, QuestionCandidate } from '@prisma/client';
+import type { CandidateVote, Question, QuestionCandidate, QuestionType } from '@prisma/client';
 
 import { prisma } from '../../prisma';
+import { UnreachableError } from '../unreachableError';
+
+export interface SingleVoteQuestionFormat {
+  type: typeof QuestionType['SingleVote'];
+}
+
+export type QuestionFormatDetails = SingleVoteQuestionFormat;
+
+export interface AbstainQuestionResponse {
+  type: 'Abstain';
+}
+
+export interface SingleVoteQuestionResponse {
+  type: typeof QuestionType['SingleVote'];
+  candidateId: string;
+}
+
+export type QuestionResponse = AbstainQuestionResponse | SingleVoteQuestionResponse;
 
 export interface QuestionCandidateWithVotes {
   id: string;
@@ -11,8 +29,8 @@ export interface QuestionCandidateWithVotes {
 export interface RoomQuestion {
   id: string;
   question: string;
+  details: QuestionFormatDetails;
   createdAt: Date;
-  maxChoices: number;
   closed: boolean;
   totalVoters: number;
   candidates: QuestionCandidateWithVotes[];
@@ -20,8 +38,8 @@ export interface RoomQuestion {
 
 export interface CreateQuestionParams {
   question: string;
-  maxChoices: number;
   candidates: string[];
+  details: QuestionFormatDetails;
 }
 
 export const prismaQuestionInclude = {
@@ -51,7 +69,12 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
     createdAt: question.createdAt,
     question: question.question,
     closed: question.closed,
-    maxChoices: question.maxChoices,
+
+    // TODO: Abstract this when more question types are added
+    details: {
+      type: question.format,
+    },
+
     totalVoters: uniqueVoters.size,
     candidates: question.candidates.map((candidate) => ({
       id: candidate.id,
@@ -61,20 +84,15 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
   };
 }
 
-export async function createRoomQuestion(
-  roomId: string,
-  question: string,
-  candidates: string[],
-  maxChoices: number
-): Promise<RoomQuestion> {
+export async function createRoomQuestion(roomId: string, params: CreateQuestionParams): Promise<RoomQuestion> {
   const created = await prisma.question.create({
     data: {
-      question,
-      maxChoices,
       roomId,
+      question: params.question,
+      format: params.details.type,
       candidates: {
         createMany: {
-          data: candidates.map((candidate) => ({ name: candidate })),
+          data: params.candidates.map((candidate) => ({ name: candidate })),
         },
       },
     },
@@ -87,16 +105,12 @@ export async function createRoomQuestion(
 export async function voteForQuestion(
   questionId: string,
   voterId: string,
-  candidateIds: string[]
+  response: QuestionResponse
 ): Promise<RoomQuestion | null> {
   return prisma.$transaction(async (prisma) => {
     const question = await prisma.question.findUnique({ where: { id: questionId } });
     if (!question || question.closed) {
       return null;
-    }
-
-    if (question.maxChoices < candidateIds.length) {
-      throw new Error('Too many choices');
     }
 
     // Delete all previous votes from the voter for the question
@@ -109,13 +123,25 @@ export async function voteForQuestion(
       },
     });
 
-    // Create new votes
-    await prisma.candidateVote.createMany({
-      data: candidateIds.map((candidateId) => ({
-        voterId,
-        candidateId,
-      })),
-    });
+    if (response.type !== question.format && response.type !== 'Abstain') {
+      throw new Error('Invalid response type');
+    }
+
+    switch (response.type) {
+      case 'Abstain':
+        // Do nothing, the votes have already been cleared
+        break;
+      case 'SingleVote':
+        await prisma.candidateVote.create({
+          data: {
+            voterId,
+            candidateId: response.candidateId,
+          },
+        });
+        break;
+      default:
+        throw new UnreachableError(response);
+    }
 
     const newQuestion = await prisma.question.findUnique({
       where: { id: questionId },
@@ -145,7 +171,7 @@ export async function createNewQuestion(roomId: string, params: CreateQuestionPa
   const question = await prisma.question.create({
     data: {
       question: params.question,
-      maxChoices: params.maxChoices,
+      format: params.details.type,
       roomId,
       candidates: {
         createMany: {

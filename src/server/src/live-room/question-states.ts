@@ -1,3 +1,5 @@
+import type { QuestionFormatDetails } from './question';
+
 export interface CandidateWithVotes {
   id: string;
   name: string;
@@ -24,7 +26,7 @@ interface BlankState {
 export interface PartialLiveQuestionMetadata {
   questionId: string;
   question: string;
-  maxChoices: number;
+  details: QuestionFormatDetails;
   peopleVoted: number;
   totalPeople: number;
 }
