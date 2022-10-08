@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Heading, PageContainer } from '../components/styles';
@@ -14,10 +15,12 @@ export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
 
   const roomQuery = trpc.useQuery(['room.getRoomByShortId', { shortId: props.shortId }]);
 
-  if (roomQuery.data?.id) {
-    cacheFetchedRoom(roomQuery.data);
-    navigate(props.makePath(roomQuery.data.id));
-  }
+  useEffect(() => {
+    if (roomQuery.data?.id) {
+      cacheFetchedRoom(roomQuery.data);
+      navigate(props.makePath(roomQuery.data.id));
+    }
+  }, [roomQuery.data?.id]);
 
   return (
     <PageContainer className="gap-2">

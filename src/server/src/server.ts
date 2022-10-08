@@ -9,6 +9,7 @@ import ws from 'ws';
 import { env } from './env';
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
+import { roomVoteRouter } from './routers/room-vote';
 import { roomWaitingListRouter } from './routers/room-waiting';
 
 type Post = {
@@ -25,6 +26,7 @@ const appRouter = trpc
   })
   .merge('room.', roomRouter)
   .merge('waitingRoom.', roomWaitingListRouter)
+  .merge('vote.', roomVoteRouter)
   .merge('admin.', roomAdminRouter);
 
 export type AppRouter = typeof appRouter;

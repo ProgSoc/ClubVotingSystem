@@ -63,7 +63,6 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
         dark: rgb2hex(style.color),
       },
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasRef.current, styleDivRef.current, props.roomId, joinLink]);
 
   return (

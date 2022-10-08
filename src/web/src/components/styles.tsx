@@ -18,6 +18,10 @@ export const Heading = ({ children, className }: BaseProps) => (
   <h1 className={twMerge('text-4xl font-bold', className)}>{children}</h1>
 );
 
+export const Question = ({ children, className }: BaseProps) => (
+  <h1 className={twMerge('text-2xl font-bold text-info', className)}>{children}</h1>
+);
+
 const SmallLoadingSpinner = ({ children, className }: BaseProps) => (
   <svg className={twMerge('animate-spin h-5 w-5', className)} viewBox="0 0 24 24">
     <circle

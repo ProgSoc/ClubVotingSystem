@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 
 import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '../../../../../server/src/live-room/user';
@@ -21,8 +20,6 @@ interface UserWithState extends WaitingRoomUserWithDetails {
 function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
   const [users, setUsers] = useState<UserWithState[]>([]);
   const [voters, setVoters] = useState<AdmittedRoomUserWithDetails[]>([]);
-
-  const navigate = useNavigate();
 
   const admitUserMutation = trpc.useMutation(['admin.users.admitUser']);
   const declineUserMutation = trpc.useMutation(['admin.users.declineUser']);
@@ -175,6 +172,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
               <div className="">{user.details.location}</div>
               <div className="gap-4">
                 <Button
+                  className="btn-primary"
                   onClick={async () => {
                     if (user.uiLoadingState === UserState.Waiting) {
                       admitUser(user.id);

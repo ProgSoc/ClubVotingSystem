@@ -7,14 +7,15 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 import type { CreateQuestionParams } from '../../../../../server/src/live-room/question';
 import type {
   BoardState,
-  ResultsView,
   ShowingQuestionState,
+  ShowingResultsState,
 } from '../../../../../server/src/live-room/question-states';
 import { QuestionState } from '../../../../../server/src/live-room/question-states';
 import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
 import { UnreachableError } from '../../../../../server/src/unreachableError';
 import { AdminRouter } from '../../../components/adminRouter';
-import { AdminPageContainer, Button } from '../../../components/styles';
+import { ResultsViewer } from '../../../components/ResultsViewer';
+import { AdminPageContainer, Button, Heading, Question } from '../../../components/styles';
 import { trpc } from '../../../utils/trpc';
 
 interface LoadingState {
@@ -27,7 +28,7 @@ interface EndedState {
 
 interface QuestionSettingData {
   type: 'set-question';
-  previousResults?: ResultsView;
+  previousResults?: ShowingResultsState;
   setQuestion(params: CreateQuestionParams): void;
 }
 
@@ -45,28 +46,6 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
   const createQuestionMutation = trpc.useMutation(['admin.questions.createQuestion']);
   const closeQuestionMutation = trpc.useMutation(['admin.questions.closeQuestion']);
 
-  const createQuestion = (params: CreateQuestionParams) => {
-    if (state?.state === QuestionState.Blank || state?.state === QuestionState.ShowingResults) {
-      createQuestionMutation.mutate({
-        adminKey: props.adminKey,
-        roomId: props.roomId,
-        question: params.question,
-        candidates: params.candidates,
-        details: params.details,
-      });
-    }
-  };
-
-  const closeQuestion = () => {
-    if (state?.state === QuestionState.ShowingQuestion) {
-      closeQuestionMutation.mutate({
-        adminKey: props.adminKey,
-        roomId: props.roomId,
-        questionId: state.questionId,
-      });
-    }
-  };
-
   trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
     onNext: (data) => {
       setState(data);
@@ -83,14 +62,32 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
   }
 
   if (state.state === QuestionState.Blank || state.state === QuestionState.ShowingResults) {
+    const createQuestion = (params: CreateQuestionParams) => {
+      createQuestionMutation.mutate({
+        adminKey: props.adminKey,
+        roomId: props.roomId,
+        question: params.question,
+        candidates: params.candidates,
+        details: params.details,
+      });
+    };
+
     return {
       type: 'set-question',
-      previousResults: state.state === QuestionState.ShowingResults ? state.results : undefined,
+      previousResults: state.state === QuestionState.ShowingResults ? state : undefined,
       setQuestion: createQuestion,
     };
   }
 
   if (state.state === QuestionState.ShowingQuestion) {
+    const closeQuestion = () => {
+      closeQuestionMutation.mutate({
+        adminKey: props.adminKey,
+        roomId: props.roomId,
+        questionId: state.questionId,
+      });
+    };
+
     return {
       type: 'asking-question',
       question: state,
@@ -114,6 +111,7 @@ export function QuestionSettingPage(props: { roomId: string; room: PublicStaticR
 }
 
 function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
+  // FIXME: Prettify the loading and ended states
   switch (data.type) {
     case 'loading':
       return <div>Loading...</div>;
@@ -153,80 +151,91 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
   };
 
   return (
-    <Formik<FormValues>
-      initialValues={{
-        question: '',
-        candidates: [
-          { innerId: getId(), name: '' },
-          { innerId: getId(), name: '' },
-        ],
-      }}
-      onSubmit={onSubmit}
-      validationSchema={toFormikValidationSchema(schema)}
-      isInitialValid={false}
-      initialErrors={{
-        question: 'Required',
-      }}
-    >
-      {(form) => (
-        <Form>
-          <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
-            <Field
-              className="input input-bordered w-full sm:w-96"
-              placeholder="Question"
-              name="question"
-              value={form.values.question}
-              onChange={form.handleChange}
-            />
+    <>
+      <Formik<FormValues>
+        initialValues={{
+          question: '',
+          candidates: [
+            { innerId: getId(), name: '' },
+            { innerId: getId(), name: '' },
+          ],
+        }}
+        onSubmit={onSubmit}
+        validationSchema={toFormikValidationSchema(schema)}
+        isInitialValid={false}
+        initialErrors={{
+          question: 'Required',
+        }}
+      >
+        {(form) => (
+          <Form>
+            <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
+              <Field
+                className="input input-bordered w-full sm:w-96"
+                placeholder="Question"
+                name="question"
+                value={form.values.question}
+                onChange={form.handleChange}
+              />
 
-            <div className="gap-2 flex flex-col">
-              {form.values.candidates.map((candidate, index) => (
-                <div key={candidate.innerId} className="flex gap-2">
-                  <Field
-                    className="input input-bordered w-full sm:w-96"
-                    placeholder="Candidate"
-                    name={`candidates.${index}.name`}
-                    value={candidate.name}
-                    onChange={form.handleChange}
-                  />
-                  <Button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => {
-                      form.setFieldValue(
-                        'candidates',
-                        form.values.candidates.filter((c) => c.innerId !== candidate.innerId)
-                      );
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
+              <div className="gap-2 flex flex-col">
+                {form.values.candidates.map((candidate, index) => (
+                  <div key={candidate.innerId} className="flex gap-2">
+                    <Field
+                      className="input input-bordered w-full sm:w-96"
+                      placeholder="Candidate"
+                      name={`candidates.${index}.name`}
+                      value={candidate.name}
+                      onChange={form.handleChange}
+                    />
+                    <Button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => {
+                        form.setFieldValue(
+                          'candidates',
+                          form.values.candidates.filter((c) => c.innerId !== candidate.innerId)
+                        );
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  className="btn-info"
+                  disabled={submitting}
+                  type="button"
+                  onClick={() => {
+                    form.setFieldValue('candidates', [...form.values.candidates, { innerId: getId(), name: '' }]);
+                  }}
+                >
+                  Add candidate
+                </Button>
+              </div>
+
               <Button
-                className="btn-info"
-                disabled={submitting}
-                type="button"
-                onClick={() => {
-                  form.setFieldValue('candidates', [...form.values.candidates, { innerId: getId(), name: '' }]);
-                }}
+                className="w-32 btn-primary"
+                type="submit"
+                disabled={submitting || Object.values(form.errors).length > 0}
+                isLoading={submitting}
               >
-                Add candidate
+                Create
               </Button>
-            </div>
-
-            <Button
-              className="w-32 btn-primary"
-              type="submit"
-              disabled={submitting || Object.values(form.errors).length > 0}
-              isLoading={submitting}
-            >
-              Create
-            </Button>
-          </fieldset>
-        </Form>
+            </fieldset>
+          </Form>
+        )}
+      </Formik>
+      {data.previousResults && (
+        <div className="mt-8 flex flex-col items-center">
+          <Heading className="mb-2">Previous results</Heading>
+          <Question>{data.previousResults.question}</Question>
+          <div className="mt-2">
+            <ResultsViewer results={data.previousResults.results} />
+          </div>
+        </div>
       )}
-    </Formik>
+    </>
   );
 }
 

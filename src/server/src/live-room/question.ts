@@ -1,5 +1,7 @@
 import type { CandidateVote, Question, QuestionCandidate } from '@prisma/client';
 import { QuestionType } from '@prisma/client';
+import type { TypeOf } from 'zod';
+import { z } from 'zod';
 
 import { prisma } from '../../prisma';
 import { UnreachableError } from '../unreachableError';
@@ -11,16 +13,17 @@ export interface SingleVoteQuestionFormat {
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;
 
-export interface AbstainQuestionResponse {
-  type: 'Abstain';
-}
+const abstainQuestionResponse = z.object({
+  type: z.literal('Abstain'),
+});
 
-export interface SingleVoteQuestionResponse {
-  type: typeof QuestionType['SingleVote'];
-  candidateId: string;
-}
+const singleVoteQuestionResponse = z.object({
+  type: z.literal(QuestionType.SingleVote),
+  candidateId: z.string(),
+});
 
-export type QuestionResponse = AbstainQuestionResponse | SingleVoteQuestionResponse;
+export const questionResponse = z.union([abstainQuestionResponse, singleVoteQuestionResponse]);
+export type QuestionResponse = TypeOf<typeof questionResponse>;
 
 export interface QuestionCandidateWithVotes {
   id: string;
@@ -37,6 +40,8 @@ export interface RoomQuestion {
   totalVoters: number;
   candidates: VotingCandidate[];
   results: ResultsView;
+
+  originalPrismaQuestionObject: PrismaQuestionInclude;
 }
 
 export interface CreateQuestionParams {
@@ -108,6 +113,8 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
       id: candidate.id,
       name: candidate.name,
     })),
+
+    originalPrismaQuestionObject: question,
   };
 }
 

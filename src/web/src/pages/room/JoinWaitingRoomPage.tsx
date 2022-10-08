@@ -74,7 +74,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                   </label>
                 </div>
                 <Button
-                  className="w-32"
+                  className="btn-primary w-32"
                   type="submit"
                   disabled={disabled || Object.values(form.errors).length > 0}
                   isLoading={mutation.isLoading}

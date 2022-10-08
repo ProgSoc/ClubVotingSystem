@@ -7,7 +7,6 @@ let selfUrl: string | undefined = undefined;
 export function useSelfUrl(): string | undefined {
   const shouldCall = !selfUrl;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const [calledBefore] = useState(shouldCall);
 
   if (calledBefore) {

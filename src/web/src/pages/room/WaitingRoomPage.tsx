@@ -26,8 +26,6 @@ export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: str
         setDeclined(true);
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.data]);
 
   if (!declined) {

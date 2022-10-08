@@ -1,8 +1,10 @@
-import type { Room } from '@prisma/client';
+import type { CandidateVote, Room } from '@prisma/client';
+import { QuestionType } from '@prisma/client';
 import { WaitingState } from '@prisma/client';
 import { customAlphabet } from 'nanoid';
 
 import { prisma } from '../../prisma';
+import { UnreachableError } from '../unreachableError';
 import type { JoinWaitingRoomParams } from './inputs';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
@@ -216,17 +218,17 @@ export class LiveRoom {
       this.assertRoomNotClosed();
       const voter = this.getVoterListener(voterId);
       if (!voter) {
-        return false;
+        throw new Error("Can't find voter");
       }
 
       const question = this.currentQuestion;
       if (!question || question.closed) {
-        return false;
+        throw new Error('No question is currently open');
       }
 
       const updatedQuestion = await voteForQuestion(questionId, voterId, response);
       if (!updatedQuestion) {
-        return false;
+        throw new Error('Failed to update question');
       }
 
       this.updateCurrentQuestion(updatedQuestion);
@@ -341,6 +343,37 @@ export class LiveRoom {
     return unsubscribe;
   }
 
+  async getVoterVote(voterId: string, questionId: string): Promise<QuestionResponse | null> {
+    const question = this.questions.find((q) => q.id === questionId);
+    if (!question) {
+      return null;
+    }
+
+    const questionObj = question.originalPrismaQuestionObject;
+
+    const votes: CandidateVote[] = [];
+    questionObj.candidates.forEach((c) => {
+      const vote = c.votes.find((v) => v.voterId === voterId);
+      if (vote) {
+        votes.push(vote);
+      }
+    });
+    if (votes.length === 0) {
+      // TODO: Support abstain votes.
+      return null;
+    }
+
+    switch (questionObj.format) {
+      case QuestionType.SingleVote:
+        return {
+          type: QuestionType.SingleVote,
+          candidateId: votes[0].candidateId,
+        };
+      default:
+        throw new UnreachableError(questionObj.format);
+    }
+  }
+
   // #endregion
 
   //
@@ -352,7 +385,7 @@ export class LiveRoom {
   }
 
   private getVoterListener(voterId: string): WithListeners<AdmittedRoomUser, VoterState> | null {
-    return this.voters.find((v) => v.val.id === voterId) || null;
+    return this.voters.find((v) => v.val.voterId === voterId) || null;
   }
 
   private async removeUserFromList(userId: string) {

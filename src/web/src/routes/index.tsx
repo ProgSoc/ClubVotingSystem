@@ -48,7 +48,7 @@ const routes = {
   }),
   votingRoom: route({
     path: path`/room/${'roomId'}/vote/${'voterId'}`,
-    component: VotingRoomPage,
+    component: withRoomFetched(VotingRoomPage),
   }),
   shortView: route({
     path: path`/b/${'shortId'}`,

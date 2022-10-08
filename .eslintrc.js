@@ -95,7 +95,6 @@ module.exports = {
         'react/no-unescaped-entities': 'off',
         'react/display-name': 'off',
         'react-hooks/rules-of-hooks': 'error',
-        'react-hooks/exhaustive-deps': 'error',
         'typescript/no-type-alias': 'off',
         '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-empty-function': 'off',

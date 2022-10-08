@@ -36,7 +36,7 @@ export interface ShowingQuestionState extends PartialLiveQuestionMetadata {
   candidates: VotingCandidate[];
 }
 
-interface SingleVoteResultsView {
+export interface SingleVoteResultsView {
   type: 'SingleVote';
   results: CandidateWithVotes[];
 }
@@ -44,7 +44,7 @@ interface SingleVoteResultsView {
 // TODO: Add more types
 export type ResultsView = SingleVoteResultsView;
 
-interface ShowingResultsState extends PartialLiveQuestionMetadata {
+export interface ShowingResultsState extends PartialLiveQuestionMetadata {
   state: QuestionState.ShowingResults;
   candidates: VotingCandidate[];
   results: ResultsView;
