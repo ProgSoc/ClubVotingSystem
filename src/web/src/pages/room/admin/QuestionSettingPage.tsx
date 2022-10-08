@@ -162,10 +162,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
         }}
         onSubmit={onSubmit}
         validationSchema={toFormikValidationSchema(schema)}
-        isInitialValid={false}
-        initialErrors={{
-          question: 'Required',
-        }}
+        validateOnMount={true}
       >
         {(form) => (
           <Form>
@@ -242,22 +239,32 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 function AskingQuestion({ data }: { data: QuestionAskingData }) {
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-2xl font-bold">{data.question.question}</div>
-      <progress
-        className="progress progress-primary"
-        max={data.question.totalPeople}
-        value={data.question.peopleVoted}
-      />
-      <div className="flex flex-col gap-2">
-        {data.question.candidates.map((candidate) => (
-          <div key={candidate.id} className="flex gap-2">
-            <div className="flex-1">{candidate.name}</div>
+      <Question>{data.question.question}</Question>
+
+      <div className="flex gap-8 flex-col sm:flex-row">
+        <div className="flex flex-col gap-4">
+          <div>
+            <div>Votes remaining: {data.question.totalPeople - data.question.peopleVoted}</div>
+            <progress
+              className="progress progress-info w-48"
+              max={data.question.totalPeople}
+              value={data.question.peopleVoted}
+            />
           </div>
-        ))}
+          <Button className="btn-primary" onClick={data.endQuestion}>
+            End question
+          </Button>
+        </div>
+        <div>
+          <div className="flex flex-col gap-2">
+            {data.question.candidates.map((candidate) => (
+              <div className="alert min-w-[10rem] w-full" key={candidate.id}>
+                {candidate.name}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-      <Button className="btn-primary" onClick={data.endQuestion}>
-        End question
-      </Button>
     </div>
   );
 }

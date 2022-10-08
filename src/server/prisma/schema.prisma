@@ -52,6 +52,8 @@ model Question {
   format     QuestionType
   candidates QuestionCandidate[]
 
+  votersPresentAtEnd Int @default(0)
+
   roomId String
   room   Room?  @relation(fields: [roomId], references: [id])
 

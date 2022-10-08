@@ -83,7 +83,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
     }
   };
 
-  const makeResukts = (): ResultsView => {
+  const makeResults = (): ResultsView => {
     switch (question.format) {
       case QuestionType.SingleVote:
         return {
@@ -93,6 +93,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
             name: candidate.name,
             votes: candidate.votes.length,
           })),
+          abstained: Math.max(0, question.votersPresentAtEnd - uniqueVoters.size),
         };
       default:
         throw new UnreachableError(question.format);
@@ -106,7 +107,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
     closed: question.closed,
 
     details: makeDetails(),
-    results: makeResukts(),
+    results: makeResults(),
 
     totalVoters: uniqueVoters.size,
     candidates: question.candidates.map((candidate) => ({
@@ -191,10 +192,10 @@ export async function voteForQuestion(
   });
 }
 
-export async function closeQuestion(questionId: string): Promise<RoomQuestion> {
+export async function closeQuestion(questionId: string, votersPresent: number): Promise<RoomQuestion> {
   const question = await prisma.question.update({
     where: { id: questionId },
-    data: { closed: true },
+    data: { closed: true, votersPresentAtEnd: votersPresent },
     include: prismaQuestionInclude,
   });
 

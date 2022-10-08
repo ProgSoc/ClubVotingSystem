@@ -47,10 +47,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
           }}
           onSubmit={onSubmit}
           validationSchema={toFormikValidationSchema(schema)}
-          isInitialValid={false}
-          initialErrors={{
-            studentEmail: 'Required',
-          }}
+          validateOnMount={true}
         >
           {(form) => (
             <Form>

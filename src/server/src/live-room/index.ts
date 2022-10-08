@@ -246,7 +246,7 @@ export class LiveRoom {
         throw new Error("Failed to close question: Question doesn't exist or is already closed");
       }
 
-      const updatedQuestion = await closeQuestion(questionId);
+      const updatedQuestion = await closeQuestion(questionId, this.voters.length);
 
       this.updateCurrentQuestion(updatedQuestion);
       await this.notifyEveryoneOfStateChange();

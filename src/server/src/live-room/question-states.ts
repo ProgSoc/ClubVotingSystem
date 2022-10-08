@@ -42,7 +42,7 @@ export interface SingleVoteResultsView {
 }
 
 // TODO: Add more types
-export type ResultsView = SingleVoteResultsView;
+export type ResultsView = { abstained: number } & SingleVoteResultsView;
 
 export interface ShowingResultsState extends PartialLiveQuestionMetadata {
   state: QuestionState.ShowingResults;
