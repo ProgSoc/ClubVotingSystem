@@ -2,74 +2,70 @@ import * as trpc from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
-import EventEmitter from 'events';
 import express from 'express';
 import ws from 'ws';
 
-import { env } from './env';
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
 import { roomVoteRouter } from './routers/room-vote';
 import { roomWaitingListRouter } from './routers/room-waiting';
 
-type Post = {
-  id: number;
-  title: string;
-};
-
 const appRouter = trpc
   .router()
-  .query('selfUrl', {
-    resolve: ({}) => {
-      return { url: env.selfUrl };
-    },
-  })
   .merge('room.', roomRouter)
   .merge('waitingRoom.', roomWaitingListRouter)
   .merge('vote.', roomVoteRouter)
   .merge('admin.', roomAdminRouter);
 
 export type AppRouter = typeof appRouter;
-const ee = new EventEmitter();
 
 const app = express();
 
-// Allow CORS and Cookies
-app.use(
-  cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-  })
-);
+// Allow CORS for dev
+if (process.env.NODE_ENV !== 'production') {
+  app.use(
+    cors({
+      origin: '*',
+      credentials: true,
+    })
+  );
+}
 
-// created for each request
-const createContext = ({ req, res }: trpcExpress.CreateExpressContextOptions) => ({}); // no context
-type Context = trpc.inferAsyncReturnType<typeof createContext>;
+// Create the express server
 app.use(
   '/trpc',
   trpcExpress.createExpressMiddleware({
     router: appRouter,
-    createContext,
   })
 );
-app.listen(8080, () => {
+const server = app.listen(8080, () => {
   console.log('Server started on port 8080');
 });
 
-const wss = new ws.Server({
-  port: 8081,
-});
-const handler = applyWSSHandler({ wss, router: appRouter });
+// Create the websocket server
 
-wss.on('connection', (ws) => {
-  console.log(`➕➕ Connection (${wss.clients.size})`);
-  ws.once('close', () => {
-    console.log(`➖➖ Connection (${wss.clients.size})`);
+const websocketServer = new ws.Server({
+  noServer: true,
+  path: '/trpc/socket',
+});
+
+const handler = applyWSSHandler({ wss: websocketServer, router: appRouter });
+
+server.on('upgrade', (request, socket, head) => {
+  websocketServer.handleUpgrade(request, socket, head, (websocket) => {
+    websocketServer.emit('connection', websocket, request);
   });
 });
-console.log('✅ WebSocket Server listening on ws://localhost:8081');
+
 process.on('SIGTERM', () => {
   console.log('SIGTERM');
   handler.broadcastReconnectNotification();
-  wss.close();
+  websocketServer.close();
+});
+
+websocketServer.on('connection', (ws) => {
+  console.log(`➕➕ Connection (${websocketServer.clients.size})`);
+  ws.once('close', () => {
+    console.log(`➖➖ Connection (${websocketServer.clients.size})`);
+  });
 });

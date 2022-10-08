@@ -17,5 +17,4 @@ function envVarProdForce(name: string): string | undefined {
 
 export const env = {
   port: envVarProdForce('PORT') ?? '8080',
-  selfUrl: envVarProdForce('SELF_URL') ?? 'http://localhost:5173',
 };

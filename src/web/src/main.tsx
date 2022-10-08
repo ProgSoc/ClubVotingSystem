@@ -11,12 +11,15 @@ import './index.css';
 
 const queryClient = new QueryClient();
 
+const trpcHost = import.meta.env.DEV ? 'localhost:8080' : location.host;
+const secure = location.protocol === 'https:';
+
 const trpcClient = trpc.createClient({
-  url: 'http://localhost:8080/trpc',
+  url: `${secure ? 'https' : 'http'}://${trpcHost}/trpc`,
   links: [
     wsLink({
       client: createWSClient({
-        url: `ws://localhost:8081`,
+        url: `${secure ? 'wss' : 'ws'}://${trpcHost}/trpc/socket`,
       }),
     }),
   ],

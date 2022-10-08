@@ -6,7 +6,6 @@ import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
 import { AdminRouter } from '../../../components/adminRouter';
 import { AdminPageContainer, Heading } from '../../../components/styles';
 import { routeBuilders } from '../../../routes';
-import { useSelfUrl } from '../../../routes/useSelfUrl';
 import { trpc } from '../../../utils/trpc';
 
 // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
@@ -22,8 +21,6 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
   const styleDivRef = useRef<HTMLDivElement>(null);
 
   const [roomVoters, setRoomVoters] = useState(0);
-
-  const selfUrl = useSelfUrl();
 
   trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
     onNext: (data) => {
@@ -44,8 +41,8 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
     },
   });
 
-  const joinLink: string | undefined = selfUrl && selfUrl + routeBuilders.shortJoin({ shortId: props.room.shortId });
-  const boardLink: string | undefined = selfUrl && selfUrl + routeBuilders.shortView({ shortId: props.room.shortId });
+  const joinLink: string | undefined = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
+  const boardLink: string | undefined = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
 
   useEffect(() => {
     if (!styleDivRef.current || !canvasRef.current || !joinLink) {
