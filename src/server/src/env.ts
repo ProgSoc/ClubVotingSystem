@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 
-dotenv.config({});
-dotenv.config({ path: '../../.env' });
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({});
+  dotenv.config({ path: '../../.env' });
+}
 
 function envVar(name: string): string | undefined {
   return process.env[name];
@@ -17,4 +19,5 @@ function envVarProdForce(name: string): string | undefined {
 
 export const env = {
   port: envVarProdForce('PORT') ?? '8080',
+  publicDir: envVarProdForce('PUBLIC_DIR'),
 };

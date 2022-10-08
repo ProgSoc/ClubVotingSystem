@@ -3,7 +3,7 @@ import { QuestionType } from '@prisma/client';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 
-import { prisma } from '../../prisma';
+import { prisma } from '../prisma';
 import { UnreachableError } from '../unreachableError';
 import type { ResultsView, VotingCandidate } from './question-states';
 

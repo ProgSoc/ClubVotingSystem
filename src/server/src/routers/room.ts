@@ -10,7 +10,7 @@ export const roomRouter = trpc
   .router()
   .mutation('create', {
     input: z.object({
-      name: z.string().refine((s) => s.length > 0, { message: 'Name must not be empty' }),
+      name: z.string().min(1),
     }),
     async resolve({ input }) {
       const room = await createLiveRoom(input.name);
@@ -47,7 +47,7 @@ export const roomRouter = trpc
   .mutation('joinWaitingList', {
     input: z.object({
       roomId: z.string(),
-      studentEmail: z.string().refine((s) => s.length > 0, { message: 'Email must not be empty' }),
+      studentEmail: z.string().email(),
       location: z.nativeEnum(UserLocation),
     }),
     async resolve({ input }) {

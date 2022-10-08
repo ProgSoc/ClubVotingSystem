@@ -26,37 +26,37 @@ export function BoardPage(props: { roomId: string }) {
     return <h1>Waiting for a question...</h1>;
   }
 
-  if (state.state === QuestionState.ShowingQuestion) {
-    return (
-      <div>
-        <h1>Question: {state.question}</h1>
-        <div>Candidates: {state.candidates.map((c) => c.name).join(', ')}</div>
-        <div>Max Choices: {state.maxChoices}</div>
-        <div>
-          People voted: {state.peopleVoted}/{state.totalPeople}
-        </div>
-      </div>
-    );
-  }
+  // if (state.state === QuestionState.ShowingQuestion) {
+  //   return (
+  //     <div>
+  //       <h1>Question: {state.question}</h1>
+  //       <div>Candidates: {state.candidates.map((c) => c.name).join(', ')}</div>
+  //       <div>Max Choices: {state.maxChoices}</div>
+  //       <div>
+  //         People voted: {state.peopleVoted}/{state.totalPeople}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
-  if (state.state === QuestionState.ShowingResults) {
-    return (
-      <div>
-        <h1>Voting finished: {state.question}</h1>
-        <div>
-          Candidates:{' '}
-          {state.candidates
-            .sort((a, b) => a.votes - b.votes)
-            .map((c) => `${c.name} (${c.votes})`)
-            .join(', ')}
-        </div>
-        <div>Max Choices: {state.maxChoices}</div>
-        <div>
-          People voted: {state.peopleVoted}/{state.totalPeople}
-        </div>
-      </div>
-    );
-  }
+  // if (state.state === QuestionState.ShowingResults) {
+  //   return (
+  //     <div>
+  //       <h1>Voting finished: {state.question}</h1>
+  //       <div>
+  //         Candidates:{' '}
+  //         {state.candidates
+  //           .sort((a, b) => a.votes - b.votes)
+  //           .map((c) => `${c.name} (${c.votes})`)
+  //           .join(', ')}
+  //       </div>
+  //       <div>Max Choices: {state.maxChoices}</div>
+  //       <div>
+  //         People voted: {state.peopleVoted}/{state.totalPeople}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return <h1>Room closed</h1>;
 }

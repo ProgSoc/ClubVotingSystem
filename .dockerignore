@@ -1,0 +1,6 @@
+Dockerfile
+node_modules
+
+dist
+src/server/dist
+src/web/dist

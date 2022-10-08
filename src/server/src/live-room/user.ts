@@ -1,8 +1,12 @@
 import type { UserLocation } from '@prisma/client';
 import { WaitingState } from '@prisma/client';
 
-import { prisma } from '../../prisma';
-import type { JoinWaitingRoomParams } from './inputs';
+import { prisma } from '../prisma';
+
+export interface JoinWaitingRoomParams {
+  studentEmail: string;
+  location: UserLocation;
+}
 
 export interface WaitingRoomUser {
   id: string;

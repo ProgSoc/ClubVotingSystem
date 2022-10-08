@@ -2,8 +2,11 @@ import * as trpc from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
 import express from 'express';
 import ws from 'ws';
+import { env } from './env';
 
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
@@ -38,6 +41,16 @@ app.use(
     router: appRouter,
   })
 );
+
+if (env.publicDir) {
+  const publicDir = env.publicDir;
+  // Serve up the single page app
+  app.use(express.static(publicDir));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(publicDir, 'index.html'));
+  });
+}
+
 const server = app.listen(8080, () => {
   console.log('Server started on port 8080');
 });
@@ -61,6 +74,7 @@ process.on('SIGTERM', () => {
   console.log('SIGTERM');
   handler.broadcastReconnectNotification();
   websocketServer.close();
+  console.log('Server killed, broadcasting reconnect notification');
 });
 
 websocketServer.on('connection', (ws) => {

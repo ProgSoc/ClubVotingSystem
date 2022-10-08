@@ -3,9 +3,8 @@ import { QuestionType } from '@prisma/client';
 import { WaitingState } from '@prisma/client';
 import { customAlphabet } from 'nanoid';
 
-import { prisma } from '../../prisma';
+import { prisma } from '../prisma';
 import { UnreachableError } from '../unreachableError';
-import type { JoinWaitingRoomParams } from './inputs';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
 import type { CreateQuestionParams, QuestionResponse, RoomQuestion } from './question';
@@ -22,6 +21,7 @@ import type {
   AdmittedRoomUser,
   AdmittedRoomUserWithDetails,
   DeclinedRoomUser,
+  JoinWaitingRoomParams,
   RoomUserAdmitDecline,
   RoomUsersList,
   WaitingRoomUser,

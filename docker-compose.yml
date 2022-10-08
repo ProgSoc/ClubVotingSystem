@@ -1,0 +1,21 @@
+version: '3.1'
+
+services:
+  voting:
+    build: .
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    environment:
+        PORT: 8080
+        DATABASE_URL: postgres://postgres:psqlpass@postgre:5432/voting
+    # volumes:
+
+  postgre:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: psqlpass
+      POSTGRES_USER: postgres
+    # ports:
+    # volumes:
