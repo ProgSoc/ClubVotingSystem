@@ -12,7 +12,7 @@ function asWidthPercentage(val: number, max: number) {
 function ResultBar(props: { name: string; votes: number; max: number; grey?: boolean }) {
   return (
     <div className="flex gap-4 items-center">
-      <div className="flex-1">{props.name}</div>
+      <div className="flex-1 text-right">{props.name}</div>
       <div className="flex-1">
         <div className="flex gap-2">
           <div className="w-64 h-6 flex items-center">
@@ -31,7 +31,6 @@ function ResultBar(props: { name: string; votes: number; max: number; grey?: boo
 }
 
 export function ResultsViewer({ results }: { results: ResultsView }) {
-  console.log(results);
   switch (results.type) {
     case 'SingleVote':
       const candidates = results.results.sort((a, b) => b.votes - a.votes);
