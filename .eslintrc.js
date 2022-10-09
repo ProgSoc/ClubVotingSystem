@@ -26,7 +26,7 @@ module.exports = {
     'import',
     'jest',
   ],
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['.eslintrc.js', '**/dist/**'],
   settings: {
     react: {
       version: 'detect',
