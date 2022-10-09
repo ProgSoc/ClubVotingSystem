@@ -1,5 +1,6 @@
 import { ClassNames, css, keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
+import { RoomResultsListPage } from 'pages/room/RoomResultsListPage';
 import type { RefObject } from 'react';
 import { createRef } from 'react';
 import { createBrowserRouter, useLocation, useOutlet } from 'react-router-dom';
@@ -37,6 +38,10 @@ const routes = {
   viewRoomBoard: route({
     path: path`/room/${'roomId'}/board`,
     component: BoardPage,
+  }),
+  viewRoomResults: route({
+    path: path`/room/${'roomId'}/results`,
+    component: withRoomFetched(RoomResultsListPage),
   }),
   joinRoom: route({
     path: path`/join/${'roomId'}`,

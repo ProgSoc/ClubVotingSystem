@@ -219,3 +219,35 @@ export async function createNewQuestion(roomId: string, params: CreateQuestionPa
 
   return mapPrismaQuestionInclude(question);
 }
+
+export async function getAllResultsForRoom(roomId: string) {
+  const room = await prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+    include: {
+      users: {
+        include: {
+          voter: true,
+        },
+      },
+      questions: {
+        where: { closed: true },
+        orderBy: { createdAt: 'asc' },
+        include: prismaQuestionInclude,
+      },
+    },
+  });
+
+  if (!room) {
+    throw new Error('Room not found');
+  }
+
+  const resultsList = room.questions.map((question) => mapPrismaQuestionInclude(question));
+
+  return resultsList.map((result) => ({
+    questionId: result.id,
+    name: result.question,
+    result: result.results,
+  }));
+}

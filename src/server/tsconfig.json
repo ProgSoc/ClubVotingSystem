@@ -6,5 +6,7 @@
     "baseUrl": "./src",
     "paths": {}
   },
-  "include": ["./src/**/*.ts"]
+  "include": [
+    "./src/**/*.ts"
+  ]
 }

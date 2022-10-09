@@ -2,6 +2,7 @@ import { UserLocation } from '@prisma/client';
 import * as trpc from '@trpc/server';
 import { z } from 'zod';
 
+import { getAllResultsForRoom } from '../live-room/question';
 import type { BoardState } from '../live-room/question-states';
 import type { PublicStaticRoomData } from '../rooms';
 import { createLiveRoom, getLiveRoomOrError, getRoomById, getRoomByShortId } from '../rooms';
@@ -58,6 +59,14 @@ export const roomRouter = trpc
         location: input.location,
       });
       return user;
+    },
+  })
+  .query('getResults', {
+    input: z.object({
+      roomId: z.string(),
+    }),
+    async resolve({ input }) {
+      return getAllResultsForRoom(input.roomId);
     },
   })
   .subscription('listenBoardEvents', {
