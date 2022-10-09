@@ -18,10 +18,6 @@ jobs:
         run: |
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-
       - name: Build the Docker image
         run: docker build . -t progsoc/club-voting-system:$(date +%s) -t progsoc/club-voting-system:latest
 
