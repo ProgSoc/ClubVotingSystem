@@ -1,24 +1,13 @@
 import { QuestionState } from '@server/live-room/question-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { AdminRouter } from 'components/adminRouter';
+import { QRCodeRender } from 'components/QRCode';
 import { AdminPageContainer, Heading } from 'components/styles';
-import QRCode from 'qrcode';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { routeBuilders } from 'routes';
 import { trpc } from 'utils/trpc';
 
-// from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-const rgb2hex = (c: string) =>
-  '#' +
-  c
-    .match(/\d+/g)!
-    .map((x) => (+x).toString(16).padStart(2, '0'))
-    .join('');
-
 export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const styleDivRef = useRef<HTMLDivElement>(null);
-
   const [roomVoters, setRoomVoters] = useState(0);
 
   trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
@@ -43,34 +32,15 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
   const joinLink: string | undefined = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
   const boardLink: string | undefined = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
 
-  useEffect(() => {
-    if (!styleDivRef.current || !canvasRef.current || !joinLink) {
-      return;
-    }
-
-    const style = getComputedStyle(styleDivRef.current);
-
-    void QRCode.toCanvas(canvasRef.current, joinLink, {
-      margin: 0,
-      width: 300,
-      errorCorrectionLevel: 'low',
-      color: {
-        light: rgb2hex(style.backgroundColor),
-        dark: rgb2hex(style.color),
-      },
-    });
-  }, [canvasRef.current, styleDivRef.current, props.roomId, joinLink]);
-
   return (
     <AdminPageContainer className="gap-4">
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
-      <div className="bg-base-300" ref={styleDivRef}></div>
       <p>People admitted into the room: {roomVoters}</p>
       <Heading>Join voting Room</Heading>
-      <canvas ref={canvasRef} className="rounded-lg" />
+      <QRCodeRender content={joinLink} />
       {joinLink && (
         <p>
-          <a href={joinLink} className="text-3xl underline text-info font-mono">
+          <a target="_blank" rel="noreferrer" href={joinLink} className="text-3xl underline text-info font-mono">
             {joinLink}
           </a>
         </p>
@@ -79,7 +49,7 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
         <Heading className="text-2xl">View board</Heading>
         {joinLink && (
           <p>
-            <a href={boardLink} className="text-xl underline text-info font-mono">
+            <a target="_blank" rel="noreferrer" href={boardLink} className="text-xl underline text-info font-mono">
               {boardLink}
             </a>
           </p>
