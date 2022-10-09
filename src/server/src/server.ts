@@ -2,12 +2,11 @@ import * as trpc from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
 import express from 'express';
+import path from 'path';
 import ws from 'ws';
-import { env } from './env';
 
+import { env } from './env';
 import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
 import { roomVoteRouter } from './routers/room-vote';

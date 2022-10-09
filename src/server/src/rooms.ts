@@ -1,7 +1,7 @@
 import type { Room } from '@prisma/client';
 
-import { prisma } from './prisma';
 import { LiveRoom } from './live-room';
+import { prisma } from './prisma';
 
 const liveRooms = new Map<string, LiveRoom>();
 
