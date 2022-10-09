@@ -1,6 +1,5 @@
 // utils/trpc.ts
+import type { AppRouter } from '@server/server';
 import { createReactQueryHooks } from '@trpc/react';
-
-import type { AppRouter } from '../../../server/src/server';
 
 export const trpc = createReactQueryHooks<AppRouter>();

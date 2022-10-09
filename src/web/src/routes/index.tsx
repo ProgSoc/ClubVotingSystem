@@ -1,21 +1,21 @@
 import { ClassNames, css, keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
+import { CreateRoomPage } from 'pages/CreateRoomPage';
+import { QuestionSettingPage } from 'pages/room/admin/QuestionSettingPage';
+import { RoomInfoPage } from 'pages/room/admin/RoomInfoPage';
+import { WaitingRoomManagementPage } from 'pages/room/admin/WaitingRoomManagemenentPage';
+import { BoardPage } from 'pages/room/BoardPage';
+import { JoinWaitingRoomPage } from 'pages/room/JoinWaitingRoomPage';
 import { RoomResultsListPage } from 'pages/room/RoomResultsListPage';
+import { VotingRoomPage } from 'pages/room/VotingRoomPage';
+import { WaitingRoomPage } from 'pages/room/WaitingRoomPage';
+import { ShortRedirectPage } from 'pages/ShortRedirectPage';
 import type { RefObject } from 'react';
 import { createRef } from 'react';
 import { createBrowserRouter, useLocation, useOutlet } from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { withRoomFetched } from 'utils/withRoomData';
 
-import { CreateRoomPage } from '../pages/CreateRoomPage';
-import { QuestionSettingPage } from '../pages/room/admin/QuestionSettingPage';
-import { RoomInfoPage } from '../pages/room/admin/RoomInfoPage';
-import { WaitingRoomManagementPage } from '../pages/room/admin/WaitingRoomManagemenentPage';
-import { BoardPage } from '../pages/room/BoardPage';
-import { JoinWaitingRoomPage } from '../pages/room/JoinWaitingRoomPage';
-import { VotingRoomPage } from '../pages/room/VotingRoomPage';
-import { WaitingRoomPage } from '../pages/room/WaitingRoomPage';
-import { ShortRedirectPage } from '../pages/ShortRedirectPage';
-import { withRoomFetched } from '../utils/withRoomData';
 import { buildBuilders, buildRoutes, path, route } from './routeBuilder';
 
 const routes = {

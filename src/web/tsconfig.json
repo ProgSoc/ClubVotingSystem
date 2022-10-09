@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": false,
@@ -17,9 +21,20 @@
     "jsx": "react-jsx",
     "baseUrl": "./src",
     "paths": {
-      "@prisma/*": ["../../../node_modules/.prisma/*"]
+      "@prisma/*": [
+        "../../../node_modules/.prisma/*"
+      ],
+      "@server/*": [
+        "../../server/src/*"
+      ]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

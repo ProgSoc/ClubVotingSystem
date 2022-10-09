@@ -1,22 +1,17 @@
+import type { CreateQuestionParams } from '@server/live-room/question';
+import type { BoardState, ShowingQuestionState, ShowingResultsState } from '@server/live-room/question-states';
+import { QuestionState } from '@server/live-room/question-states';
+import type { PublicStaticRoomData } from '@server/rooms';
+import { UnreachableError } from '@server/unreachableError';
+import { AdminRouter } from 'components/adminRouter';
+import { ResultsViewer } from 'components/ResultsViewer';
+import { AdminPageContainer, Button, Heading, Question } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useState } from 'react';
+import { trpc } from 'utils/trpc';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
-
-import type { CreateQuestionParams } from '../../../../../server/src/live-room/question';
-import type {
-  BoardState,
-  ShowingQuestionState,
-  ShowingResultsState,
-} from '../../../../../server/src/live-room/question-states';
-import { QuestionState } from '../../../../../server/src/live-room/question-states';
-import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
-import { UnreachableError } from '../../../../../server/src/unreachableError';
-import { AdminRouter } from '../../../components/adminRouter';
-import { ResultsViewer } from '../../../components/ResultsViewer';
-import { AdminPageContainer, Button, Heading, Question } from '../../../components/styles';
-import { trpc } from '../../../utils/trpc';
 
 interface LoadingState {
   type: 'loading';

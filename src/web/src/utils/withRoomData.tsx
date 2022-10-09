@@ -1,4 +1,6 @@
-import type { PublicStaticRoomData } from '../../../server/src/rooms';
+import type { PublicStaticRoomData } from '@server/rooms';
+import { Heading, PageContainer } from 'components/styles';
+
 import { trpc } from './trpc';
 
 const cachedRooms: Record<string, PublicStaticRoomData | undefined> = {};
@@ -15,7 +17,11 @@ export function withRoomFetched<Props extends { room: PublicStaticRoomData }>(Co
 
     const room = cachedRooms[props.roomId];
     if (!room) {
-      return <h1>Loading room...</h1>;
+      return (
+        <PageContainer>
+          <Heading>Loading room...</Heading>
+        </PageContainer>
+      );
     } else {
       return <Component room={room} {...(props as any)} />;
     }

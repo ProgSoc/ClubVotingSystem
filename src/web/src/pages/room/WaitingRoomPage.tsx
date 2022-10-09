@@ -1,9 +1,8 @@
+import type { PublicStaticRoomData } from '@server/rooms';
+import { Heading, PageContainer } from 'components/styles';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import type { PublicStaticRoomData } from '../../../../server/src/rooms';
-import { Heading, PageContainer } from '../../components/styles';
-import { trpc } from '../../utils/trpc';
+import { trpc } from 'utils/trpc';
 
 export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: string; userId: string }) {
   const navigate = useNavigate();

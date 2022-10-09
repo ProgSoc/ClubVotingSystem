@@ -1,8 +1,7 @@
+import type { PublicStaticRoomData } from '@server/rooms';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Heading, PageContainer, Question } from 'components/styles';
-
-import type { PublicStaticRoomData } from '../../../../server/src/rooms';
-import { trpc } from '../../utils/trpc';
+import { trpc } from 'utils/trpc';
 
 export function RoomResultsListPage(props: { roomId: string; room: PublicStaticRoomData }) {
   const roomResults = trpc.useQuery(['room.getResults', { roomId: props.roomId }]);

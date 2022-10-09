@@ -1,13 +1,12 @@
 import { UserLocation } from '@prisma/client';
+import { Button, Heading, PageContainer } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
+import { routeBuilders } from 'routes';
+import { trpc } from 'utils/trpc';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
-
-import { Button, Heading, PageContainer } from '../../components/styles';
-import { routeBuilders } from '../../routes';
-import { trpc } from '../../utils/trpc';
 
 const schema = z.object({
   studentEmail: z.string().email(),

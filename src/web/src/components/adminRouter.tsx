@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
+import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
-
-import { routeBuilders } from '../routes';
 
 const AdminLink = (props: { path: string; name: string }) => {
   const selected = window.location.pathname === props.path;

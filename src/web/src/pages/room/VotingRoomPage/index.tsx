@@ -1,10 +1,10 @@
+import type { PublicStaticRoomData } from '@server/rooms';
+import { UnreachableError } from '@server/unreachableError';
+import { ResultsViewer } from 'components/ResultsViewer';
+import { Button, Heading, PageContainer, Question } from 'components/styles';
 import { useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
-import { UnreachableError } from '../../../../../server/src/unreachableError';
-import { ResultsViewer } from '../../../components/ResultsViewer';
-import { Button, Heading, PageContainer, Question } from '../../../components/styles';
 import type { QuestionVotingData, ViewingResultsData, VotingPageState } from './hooks';
 import { useVoterState } from './hooks';
 

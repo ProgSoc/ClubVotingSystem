@@ -1,12 +1,11 @@
+import { QuestionState } from '@server/live-room/question-states';
+import type { PublicStaticRoomData } from '@server/rooms';
+import { AdminRouter } from 'components/adminRouter';
+import { AdminPageContainer, Heading } from 'components/styles';
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
-
-import { QuestionState } from '../../../../../server/src/live-room/question-states';
-import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
-import { AdminRouter } from '../../../components/adminRouter';
-import { AdminPageContainer, Heading } from '../../../components/styles';
-import { routeBuilders } from '../../../routes';
-import { trpc } from '../../../utils/trpc';
+import { routeBuilders } from 'routes';
+import { trpc } from 'utils/trpc';
 
 // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 const rgb2hex = (c: string) =>

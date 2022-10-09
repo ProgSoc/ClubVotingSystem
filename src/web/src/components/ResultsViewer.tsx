@@ -1,7 +1,6 @@
+import type { ResultsView } from '@server/live-room/question-states';
+import { UnreachableError } from '@server/unreachableError';
 import { twMerge } from 'tailwind-merge';
-
-import type { ResultsView } from '../../../server/src/live-room/question-states';
-import { UnreachableError } from '../../../server/src/unreachableError';
 
 function asWidthPercentage(val: number, max: number) {
   const value = val / max;

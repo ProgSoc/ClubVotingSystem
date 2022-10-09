@@ -1,13 +1,8 @@
+import type { QuestionResponse } from '@server/live-room/question';
+import type { BoardState, ShowingQuestionState, ShowingResultsState } from '@server/live-room/question-states';
+import { QuestionState } from '@server/live-room/question-states';
 import { useEffect, useRef, useState } from 'react';
-
-import type { QuestionResponse } from '../../../../../server/src/live-room/question';
-import type {
-  BoardState,
-  ShowingQuestionState,
-  ShowingResultsState,
-} from '../../../../../server/src/live-room/question-states';
-import { QuestionState } from '../../../../../server/src/live-room/question-states';
-import { trpc } from '../../../utils/trpc';
+import { trpc } from 'utils/trpc';
 
 interface LoadingState {
   type: 'loading';

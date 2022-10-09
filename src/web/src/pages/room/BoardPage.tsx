@@ -1,9 +1,8 @@
+import type { BoardState } from '@server/live-room/question-states';
+import { QuestionState } from '@server/live-room/question-states';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import type { BoardState } from '../../../../server/src/live-room/question-states';
-import { QuestionState } from '../../../../server/src/live-room/question-states';
-import { trpc } from '../../utils/trpc';
+import { trpc } from 'utils/trpc';
 
 export function BoardPage(props: { roomId: string }) {
   const [state, setState] = useState<BoardState | null>(null);

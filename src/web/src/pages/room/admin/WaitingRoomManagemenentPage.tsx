@@ -1,11 +1,10 @@
+import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '@server/live-room/user';
+import type { PublicStaticRoomData } from '@server/rooms';
+import { AdminRouter } from 'components/adminRouter';
+import { AdminPageContainer, Button, Heading } from 'components/styles';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
-
-import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '../../../../../server/src/live-room/user';
-import type { PublicStaticRoomData } from '../../../../../server/src/rooms';
-import { AdminRouter } from '../../../components/adminRouter';
-import { AdminPageContainer, Button, Heading } from '../../../components/styles';
-import { trpc } from '../../../utils/trpc';
+import { trpc } from 'utils/trpc';
 
 // Waiting = waiting for an admin to do something
 enum UserState {
