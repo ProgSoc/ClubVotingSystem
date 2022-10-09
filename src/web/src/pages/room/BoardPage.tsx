@@ -24,63 +24,18 @@ export function BoardPage(props: { roomId: string; room: PublicStaticRoomData })
       </div>
     </PageContainer>
   );
-
-  // if (!state) {
-  //   return (
-  //     <PageContainer>
-  //       <Heading>Loading...</Heading>
-  //     </PageContainer>
-  //   );
-  // }
-
-  // if (state.state === QuestionState.Blank) {
-  //   return (
-  //     <PageContainer>
-  //       <Heading>Waiting for a question...</Heading>
-  //     </PageContainer>
-  //   );
-  // }
-
-  // if (state.state === QuestionState.ShowingQuestion) {
-  //   return (
-  //     <div>
-  //       <h1>Question: {state.question}</h1>
-  //       <div>Candidates: {state.candidates.map((c) => c.name).join(', ')}</div>
-  //       <div>Max Choices: {state.maxChoices}</div>
-  //       <div>
-  //         People voted: {state.peopleVoted}/{state.totalPeople}
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // if (state.state === QuestionState.ShowingResults) {
-  //   return (
-  //     <div>
-  //       <h1>Voting finished: {state.question}</h1>
-  //       <div>
-  //         Candidates:{' '}
-  //         {state.candidates
-  //           .sort((a, b) => a.votes - b.votes)
-  //           .map((c) => `${c.name} (${c.votes})`)
-  //           .join(', ')}
-  //       </div>
-  //       <div>Max Choices: {state.maxChoices}</div>
-  //       <div>
-  //         People voted: {state.peopleVoted}/{state.totalPeople}
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  return <h1>Room closed</h1>;
 }
 
 function JoinPanel(props: { room: PublicStaticRoomData; className?: string }) {
   const joinLink = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
   return (
-    <div className={twMerge('text-right flex flex-col items-end gap-4', props.className)}>
+    <div
+      className={twMerge(
+        'text-right flex flex-col items-end gap-4 bg-base-300 p-8 rounded-2xl shadow-lg',
+        props.className
+      )}
+    >
       <Heading>Join voting Room</Heading>
       <QRCodeRender content={joinLink} />
       {joinLink && (
@@ -159,29 +114,5 @@ function StatusPanel(props: { room: PublicStaticRoomData }) {
     );
   }
 
-  const joinLink = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
-  const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
-  return (
-    <div className="text-right flex flex-col items-end gap-4 w-[512px]">
-      <Heading>Join voting Room</Heading>
-      <QRCodeRender content={joinLink} />
-      {joinLink && (
-        <p>
-          <a target="_blank" rel="noreferrer" href={joinLink} className="text-3xl underline text-info font-mono">
-            {joinLink}
-          </a>
-        </p>
-      )}
-      <div className="gap-2">
-        <Heading className="text-2xl">View board</Heading>
-        {joinLink && (
-          <p>
-            <a target="_blank" rel="noreferrer" href={boardLink} className="text-xl underline text-info font-mono">
-              {boardLink}
-            </a>
-          </p>
-        )}
-      </div>
-    </div>
-  );
+  return <Heading>Room closed</Heading>;
 }
