@@ -1,5 +1,3 @@
-import { ClassNames, css, keyframes } from '@emotion/react';
-import styled from '@emotion/styled';
 import { CreateRoomPage } from 'pages/CreateRoomPage';
 import { QuestionSettingPage } from 'pages/room/admin/QuestionSettingPage';
 import { RoomInfoPage } from 'pages/room/admin/RoomInfoPage';
@@ -10,13 +8,14 @@ import { RoomResultsListPage } from 'pages/room/RoomResultsListPage';
 import { VotingRoomPage } from 'pages/room/VotingRoomPage';
 import { WaitingRoomPage } from 'pages/room/WaitingRoomPage';
 import { ShortRedirectPage } from 'pages/ShortRedirectPage';
-import type { RefObject } from 'react';
-import { createRef } from 'react';
 import { createBrowserRouter, useLocation, useOutlet } from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { twMerge } from 'tailwind-merge';
 import { withRoomFetched } from 'utils/withRoomData';
 
 import { buildBuilders, buildRoutes, path, route } from './routeBuilder';
+
+import styles from './animations.module.css';
 
 const routes = {
   home: route({
@@ -82,97 +81,25 @@ export const browserRouter = createBrowserRouter([
   },
 ]);
 
-const refs: Record<string, RefObject<HTMLDivElement>> = Object.fromEntries(
-  browserRoutes.map((route) => [route.path, createRef()])
-);
-
-// Wait 50% then slide in from the right
-const enterAnimation = keyframes`
-  0% {
-    opacity: 0;
-    transform: translateX(100vw);
-  }
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-`;
-
-// Slide out to the left
-const exitAnimation = keyframes`
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-100vw);
-  }
-`;
-
-const AnimationContainer = styled(TransitionGroup)`
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-`;
-
-const PageContainer = styled.div`
-  position: absolute;
-  height: 100%;
-`;
-
-const enteringStyle = css`
-  animation: ${enterAnimation} 0.3s ease-out;
-`;
-
-const exitingStyle = css`
-  opacity: 0;
-  animation: ${exitAnimation} 0.3s cubic-bezier(0.86, 0.12, 0.91, 0.68);
-`;
-
-const exitedStyle = css`
-  opacity: 0;
-`;
-
-// FIXME: Actually get this working properly
 function AnimationRouter() {
   const location = useLocation();
   const currentOutlet = useOutlet();
-  const nodeRef = refs[location.pathname];
 
   return (
-    <AnimationContainer>
-      <CSSTransition key={location.pathname} nodeRef={nodeRef} timeout={300} unmountOnExit={true}>
+    <TransitionGroup className="w-screen h-screen relative overflow-x-hidden">
+      <CSSTransition key={location.pathname} timeout={300} unmountOnExit={true}>
         {(state) => {
           const style =
             state === 'entering'
-              ? enteringStyle
+              ? styles.entering
               : state === 'exiting'
-              ? exitingStyle
+              ? styles.exiting
               : state === 'exited'
-              ? exitedStyle
+              ? styles.exited
               : undefined;
-          return (
-            <ClassNames>
-              {({ css, cx }) => (
-                <PageContainer
-                  ref={nodeRef}
-                  className={css`
-                    ${style}
-                  `}
-                >
-                  {currentOutlet}
-                </PageContainer>
-              )}
-            </ClassNames>
-          );
+          return <div className={twMerge('absolute h-full', style)}>{currentOutlet}</div>;
         }}
       </CSSTransition>
-    </AnimationContainer>
+    </TransitionGroup>
   );
 }

@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.10.4",
-    "@emotion/styled": "^11.10.4",
     "@trpc/client": "^9.27.4",
     "@trpc/react": "^9.27.4",
     "@types/qrcode": "^1.5.0",
