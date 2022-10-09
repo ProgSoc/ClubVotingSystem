@@ -14,7 +14,7 @@ function ResultBar(props: { name: string; votes: number; max: number; grey?: boo
       <div className="flex-1 text-right">{props.name}</div>
       <div className="flex-1">
         <div className="flex gap-2">
-          <div className="w-64 h-6 flex items-center">
+          <div className="w-32 sm:w-64 h-6 flex items-center">
             <div
               className={twMerge('h-full rounded-md', props.grey ? 'bg-neutral-content' : 'bg-accent')}
               style={{

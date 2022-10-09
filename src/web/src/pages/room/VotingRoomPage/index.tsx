@@ -11,7 +11,7 @@ import { useVoterState } from './hooks';
 export function VotingRoomPage(props: { roomId: string; room: PublicStaticRoomData; voterId: string }) {
   const data = useVoterState(props);
   return (
-    <PageContainer>
+    <PageContainer className="justify-start sm:justify-center pt-32 sm:pt-4">
       <QuestionVoter data={data} />
     </PageContainer>
   );

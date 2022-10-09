@@ -36,7 +36,7 @@ const routes = {
   }),
   viewRoomBoard: route({
     path: path`/room/${'roomId'}/board`,
-    component: BoardPage,
+    component: withRoomFetched(BoardPage),
   }),
   viewRoomResults: route({
     path: path`/room/${'roomId'}/results`,

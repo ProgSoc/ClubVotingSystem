@@ -37,6 +37,7 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
       <p>People admitted into the room: {roomVoters}</p>
       <Heading>Join voting Room</Heading>
+      FIXME: Remove the QR code from here. This page should only show metadata, not join links.
       <QRCodeRender content={joinLink} />
       {joinLink && (
         <p>
