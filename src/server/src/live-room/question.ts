@@ -51,6 +51,11 @@ export interface CreateQuestionParams {
 }
 
 export const prismaQuestionInclude = {
+  _count: {
+    select: {
+      interactions: true,
+    },
+  },
   candidates: {
     include: {
       votes: true,
@@ -61,6 +66,9 @@ export type PrismaQuestionInclude = Question & {
   candidates: (QuestionCandidate & {
     votes: CandidateVote[];
   })[];
+  _count: {
+    interactions: number;
+  };
 };
 
 export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion {
@@ -71,6 +79,12 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
       uniqueVoters.add(vote.voterId);
     });
   });
+
+  const votesWithoutAbstain = uniqueVoters.size;
+  const votesWithAbstain = question._count.interactions;
+
+  // The abstain count includes both people explicitly selecting abstain and people who haven't interacted with the question
+  const abstainCount = Math.max(0, question.votersPresentAtEnd - votesWithoutAbstain);
 
   const makeDetails = (): QuestionFormatDetails => {
     switch (question.format) {
@@ -93,7 +107,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
             name: candidate.name,
             votes: candidate.votes.length,
           })),
-          abstained: Math.max(0, question.votersPresentAtEnd - uniqueVoters.size),
+          abstained: abstainCount,
         };
       default:
         throw new UnreachableError(question.format);
@@ -109,7 +123,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
     details: makeDetails(),
     results: makeResults(),
 
-    totalVoters: uniqueVoters.size,
+    totalVoters: votesWithAbstain,
     candidates: question.candidates.map((candidate) => ({
       id: candidate.id,
       name: candidate.name,
@@ -147,6 +161,18 @@ export async function voteForQuestion(
     if (!question || question.closed) {
       return null;
     }
+
+    // Create the interaction (if doesnt exist) to add to the vote count
+    await prisma.questionInteraction.upsert({
+      create: {
+        question: { connect: { id: questionId } },
+        voter: { connect: { id: voterId } },
+      },
+      update: {},
+      where: {
+        questionId_voterId: { questionId, voterId },
+      },
+    });
 
     // Delete all previous votes from the voter for the question
     await prisma.candidateVote.deleteMany({
