@@ -43,7 +43,7 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
             {boardLink}
           </a>
         </div>
-        <a target="_blank" rel="noreferrer" href={routeBuilders.viewRoomBoard({ roomId: props.room.id })}>
+        <a target="_blank" rel="noreferrer" href={routeBuilders.viewRoomResults({ roomId: props.room.id })}>
           <Button>View Results</Button>
         </a>
       </div>

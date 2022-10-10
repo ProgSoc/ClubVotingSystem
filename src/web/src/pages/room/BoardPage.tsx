@@ -14,11 +14,11 @@ export function BoardPage(props: { roomId: string; room: PublicStaticRoomData })
     <PageContainer className="gap-4">
       <div className="lg:hidden text-error">This page is not mobile friendly lol</div>
       <Heading className="text-accent">{props.room.name}</Heading>
-      <div className="flex flex-row items-center gap-16">
-        <div className="w-[512px]">
+      <div className="w-full flex flex-row items-center">
+        <div className="w-1/2 flex flex-row-reverse text-right pr-8">
           <JoinPanel room={props.room} />
         </div>
-        <div className="w-[512px] text-left">
+        <div className="w-1/2 flex flex-row text-left pl-8">
           <StatusPanel room={props.room} />
         </div>
       </div>
@@ -30,12 +30,7 @@ function JoinPanel(props: { room: PublicStaticRoomData; className?: string }) {
   const joinLink = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
   return (
-    <div
-      className={twMerge(
-        'text-right flex flex-col items-end gap-4 bg-base-300 p-8 rounded-2xl shadow-lg',
-        props.className
-      )}
-    >
+    <div className={twMerge('flex flex-col items-end gap-4 bg-base-300 p-8 rounded-2xl shadow-lg', props.className)}>
       <Heading>Join voting Room</Heading>
       <QRCodeRender content={joinLink} />
       {joinLink && (
