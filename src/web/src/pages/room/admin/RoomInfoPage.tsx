@@ -28,7 +28,6 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
     },
   });
 
-  const joinLink = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
 
   return (
