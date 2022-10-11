@@ -1,6 +1,6 @@
+import type { ShowingQuestionState, ShowingResultsState } from '@server/live-room/live-states';
+import { BoardState } from '@server/live-room/live-states';
 import type { CreateQuestionParams } from '@server/live-room/question';
-import type { BoardState, ShowingQuestionState, ShowingResultsState } from '@server/live-room/question-states';
-import { QuestionState } from '@server/live-room/question-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { UnreachableError } from '@server/unreachableError';
 import { AdminRouter } from 'components/adminRouter';
@@ -56,43 +56,54 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
     };
   }
 
-  if (state.state === QuestionState.Blank || state.state === QuestionState.ShowingResults) {
-    const createQuestion = (params: CreateQuestionParams) => {
-      createQuestionMutation.mutate({
-        adminKey: props.adminKey,
-        roomId: props.roomId,
-        question: params.question,
-        candidates: params.candidates,
-        details: params.details,
-      });
-    };
-
-    return {
-      type: 'set-question',
-      previousResults: state.state === QuestionState.ShowingResults ? state : undefined,
-      setQuestion: createQuestion,
-    };
-  }
-
-  if (state.state === QuestionState.ShowingQuestion) {
-    const closeQuestion = () => {
-      closeQuestionMutation.mutate({
-        adminKey: props.adminKey,
-        roomId: props.roomId,
-        questionId: state.questionId,
-      });
-    };
-
-    return {
-      type: 'asking-question',
-      question: state,
-      endQuestion: closeQuestion,
-    };
-  }
-
-  return {
-    type: 'ended',
+  const createQuestion = (params: CreateQuestionParams) => {
+    createQuestionMutation.mutate({
+      adminKey: props.adminKey,
+      roomId: props.roomId,
+      question: params.question,
+      candidates: params.candidates,
+      details: params.details,
+    });
   };
+
+  return BoardState.match<QuestionSettingPageState>(state, {
+    blank: (state) => {
+      return {
+        type: 'set-question',
+        setQuestion: createQuestion,
+      };
+    },
+
+    showingResults: (state) => {
+      return {
+        type: 'set-question',
+        previousResults: state,
+        setQuestion: createQuestion,
+      };
+    },
+
+    showingQuestion: (state) => {
+      const closeQuestion = () => {
+        closeQuestionMutation.mutate({
+          adminKey: props.adminKey,
+          roomId: props.roomId,
+          questionId: state.questionId,
+        });
+      };
+
+      return {
+        type: 'asking-question',
+        question: state,
+        endQuestion: closeQuestion,
+      };
+    },
+
+    ended: () => {
+      return {
+        type: 'ended',
+      };
+    },
+  });
 }
 
 export function QuestionSettingPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {

@@ -2,8 +2,8 @@ import { UserLocation } from '@prisma/client';
 import * as trpc from '@trpc/server';
 import { z } from 'zod';
 
+import type { BoardState } from '../live-room/live-states';
 import { getAllResultsForRoom } from '../live-room/question';
-import type { BoardState } from '../live-room/question-states';
 import type { PublicStaticRoomData } from '../rooms';
 import { createLiveRoom, getLiveRoomOrError, getRoomById, getRoomByShortId } from '../rooms';
 

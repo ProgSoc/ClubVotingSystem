@@ -1,4 +1,4 @@
-import { QuestionState } from '@server/live-room/question-states';
+import { BoardState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { AdminRouter } from 'components/adminRouter';
 import { AdminPageContainer, Button, Heading } from 'components/styles';
@@ -11,20 +11,12 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
 
   trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
     onNext: (data) => {
-      switch (data.state) {
-        case QuestionState.Blank:
-          setRoomVoters(data.totalPeople);
-          break;
-        case QuestionState.ShowingQuestion:
-          setRoomVoters(data.totalPeople);
-          break;
-        case QuestionState.ShowingResults:
-          setRoomVoters(data.totalPeople);
-          break;
-        case QuestionState.Ended:
-          setRoomVoters(0);
-          break;
-      }
+      BoardState.match(data, {
+        blank: (data) => setRoomVoters(data.totalPeople),
+        showingQuestion: (data) => setRoomVoters(data.totalPeople),
+        showingResults: (data) => setRoomVoters(data.totalPeople),
+        ended: (data) => setRoomVoters(0),
+      });
     },
   });
 

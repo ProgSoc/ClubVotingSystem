@@ -1,5 +1,4 @@
-import type { BoardState } from '@server/live-room/question-states';
-import { QuestionState } from '@server/live-room/question-states';
+import { BoardState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { QRCodeRender } from 'components/QRCode';
 import { ResultsViewer } from 'components/ResultsViewer';
@@ -70,12 +69,10 @@ function StatusPanel(props: { room: PublicStaticRoomData }) {
     return <Heading>Loading...</Heading>;
   }
 
-  if (state.state === QuestionState.Blank) {
-    return <Heading>Waiting for a question...</Heading>;
-  }
+  return BoardState.match(state, {
+    blank: () => <Heading>Waiting for a question...</Heading>,
 
-  if (state.state === QuestionState.ShowingQuestion) {
-    return (
+    showingQuestion: (state) => (
       <div className="flex flex-col gap-4">
         <Question>{state.question}</Question>
 
@@ -97,17 +94,15 @@ function StatusPanel(props: { room: PublicStaticRoomData }) {
           </div>
         </div>
       </div>
-    );
-  }
+    ),
 
-  if (state.state === QuestionState.ShowingResults) {
-    return (
+    showingResults: (state) => (
       <div className="flex flex-col items-center gap-4">
         <Question>{state.question}</Question>
         <ResultsViewer results={state.results} />
       </div>
-    );
-  }
+    ),
 
-  return <Heading>Room closed</Heading>;
+    ended: () => <Heading>Room closed</Heading>,
+  });
 }

@@ -1,6 +1,6 @@
+import type { ShowingQuestionState, ShowingResultsState } from '@server/live-room/live-states';
+import { BoardState } from '@server/live-room/live-states';
 import type { QuestionResponse } from '@server/live-room/question';
-import type { BoardState, ShowingQuestionState, ShowingResultsState } from '@server/live-room/question-states';
-import { QuestionState } from '@server/live-room/question-states';
 import { useEffect, useRef, useState } from 'react';
 import { trpc } from 'utils/trpc';
 
@@ -65,52 +65,56 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
     };
   }
 
-  if (state.state === QuestionState.Blank) {
-    return {
-      type: 'waiting',
-    };
-  }
-
-  if (state.state === QuestionState.ShowingQuestion) {
-    if (isInitialVoteLoading) {
+  return BoardState.match<VotingPageState>(state, {
+    blank: () => {
       return {
-        type: 'loading',
+        type: 'waiting',
       };
-    }
+    },
 
-    const castVote = (response: QuestionResponse) => {
-      void runSyncAsync(async () => {
-        await castVoteMutation.mutateAsync({
+    showingQuestion: (state) => {
+      if (isInitialVoteLoading) {
+        return {
+          type: 'loading',
+        };
+      }
+
+      const castVote = (response: QuestionResponse) => {
+        void runSyncAsync(async () => {
+          await castVoteMutation.mutateAsync({
+            questionId: state.questionId,
+            roomId: props.roomId,
+            voterId: props.voterId,
+            response,
+          });
+        });
+        setLastVote({
           questionId: state.questionId,
-          roomId: props.roomId,
-          voterId: props.voterId,
           response,
         });
-      });
-      setLastVote({
-        questionId: state.questionId,
-        response,
-      });
-    };
+      };
 
-    return {
-      type: 'question-voting',
-      question: state,
-      lastVote: lastVote?.questionId === state.questionId ? lastVote.response : undefined,
-      castVote,
-    };
-  }
+      return {
+        type: 'question-voting',
+        question: state,
+        lastVote: lastVote?.questionId === state.questionId ? lastVote.response : undefined,
+        castVote,
+      };
+    },
 
-  if (state.state === QuestionState.ShowingResults) {
-    return {
-      type: 'viewing-results',
-      question: state,
-    };
-  }
+    showingResults: (state) => {
+      return {
+        type: 'viewing-results',
+        question: state,
+      };
+    },
 
-  return {
-    type: 'ended',
-  };
+    ended: () => {
+      return {
+        type: 'ended',
+      };
+    },
+  });
 }
 
 type WithType<Type, T = {}> = T & { type: Type };
@@ -163,7 +167,7 @@ function useFetchInitialVote(
 
   useEffect(() => {
     if (fetchInitialVoteState.type === InitialVoteFetchType.WaitingForBoardState && boardState) {
-      if (boardState.state === QuestionState.ShowingQuestion) {
+      if (BoardState.is.showingQuestion(boardState)) {
         setFetchInitialVoteState({ type: InitialVoteFetchType.Fetching, questionId: boardState.questionId });
       } else {
         setFetchInitialVoteState({ type: InitialVoteFetchType.Ignoring });
@@ -177,10 +181,7 @@ function useFetchInitialVote(
       fetchInitialVoteState.type === InitialVoteFetchType.Fetching &&
       boardState
     ) {
-      if (
-        boardState.state === QuestionState.ShowingQuestion &&
-        boardState.questionId === fetchInitialVoteState.questionId
-      ) {
+      if (BoardState.is.showingQuestion(boardState) && boardState.questionId === fetchInitialVoteState.questionId) {
         setFetchInitialVoteState({ type: InitialVoteFetchType.Fetched });
         setLastVote(initialVoteQuery.data && { questionId: boardState.questionId, response: initialVoteQuery.data });
       } else {

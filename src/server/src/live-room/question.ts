@@ -5,7 +5,8 @@ import { z } from 'zod';
 
 import { prisma } from '../prisma';
 import { UnreachableError } from '../unreachableError';
-import type { ResultsView, VotingCandidate } from './question-states';
+import type { VotingCandidate } from './live-states';
+import type { ResultsView } from './results';
 
 export interface SingleVoteQuestionFormat {
   type: typeof QuestionType['SingleVote'];

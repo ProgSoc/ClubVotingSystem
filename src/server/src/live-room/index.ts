@@ -7,6 +7,8 @@ import { prisma } from '../prisma';
 import { UnreachableError } from '../unreachableError';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
+import type { BoardState, ShowingQuestionState, VoterState } from './live-states';
+import { QuestionSetterState } from './live-states';
 import type { CreateQuestionParams, QuestionResponse, RoomQuestion } from './question';
 import {
   closeQuestion,
@@ -15,8 +17,6 @@ import {
   prismaQuestionInclude,
   voteForQuestion,
 } from './question';
-import type { BoardState, PartialLiveQuestionMetadata, QuestionSetterState, VoterState } from './question-states';
-import { QuestionState } from './question-states';
 import type {
   AdmittedRoomUser,
   AdmittedRoomUserWithDetails,
@@ -423,42 +423,42 @@ export class LiveRoom {
     };
 
     if (this.closedAt) {
-      await notifyEveryone({
-        state: QuestionState.Ended,
-      });
+      await notifyEveryone(QuestionSetterState.ended({}));
       return;
     }
 
     if (!question) {
-      await notifyEveryone({
-        state: QuestionState.Blank,
-        totalPeople: this.voters.length,
-      });
+      await notifyEveryone(
+        QuestionSetterState.blank({
+          totalPeople: this.voters.length,
+        })
+      );
       return;
     }
 
-    const liveData: PartialLiveQuestionMetadata = {
+    const liveData: ShowingQuestionState = {
       questionId: question.id,
       question: question.question,
       peopleVoted: question.totalVoters,
       details: question.details,
       totalPeople: this.voters.length,
+      candidates: question.candidates,
     };
 
     if (!question.closed) {
       // Don't send candidate vote counts while the question is still open
-      await notifyEveryone({
-        state: QuestionState.ShowingQuestion,
-        candidates: question.candidates,
-        ...liveData,
-      });
+      await notifyEveryone(
+        QuestionSetterState.showingQuestion({
+          ...liveData,
+        })
+      );
     } else {
-      await notifyEveryone({
-        state: QuestionState.ShowingResults,
-        candidates: question.candidates,
-        results: question.results,
-        ...liveData,
-      });
+      await notifyEveryone(
+        QuestionSetterState.showingResults({
+          ...liveData,
+          results: question.results,
+        })
+      );
     }
   }
 
