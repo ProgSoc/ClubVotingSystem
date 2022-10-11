@@ -8,7 +8,6 @@ import { UnreachableError } from '../unreachableError';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
 import type { BlankRoomState, ShowingQuestionState, ShowingResultsState } from './live-states';
-import type { QuestionSetterState } from './live-states';
 import { BoardState, VoterState } from './live-states';
 import type { CreateQuestionParams, QuestionResponse, RoomQuestion } from './question';
 import {
@@ -37,7 +36,6 @@ const makeAdminKeyId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcde
 const makePublicShortId = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 4);
 
 export class LiveRoom {
-  questionSetterAdminListeners: Listeners<QuestionSetterState> = new Listeners();
   waitingRoomAdminListeners: Listeners<RoomUsersList> = new Listeners();
   boardListeners: Listeners<BoardState> = new Listeners();
 
@@ -331,11 +329,6 @@ export class LiveRoom {
 
   async listenWaitingRoomAdmin(listener: ListenerNotifyFn<RoomUsersList>) {
     const unsubscribe = await this.waitingRoomAdminListeners.listen(listener);
-    return unsubscribe;
-  }
-
-  async listenQuestionSetterAdmin(listener: ListenerNotifyFn<QuestionSetterState>) {
-    const unsubscribe = await this.questionSetterAdminListeners.listen(listener);
     return unsubscribe;
   }
 
