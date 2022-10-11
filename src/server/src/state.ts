@@ -1,6 +1,8 @@
+const variantField = '$variant' as const;
+
 /** Attach a type (variant) field onto an object */
 export type Variant<S extends string, Data extends object = {}> = {
-  _variant: S;
+  [variantField]: S;
 } & Data;
 
 /** Name of the variant used internally inside the enums */
@@ -93,15 +95,15 @@ export function makeStates<P extends string, O extends Record<string, Empty<any>
   for (const key in items) {
     result[key] = makeVariantName(prefix, key) as any;
     enumReverse[result[key]] = key;
-    objectCreate[key] = ((obj: any) => ({ _variant: result[key], ...obj })) as any;
-    isFns[key] = ((obj: any) => obj._variant === result[key]) as any;
+    objectCreate[key] = ((obj: any) => ({ [variantField]: result[key], ...obj })) as any;
+    isFns[key] = ((obj: any) => obj[variantField] === result[key]) as any;
   }
 
   const objectHelpers: StateObjectHelperFields<P, O> = {
     enum: result,
     is: isFns,
     match: (value, matcher) => {
-      const handler = matcher[enumReverse[value._variant]] as any;
+      const handler = matcher[enumReverse[value[variantField]]] as any;
       if (handler) {
         return handler(value);
       } else {
