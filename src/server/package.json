@@ -8,7 +8,7 @@
     "watch-compile": "swc src -w -s --out-dir dist",
     "watch-dev": "nodemon --watch \"dist/**/*\" -e js ./dist/server.js",
     "prisma": "dotenv -e ../../.env -- prisma",
-    "build": "yarn prisma generate && swc src -d dist && cp -r src/prisma/migrations dist/prisma/migrations && cp -r src/prisma/schema.prisma dist/prisma/schema.prisma",
+    "build": "yarn prisma generate && tsc && swc src -d dist && cp -r src/prisma/migrations dist/prisma/migrations && cp -r src/prisma/schema.prisma dist/prisma/schema.prisma",
     "clean": "rm -rf dist"
   },
   "dependencies": {
