@@ -31,7 +31,7 @@ function makePartial<T>(args: T): Partial<T> {
 }
 export const TestType = makePartial({ foo: 1, bar: 2 });
 
-export const QuestionSetterState = makeStates('qs', {
+export const QuestionSetterState = makeStates('qss', {
   blank: state<BlankRoomState>(),
   showingQuestion: state<ShowingQuestionState>(),
   showingResults: state<ShowingResultsState>(),
@@ -39,7 +39,7 @@ export const QuestionSetterState = makeStates('qs', {
 });
 export type QuestionSetterState = GetStatesUnion<typeof QuestionSetterState.enum>;
 
-export const BoardState = makeStates('qs', {
+export const BoardState = makeStates('bs', {
   blank: state<BlankRoomState>(),
   showingQuestion: state<ShowingQuestionState>(),
   showingResults: state<ShowingResultsState>(),
@@ -47,7 +47,7 @@ export const BoardState = makeStates('qs', {
 });
 export type BoardState = GetStatesUnion<typeof BoardState.enum>;
 
-export const VoterState = makeStates('qs', {
+export const VoterState = makeStates('vs', {
   blank: state<BlankRoomState>(),
   showingQuestion: state<ShowingQuestionState>(),
   showingResults: state<ShowingResultsState>(),
