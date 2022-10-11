@@ -1,11 +1,12 @@
+import type { ShowingResultsState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
-import { UnreachableError } from '@server/unreachableError';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, Heading, PageContainer, Question } from 'components/styles';
 import { useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import type { QuestionVotingData, ViewingResultsData, VotingPageState } from './hooks';
+import type { QuestionVotingData } from './hooks';
+import { VotingPageState } from './hooks';
 import { useVoterState } from './hooks';
 
 export function VotingRoomPage(props: { roomId: string; room: PublicStaticRoomData; voterId: string }) {
@@ -18,21 +19,13 @@ export function VotingRoomPage(props: { roomId: string; room: PublicStaticRoomDa
 }
 
 function QuestionVoter({ data }: { data: VotingPageState }) {
-  // FIXME: Prettify the loading and ended states
-  switch (data.type) {
-    case 'loading':
-      return <Heading>Loading...</Heading>;
-    case 'waiting':
-      return <Heading>Waiting for question</Heading>;
-    case 'ended':
-      return <Heading>Ended</Heading>;
-    case 'question-voting':
-      return <QuestionVoting data={data} />;
-    case 'viewing-results':
-      return <ViewingResults data={data} />;
-    default:
-      throw new UnreachableError(data);
-  }
+  return VotingPageState.match(data, {
+    loading: () => <Heading>Loading...</Heading>,
+    waiting: () => <Heading>Waiting for question</Heading>,
+    ended: () => <Heading>Ended</Heading>,
+    voting: (data) => <QuestionVoting data={data} />,
+    viewingResults: (data) => <ViewingResults data={data} />,
+  });
 }
 
 function QuestionVoting({ data }: { data: QuestionVotingData }) {
@@ -59,7 +52,7 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
         {candidatesReordered.map((candidate) => (
           <Button
             className={twMerge(
-              data.lastVote?.type === 'SingleVote' && data.lastVote.candidateId === candidate.id && 'btn-accent'
+              lastVote?.type === 'SingleVote' && lastVote.candidateId === candidate.id && 'btn-accent'
             )}
             key={candidate.id}
             onClick={() => {
@@ -87,11 +80,11 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
   );
 }
 
-function ViewingResults({ data }: { data: ViewingResultsData }) {
+function ViewingResults({ data }: { data: ShowingResultsState }) {
   return (
     <div className="flex flex-col items-center gap-6">
-      <Question>{data.question.question}</Question>
-      <ResultsViewer results={data.question.results} />
+      <Question>{data.question}</Question>
+      <ResultsViewer results={data.results} />
     </div>
   );
 }
