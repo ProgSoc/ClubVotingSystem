@@ -7,8 +7,9 @@ import { prisma } from '../prisma';
 import { UnreachableError } from '../unreachableError';
 import type { ListenerNotifyFn } from './listener';
 import { Listeners, WithListeners, WithWaiters } from './listener';
-import type { BoardState, ShowingQuestionState, VoterState } from './live-states';
-import { QuestionSetterState } from './live-states';
+import type { BlankRoomState, ShowingQuestionState, ShowingResultsState } from './live-states';
+import type { QuestionSetterState } from './live-states';
+import { BoardState, VoterState } from './live-states';
 import type { CreateQuestionParams, QuestionResponse, RoomQuestion } from './question';
 import {
   closeQuestion,
@@ -418,21 +419,23 @@ export class LiveRoom {
   private async notifyEveryoneOfStateChange() {
     const question = this.currentQuestion;
 
-    const notifyEveryone = async (state: BoardState) => {
-      await Promise.all([this.boardListeners.notify(state), Promise.all(this.voters.map((v) => v.notify(state)))]);
+    const notifyEveryone = async (boardState: BoardState, voterState: VoterState) => {
+      await Promise.all([
+        this.boardListeners.notify(boardState),
+        Promise.all(this.voters.map((v) => v.notify(voterState))),
+      ]);
     };
 
     if (this.closedAt) {
-      await notifyEveryone(QuestionSetterState.ended({}));
+      await notifyEveryone(BoardState.ended({}), VoterState.ended({}));
       return;
     }
 
     if (!question) {
-      await notifyEveryone(
-        QuestionSetterState.blank({
-          totalPeople: this.voters.length,
-        })
-      );
+      const state: BlankRoomState = {
+        totalPeople: this.voters.length,
+      };
+      await notifyEveryone(BoardState.blank(state), VoterState.blank(state));
       return;
     }
 
@@ -447,18 +450,13 @@ export class LiveRoom {
 
     if (!question.closed) {
       // Don't send candidate vote counts while the question is still open
-      await notifyEveryone(
-        QuestionSetterState.showingQuestion({
-          ...liveData,
-        })
-      );
+      await notifyEveryone(BoardState.showingQuestion(liveData), VoterState.showingQuestion(liveData));
     } else {
-      await notifyEveryone(
-        QuestionSetterState.showingResults({
-          ...liveData,
-          results: question.results,
-        })
-      );
+      const state: ShowingResultsState = {
+        ...liveData,
+        results: question.results,
+      };
+      await notifyEveryone(BoardState.showingResults(state), VoterState.showingResults(state));
     }
   }
 
