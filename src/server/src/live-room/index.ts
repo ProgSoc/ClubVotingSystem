@@ -374,12 +374,15 @@ export class LiveRoom {
         votes.push(vote);
       }
     });
+
     if (votes.length === 0) {
-      // If there are no votes but the user interacted, then the user abstained
       if (question.interactedVoters.includes(voterId)) {
+        // If there are no votes but the user interacted, then the user abstained
         return {
           type: 'Abstain',
         };
+      } else {
+        return null;
       }
     }
 
