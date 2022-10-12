@@ -132,7 +132,6 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
       <div className="flex flex-col items-center w-full gap-4">
         <Heading>Waiting Room</Heading>
         <div className="gap-2 flex flex-col">
-          TODO: Add confirmation popup
           {users.map((user) => (
             <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
               <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
