@@ -1,6 +1,6 @@
 import type { PublicStaticRoomData } from '@server/rooms';
 import { ResultsViewer } from 'components/ResultsViewer';
-import { AdminPageContainer, Heading, PageContainer, Question } from 'components/styles';
+import { AdminPageContainer, Heading, Question } from 'components/styles';
 import { trpc } from 'utils/trpc';
 
 export function RoomResultsListPage(props: { roomId: string; room: PublicStaticRoomData }) {
