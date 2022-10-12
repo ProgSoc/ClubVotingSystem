@@ -57,6 +57,19 @@ const roomUsersAdminRouter = trpc
 
       await room.declineWaitingRoomUser(input.userId);
     },
+  })
+  .mutation('kickVoter', {
+    input: z.object({
+      adminKey: z.string(),
+      roomId: z.string(),
+      userId: z.string(),
+    }),
+    async resolve({ input }) {
+      const room = await getLiveRoomOrError(input.roomId);
+      validateAdminKey(room, input.adminKey);
+
+      await room.kickVoter(input.userId);
+    },
   });
 
 const roomQuestionsAdminRouter = trpc

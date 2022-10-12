@@ -1,11 +1,27 @@
 import * as trpc from '@trpc/server';
 import { z } from 'zod';
 
+import type { VoterState } from '../live-room/live-states';
 import { questionResponse } from '../live-room/question';
 import { getLiveRoomOrError } from '../rooms';
 
 export const roomVoteRouter = trpc
   .router()
+  .subscription('listen', {
+    input: z.object({
+      roomId: z.string(),
+      voterId: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      const room = await getLiveRoomOrError(input.roomId);
+      return new trpc.Subscription<VoterState>(async (emit) => {
+        const unsubscribe = await room.listenVoter(input.voterId, (state) => {
+          emit.data(state);
+        });
+        return unsubscribe;
+      });
+    },
+  })
   .query('getMyVote', {
     input: z.object({
       roomId: z.string(),

@@ -1,5 +1,5 @@
 import type { ShowingQuestionState, ShowingResultsState } from '@server/live-room/live-states';
-import { BoardState } from '@server/live-room/live-states';
+import { VoterState } from '@server/live-room/live-states';
 import type { QuestionResponse } from '@server/live-room/question';
 import type { GetStatesUnion } from '@server/state';
 import { makeStates, state } from '@server/state';
@@ -19,6 +19,7 @@ export const VotingPageState = makeStates('vps', {
   ended: state<{}>(),
   viewingResults: state<ShowingResultsState>(),
   voting: state<QuestionVotingData>(),
+  kicked: state<{}>(),
 });
 
 interface LastVote {
@@ -27,7 +28,7 @@ interface LastVote {
 }
 
 export function useVoterState(props: { roomId: string; voterId: string }): VotingPageState {
-  const [state, setState] = useState<BoardState | null>(null);
+  const [state, setState] = useState<VoterState | null>(null);
   const [lastVote, setLastVote] = useState<LastVote | null>(null);
   const voteLock = useRef<Promise<void>>(Promise.resolve());
 
@@ -39,7 +40,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
     await promise;
   };
 
-  trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
+  trpc.useSubscription(['vote.listen', { roomId: props.roomId, voterId: props.voterId }], {
     onNext: (data) => {
       setState(data);
     },
@@ -54,10 +55,12 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
     return VotingPageState.loading({});
   }
 
-  return BoardState.match<VotingPageState>(state, {
-    blank: () => {
-      return VotingPageState.waiting({});
-    },
+  return VoterState.match<VotingPageState>(state, {
+    blank: () => VotingPageState.waiting({}),
+    ended: () => VotingPageState.ended({}),
+    kicked: () => VotingPageState.kicked({}),
+
+    showingResults: (state) => VotingPageState.viewingResults(state),
 
     showingQuestion: (state) => {
       if (isInitialVoteLoading) {
@@ -85,20 +88,12 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
         castVote,
       });
     },
-
-    showingResults: (state) => {
-      return VotingPageState.viewingResults(state);
-    },
-
-    ended: () => {
-      return VotingPageState.ended({});
-    },
   });
 }
 
 type InitialVoteFetchState = GetStatesUnion<typeof InitialVoteFetchState.enum>;
 const InitialVoteFetchState = makeStates('ivfs', {
-  waitingForBoardState: state<{}>(),
+  waitingForVoterState: state<{}>(),
   ignoring: state<{}>(),
   fetching: state<{ questionId: string }>(),
   fetched: state<{}>(),
@@ -113,10 +108,10 @@ const InitialVoteFetchState = makeStates('ivfs', {
  */
 function useFetchInitialVote(
   props: { roomId: string; voterId: string },
-  boardState: BoardState | null,
+  voterState: VoterState | null,
   setLastVote: (vote: LastVote | null) => void
 ) {
-  const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForBoardState({}));
+  const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForVoterState({}));
 
   const initialVoteQuery = trpc.useQuery(
     [
@@ -135,20 +130,20 @@ function useFetchInitialVote(
   );
 
   useEffect(() => {
-    if (InitialVoteFetchState.is.waitingForBoardState(fetchState) && boardState) {
-      if (BoardState.is.showingQuestion(boardState)) {
-        setFetchState(InitialVoteFetchState.fetching({ questionId: boardState.questionId }));
+    if (InitialVoteFetchState.is.waitingForVoterState(fetchState) && voterState) {
+      if (VoterState.is.showingQuestion(voterState)) {
+        setFetchState(InitialVoteFetchState.fetching({ questionId: voterState.questionId }));
       } else {
         setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }
-  }, [boardState]);
+  }, [voterState]);
 
   useEffect(() => {
-    if (initialVoteQuery.data !== undefined && InitialVoteFetchState.is.fetching(fetchState) && boardState) {
-      if (BoardState.is.showingQuestion(boardState) && boardState.questionId === fetchState.questionId) {
+    if (initialVoteQuery.data !== undefined && InitialVoteFetchState.is.fetching(fetchState) && voterState) {
+      if (VoterState.is.showingQuestion(voterState) && voterState.questionId === fetchState.questionId) {
         setFetchState(InitialVoteFetchState.fetched({}));
-        setLastVote(initialVoteQuery.data && { questionId: boardState.questionId, response: initialVoteQuery.data });
+        setLastVote(initialVoteQuery.data && { questionId: voterState.questionId, response: initialVoteQuery.data });
       } else {
         setFetchState(InitialVoteFetchState.ignoring({}));
       }
@@ -158,6 +153,6 @@ function useFetchInitialVote(
   return {
     // We're loading if we're waiting for the board state, or if we're fetching
     isInitialVoteLoading:
-      InitialVoteFetchState.is.waitingForBoardState(fetchState) || InitialVoteFetchState.is.fetching(fetchState),
+      InitialVoteFetchState.is.waitingForVoterState(fetchState) || InitialVoteFetchState.is.fetching(fetchState),
   };
 }

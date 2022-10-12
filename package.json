@@ -10,6 +10,7 @@
   "scripts": {
     "web": "cd src/web && yarn",
     "server": "cd src/server && yarn",
+    "tsc": "yarn web tsc && yarn server tsc",
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {

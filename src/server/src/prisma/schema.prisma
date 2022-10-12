@@ -102,6 +102,7 @@ enum WaitingState {
   Waiting
   Admitted
   Declined
+  Kicked
 }
 
 enum QuestionType {

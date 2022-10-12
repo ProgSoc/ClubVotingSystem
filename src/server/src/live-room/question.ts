@@ -1,4 +1,4 @@
-import type { CandidateVote, Question, QuestionCandidate } from '@prisma/client';
+import type { CandidateVote, Question, QuestionCandidate, QuestionInteraction } from '@prisma/client';
 import { QuestionType } from '@prisma/client';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
@@ -40,6 +40,7 @@ export interface RoomQuestion {
   closed: boolean;
   totalVoters: number;
   candidates: VotingCandidate[];
+  interactedVoters: string[];
   results: ResultsView;
 
   originalPrismaQuestionObject: PrismaQuestionInclude;
@@ -52,11 +53,7 @@ export interface CreateQuestionParams {
 }
 
 export const prismaQuestionInclude = {
-  _count: {
-    select: {
-      interactions: true,
-    },
-  },
+  interactions: true,
   candidates: {
     include: {
       votes: true,
@@ -67,14 +64,12 @@ export type PrismaQuestionInclude = Question & {
   candidates: (QuestionCandidate & {
     votes: CandidateVote[];
   })[];
-  _count: {
-    interactions: number;
-  };
+  interactions: QuestionInteraction[];
 };
 
 export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion {
   // Count the number of unique voters by inserting them into a set
-  const uniqueVoters = new Set();
+  const uniqueVoters = new Set<string>();
   question.candidates.forEach((candidate) => {
     candidate.votes.forEach((vote) => {
       uniqueVoters.add(vote.voterId);
@@ -82,7 +77,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
   });
 
   const votesWithoutAbstain = uniqueVoters.size;
-  const votesWithAbstain = question._count.interactions;
+  const votesWithAbstain = question.interactions.length;
 
   // The abstain count includes both people explicitly selecting abstain and people who haven't interacted with the question
   const abstainCount = Math.max(0, question.votersPresentAtEnd - votesWithoutAbstain);
@@ -124,6 +119,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
     details: makeDetails(),
     results: makeResults(),
 
+    interactedVoters: question.interactions.map((interaction) => interaction.voterId),
     totalVoters: votesWithAbstain,
     candidates: question.candidates.map((candidate) => ({
       id: candidate.id,

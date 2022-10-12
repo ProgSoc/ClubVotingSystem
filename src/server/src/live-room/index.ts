@@ -18,17 +18,15 @@ import {
   voteForQuestion,
 } from './question';
 import type {
-  AdmittedRoomUser,
-  AdmittedRoomUserWithDetails,
-  DeclinedRoomUser,
   JoinWaitingRoomParams,
-  RoomUserAdmitDecline,
   RoomUsersList,
+  RoomUserWithDetails,
+  RoomVoterWithDetails,
   WaitingRoomUser,
-  WaitingRoomUserWithDetails,
 } from './user';
+import { kickVoter, RoomUserResolvedState, RoomUserState } from './user';
 import { declineWaitingRoomUser } from './user';
-import { admitWaitingRoomUser, createWaitingRoomUser, getRoomUser } from './user';
+import { admitWaitingRoomUser, createWaitingRoomUser, getRoomUserState } from './user';
 
 const makeAdminKeyId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 48);
 
@@ -39,11 +37,11 @@ export class LiveRoom {
   waitingRoomAdminListeners: Listeners<RoomUsersList> = new Listeners();
   boardListeners: Listeners<BoardState> = new Listeners();
 
-  waitingRoom: WithWaiters<WaitingRoomUserWithDetails, RoomUserAdmitDecline>[];
+  waitingRoom: WithWaiters<RoomUserWithDetails, RoomUserResolvedState>[];
 
   // Voters listeners are stored in an array rather than a single listener so that individual
-  // voters can get kicked in the future.
-  voters: WithListeners<AdmittedRoomUserWithDetails, VoterState>[] = [];
+  // voters can get kicked
+  voters: WithListeners<RoomVoterWithDetails, VoterState>[] = [];
 
   questions: RoomQuestion[];
 
@@ -51,8 +49,8 @@ export class LiveRoom {
 
   private constructor(
     readonly room: Room,
-    waitingUsers: WaitingRoomUserWithDetails[],
-    voters: AdmittedRoomUserWithDetails[],
+    waitingUsers: RoomUserWithDetails[],
+    voters: RoomVoterWithDetails[],
     questions: RoomQuestion[]
   ) {
     this.waitingRoom = waitingUsers.map((user) => new WithWaiters(user));
@@ -106,7 +104,7 @@ export class LiveRoom {
     return rooms.map((room) => {
       const waitingRoomUsers = room.users
         .filter((user) => user.state === WaitingState.Waiting)
-        .map<WaitingRoomUserWithDetails>((user) => ({
+        .map<RoomUserWithDetails>((user) => ({
           id: user.id,
           state: WaitingState.Waiting,
           details: {
@@ -117,7 +115,7 @@ export class LiveRoom {
 
       const roomVoters = room.users
         .filter((user) => user.state === WaitingState.Admitted && user.voterId)
-        .map<AdmittedRoomUserWithDetails>((user) => ({
+        .map<RoomVoterWithDetails>((user) => ({
           id: user.id,
           state: WaitingState.Admitted,
           details: {
@@ -163,56 +161,75 @@ export class LiveRoom {
   }
 
   /** Admit a user as a voter, notify the admins that the list has updated, return the admitted user (with voter id) */
-  async admitWaitingRoomUser(userId: string): Promise<AdmittedRoomUser | null> {
+  async admitWaitingRoomUser(userId: string) {
     this.assertRoomNotClosed();
     const user = await prisma.roomUser.findUnique({ where: { id: userId } });
     if (!user || user.roomId !== this.id || user.state !== WaitingState.Waiting) {
-      return null;
+      throw new Error('Waiting room user not found');
     }
 
-    const admitted = await admitWaitingRoomUser(userId);
-    if (!admitted) {
-      return null;
-    }
+    const { voterId } = await admitWaitingRoomUser(userId);
 
     const listener = this.getUserWaiter(userId);
     if (listener) {
-      await listener.notify(admitted);
+      await listener.notify(RoomUserResolvedState.admitted({ id: userId, voterId }));
     }
 
     // Add the user to voters, remove from waiting room
     await this.removeUserFromList(userId);
-    await this.addVoterToList(admitted);
-
-    return admitted;
+    await this.addVoterToList({
+      id: userId,
+      details: {
+        location: user.location,
+        studentEmail: user.studentEmail,
+      },
+      voterId,
+    });
   }
 
   /** Decline a user, notify the admins that the list has updated */
-  async declineWaitingRoomUser(userId: string): Promise<DeclinedRoomUser | null> {
+  async declineWaitingRoomUser(userId: string) {
     this.assertRoomNotClosed();
     const user = await prisma.roomUser.findUnique({ where: { id: userId } });
     if (!user || user.roomId !== this.id || user.state !== WaitingState.Waiting) {
-      return null;
+      throw new Error('Waiting room user not found');
     }
 
-    const declined = await declineWaitingRoomUser(userId);
-    if (!declined) {
-      return null;
-    }
+    await declineWaitingRoomUser(userId);
 
     const listener = this.getUserWaiter(userId);
     if (listener) {
-      await listener.notify(declined);
+      await listener.notify(RoomUserResolvedState.declined({ id: userId }));
     }
 
     // Add the user to voters, remove from waiting room
     await this.removeUserFromList(userId);
+  }
 
-    return declined;
+  /** Kick a voter from the room, notify the admins that the list has updated */
+  async kickVoter(userId: string) {
+    this.assertRoomNotClosed();
+
+    const user = await prisma.roomUser.findUnique({ where: { id: userId } });
+    if (!user || user.roomId !== this.id || user.state !== WaitingState.Admitted || !user.voterId) {
+      throw new Error('Voter not found');
+    }
+
+    const voterId = user.voterId;
+
+    await kickVoter(voterId);
+
+    const listener = this.getVoterListener(voterId);
+    if (listener) {
+      await listener.notify(VoterState.kicked({}));
+    }
+
+    // Add the user to voters, remove from waiting room
+    await this.removeVoterFromList(voterId);
   }
 
   /** Cast a vote on a question, notify everyone of the current question state change */
-  async castVote(questionId: string, voterId: string, response: QuestionResponse): Promise<boolean> {
+  async castVote(questionId: string, voterId: string, response: QuestionResponse) {
     return this.withQuestionLock(async () => {
       this.assertRoomNotClosed();
       const voter = this.getVoterListener(voterId);
@@ -232,8 +249,6 @@ export class LiveRoom {
 
       this.updateCurrentQuestion(updatedQuestion);
       await this.notifyEveryoneOfStateChange();
-
-      return true;
     });
   }
 
@@ -292,15 +307,22 @@ export class LiveRoom {
   // #region Functions to listen on the room
   //
 
-  async waitForWaitingRoomUserAdmitOrDecline(userId: string): Promise<RoomUserAdmitDecline | null> {
-    const user = await getRoomUser(userId, this.id);
-    if (!user) {
+  async waitForWaitingRoomUser(userId: string): Promise<RoomUserResolvedState | null> {
+    const state = await getRoomUserState(userId, this.id);
+    if (!state) {
       return null;
     }
 
-    // If admitted or declined, return the user directly, as the types are the same
-    if (user.state === WaitingState.Admitted || user.state === WaitingState.Declined) {
-      return user;
+    // If already not waiting, return the state
+    const existingState = RoomUserState.match<RoomUserResolvedState | null>(state, {
+      waiting: () => null,
+      admitted: (user) => RoomUserResolvedState.admitted(user),
+      declined: (user) => RoomUserResolvedState.declined(user),
+      kicked: (user) => RoomUserResolvedState.kicked(user),
+    });
+
+    if (existingState) {
+      return existingState;
     }
 
     // If waiting, add a listener to the user and return the user with an unsubscribe function
@@ -317,10 +339,10 @@ export class LiveRoom {
     );
   }
 
-  async tryListenVoter(voterId: string, listener: (user: VoterState) => Promise<void>) {
+  async listenVoter(voterId: string, listener: ListenerNotifyFn<VoterState>) {
     const voterListener = this.getVoterListener(voterId);
     if (!voterListener) {
-      return null;
+      throw new Error("This voter doesn't exist");
     }
 
     const unsubscribe = await voterListener.listen(listener);
@@ -353,8 +375,12 @@ export class LiveRoom {
       }
     });
     if (votes.length === 0) {
-      // TODO: Support abstain votes.
-      return null;
+      // If there are no votes but the user interacted, then the user abstained
+      if (question.interactedVoters.includes(voterId)) {
+        return {
+          type: 'Abstain',
+        };
+      }
     }
 
     switch (questionObj.format) {
@@ -374,11 +400,11 @@ export class LiveRoom {
   // #region Internal helper functions
   //
 
-  private getUserWaiter(userId: string): WithWaiters<WaitingRoomUserWithDetails, RoomUserAdmitDecline> | null {
+  private getUserWaiter(userId: string): WithWaiters<RoomUserWithDetails, RoomUserResolvedState> | null {
     return this.waitingRoom.find((wr) => wr.val.id === userId) || null;
   }
 
-  private getVoterListener(voterId: string): WithListeners<AdmittedRoomUser, VoterState> | null {
+  private getVoterListener(voterId: string): WithListeners<RoomUserWithDetails, VoterState> | null {
     return this.voters.find((v) => v.val.voterId === voterId) || null;
   }
 
@@ -387,15 +413,20 @@ export class LiveRoom {
     await this.notifyAdminsOfUsersChange();
   }
 
-  private async addUserToList(user: WaitingRoomUserWithDetails) {
-    const waiter = new WithWaiters<WaitingRoomUserWithDetails, RoomUserAdmitDecline>(user);
+  private async removeVoterFromList(voterId: string) {
+    this.voters = this.voters.filter((v) => v.val.voterId !== voterId);
+    await this.notifyAdminsOfUsersChange();
+  }
+
+  private async addUserToList(user: RoomUserWithDetails) {
+    const waiter = new WithWaiters<RoomUserWithDetails, RoomUserResolvedState>(user);
     this.waitingRoom.push(waiter);
     await this.notifyAdminsOfUsersChange();
     return waiter;
   }
 
-  private async addVoterToList(voter: AdmittedRoomUserWithDetails) {
-    const listener = new WithListeners<AdmittedRoomUserWithDetails, VoterState>(voter);
+  private async addVoterToList(voter: RoomVoterWithDetails) {
+    const listener = new WithListeners<RoomVoterWithDetails, VoterState>(voter);
     this.voters.push(listener);
     await this.notifyAdminsOfUsersChange();
     await this.notifyEveryoneOfStateChange();
@@ -405,7 +436,12 @@ export class LiveRoom {
   private async notifyAdminsOfUsersChange() {
     await this.waitingRoomAdminListeners.notify({
       waiting: this.waitingRoom.map((wr) => wr.val),
-      admitted: this.voters.map((v) => v.val),
+      admitted: this.voters.map((v) => {
+        // We remove voterId as admins shouldn't ave access to it
+        const { voterId, ...rest } = v.val;
+
+        return rest;
+      }),
     });
   }
 

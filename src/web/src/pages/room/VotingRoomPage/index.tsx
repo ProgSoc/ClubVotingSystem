@@ -2,15 +2,31 @@ import type { ShowingResultsState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, Heading, PageContainer, Question } from 'components/styles';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router';
+import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
 
 import type { QuestionVotingData } from './hooks';
 import { VotingPageState } from './hooks';
 import { useVoterState } from './hooks';
 
-export function VotingRoomPage(props: { roomId: string; room: PublicStaticRoomData; voterId: string }) {
+export function VotingRoomPage(props: { roomId: string; userId: string; room: PublicStaticRoomData; voterId: string }) {
   const data = useVoterState(props);
+
+  // Navigate to waiting room if the user was kicked
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (VotingPageState.is.kicked(data)) {
+      navigate(
+        routeBuilders.waitInWaitingRoom({
+          roomId: props.roomId,
+          userId: props.userId,
+        })
+      );
+    }
+  }, [VotingPageState.is.kicked(data)]);
+
   return (
     <PageContainer className="justify-start sm:justify-center pt-32 sm:pt-4">
       <QuestionVoter data={data} />
@@ -25,6 +41,7 @@ function QuestionVoter({ data }: { data: VotingPageState }) {
     ended: () => <Heading>Ended</Heading>,
     voting: (data) => <QuestionVoting data={data} />,
     viewingResults: (data) => <ViewingResults data={data} />,
+    kicked: () => <></>,
   });
 }
 

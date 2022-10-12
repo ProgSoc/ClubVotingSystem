@@ -11,7 +11,7 @@ export const roomWaitingListRouter = trpc.router().query('waitResponse', {
   async resolve({ input }) {
     const room = await getLiveRoomOrError(input.roomId);
 
-    const result = await room.waitForWaitingRoomUserAdmitOrDecline(input.userId);
+    const result = await room.waitForWaitingRoomUser(input.userId);
 
     if (!result) {
       throw new Error('User not found');

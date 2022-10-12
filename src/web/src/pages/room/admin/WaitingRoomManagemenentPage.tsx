@@ -1,4 +1,4 @@
-import type { AdmittedRoomUserWithDetails, WaitingRoomUserWithDetails } from '@server/live-room/user';
+import type { RoomUserWithDetails } from '@server/live-room/user';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { AdminRouter } from 'components/adminRouter';
 import { AdminPageContainer, Button, Heading } from 'components/styles';
@@ -7,23 +7,35 @@ import { twMerge } from 'tailwind-merge';
 import { trpc } from 'utils/trpc';
 
 // Waiting = waiting for an admin to do something
-enum UserState {
+enum WaitingUserState {
   Waiting = 'Waiting',
   Admitting = 'Admitting',
   Declining = 'Declining',
 }
-interface UserWithState extends WaitingRoomUserWithDetails {
-  uiLoadingState: UserState;
+
+// Waiting = waiting for an admin to do something
+enum VoterState {
+  Voting = 'Voting',
+  Kicking = 'Kicking',
+}
+
+interface UserWithState extends RoomUserWithDetails {
+  uiLoadingState: WaitingUserState;
+}
+
+interface VoterWithState extends RoomUserWithDetails {
+  uiLoadingState: VoterState;
 }
 
 function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
   const [users, setUsers] = useState<UserWithState[]>([]);
-  const [voters, setVoters] = useState<AdmittedRoomUserWithDetails[]>([]);
+  const [voters, setVoters] = useState<VoterWithState[]>([]);
 
   const admitUserMutation = trpc.useMutation(['admin.users.admitUser']);
   const declineUserMutation = trpc.useMutation(['admin.users.declineUser']);
+  const kickVoterMutation = trpc.useMutation(['admin.users.kickVoter']);
 
-  const setUserState = (userId: string, uiLoadingState: UserState) => {
+  const setUserState = (userId: string, uiLoadingState: WaitingUserState) => {
     setUsers((users) => {
       const user = users.find((u) => u.id === userId);
       if (!user) {
@@ -33,14 +45,29 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
     });
   };
 
+  const setVoterState = (userId: string, uiLoadingState: VoterState) => {
+    setVoters((voters) => {
+      const user = voters.find((u) => u.id === userId);
+      if (!user) {
+        return voters;
+      }
+      return voters.map((u) => (u.id === userId ? { ...u, uiLoadingState } : u));
+    });
+  };
+
   const declineUser = (userId: string) => {
     declineUserMutation.mutate({ adminKey: props.adminKey, roomId: props.roomId, userId });
-    setUserState(userId, UserState.Declining);
+    setUserState(userId, WaitingUserState.Declining);
   };
 
   const admitUser = (userId: string) => {
     admitUserMutation.mutate({ adminKey: props.adminKey, roomId: props.roomId, userId });
-    setUserState(userId, UserState.Admitting);
+    setUserState(userId, WaitingUserState.Admitting);
+  };
+
+  const kickVoter = (userId: string) => {
+    kickVoterMutation.mutate({ adminKey: props.adminKey, roomId: props.roomId, userId });
+    setVoterState(userId, VoterState.Kicking);
   };
 
   trpc.useSubscription(['admin.users.listenWaitingRoom', { roomId: props.roomId, adminKey: props.adminKey }], {
@@ -54,86 +81,27 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
           ...user,
 
           // If the user already exist then keep the loading state, otherwise set it to waiting
-          uiLoadingState: getUserById(user.id)?.uiLoadingState ?? UserState.Waiting,
+          uiLoadingState: getUserById(user.id)?.uiLoadingState ?? WaitingUserState.Waiting,
         }));
       });
 
-      setVoters(admitted);
+      setVoters((voters) => {
+        const getUserById = (userId: string) => voters.find((u) => u.id === userId);
+
+        return admitted.map((voters) => ({
+          ...voters,
+
+          // If the user already exist then keep the loading state, otherwise set it to voting
+          uiLoadingState: getUserById(voters.id)?.uiLoadingState ?? VoterState.Voting,
+        }));
+      });
     },
     onError: (err) => {
       console.error(err);
     },
   });
 
-  return { users, voters, admitUser, declineUser };
-}
-
-interface CreateQuestionData {
-  question: string;
-  candidates: string[];
-  maxChoices: number;
-}
-
-let id = 0;
-const makeId = () => id++;
-
-const makeEmptyCandidate = () => ({ id: makeId(), value: '' });
-
-function QuestionBuilder(props: { onSubmit: (data: CreateQuestionData) => void }) {
-  const [question, setQuestion] = useState('');
-  const [candidates, setCandidates] = useState([makeEmptyCandidate(), makeEmptyCandidate()]);
-  const [maxChoices, setMaxChoices] = useState(1);
-
-  const addCandidate = () => {
-    setCandidates((candidates) => [...candidates, makeEmptyCandidate()]);
-  };
-
-  const removeCandidate = (index: number) => {
-    setCandidates((candidates) => {
-      const newCandidates = [...candidates];
-      newCandidates.splice(index, 1);
-      return newCandidates;
-    });
-  };
-
-  const submit = () => {
-    props.onSubmit({ question, maxChoices, candidates: candidates.map((c) => c.value) });
-  };
-
-  return (
-    <div>
-      <h1>Make question</h1>
-      <div>
-        <label>Question</label>
-        <input id="question" type="text" value={question} onChange={(e) => setQuestion(e.target.value)} />
-      </div>
-      <div>
-        <label>Candidates</label>
-        {candidates.map((candidate, index) => (
-          <div key={candidate.id}>
-            <input
-              type="text"
-              value={candidate.value}
-              onChange={(e) => {
-                setCandidates((candidates) => {
-                  const newCandidates = [...candidates];
-                  newCandidates[index] = { ...newCandidates[index], value: e.target.value };
-                  return newCandidates;
-                });
-              }}
-            />
-            <button onClick={() => removeCandidate(index)}>Remove</button>
-          </div>
-        ))}
-        <button onClick={addCandidate}>Add candidate</button>
-      </div>
-      <div>
-        <label>Max choices</label>
-        <input type="number" value={maxChoices} onChange={(e) => setMaxChoices(Number(e.target.value))} />
-      </div>
-      <button onClick={submit}>Submit</button>
-    </div>
-  );
+  return { users, voters, admitUser, declineUser, kickVoter };
 }
 
 function Email(props: { email: string; className?: string }) {
@@ -155,7 +123,7 @@ function Email(props: { email: string; className?: string }) {
 }
 
 export function WaitingRoomManagementPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
-  const { users, voters, admitUser, declineUser } = useUserWaitingRoom(props);
+  const { users, voters, admitUser, declineUser, kickVoter } = useUserWaitingRoom(props);
 
   return (
     <AdminPageContainer>
@@ -173,22 +141,22 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
                 <Button
                   className="btn-primary"
                   onClick={async () => {
-                    if (user.uiLoadingState === UserState.Waiting) {
+                    if (user.uiLoadingState === WaitingUserState.Waiting) {
                       admitUser(user.id);
                     }
                   }}
-                  isLoading={user.uiLoadingState === UserState.Admitting}
+                  isLoading={user.uiLoadingState === WaitingUserState.Admitting}
                 >
                   Admit
                 </Button>
                 <Button
                   className="btn-error"
                   onClick={async () => {
-                    if (user.uiLoadingState === UserState.Waiting) {
+                    if (user.uiLoadingState === WaitingUserState.Waiting) {
                       declineUser(user.id);
                     }
                   }}
-                  isLoading={user.uiLoadingState === UserState.Declining}
+                  isLoading={user.uiLoadingState === WaitingUserState.Declining}
                 >
                   Decline
                 </Button>
@@ -197,7 +165,6 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
           ))}
         </div>
         <Heading>Voters</Heading>
-        TODO: Allow kicking voters
         {voters.map((user) => (
           <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
             <div className="flex-1">
@@ -207,9 +174,8 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
             <div className="gap-4">
               <Button
                 className="btn-error"
-                disabled={true}
                 onClick={async () => {
-                  declineUser(user.id);
+                  kickVoter(user.id);
                 }}
               >
                 Kick
