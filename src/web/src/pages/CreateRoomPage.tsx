@@ -15,7 +15,7 @@ export function CreateRoomPage() {
   const onSubmit = async () => {
     const result = await mutation.mutateAsync({ name: pageName.trim() });
     cacheFetchedRoom(result);
-    navigate(routeBuilders.manageWaitingRoom({ roomId: result.id, adminKey: result.adminKey }));
+    navigate(routeBuilders.manageRoomInfo({ roomId: result.id, adminKey: result.adminKey }));
   };
 
   const invalid = pageName.trim().length === 0;
