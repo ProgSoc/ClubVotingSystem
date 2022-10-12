@@ -1,34 +1,25 @@
 import type { ShowingQuestionState, ShowingResultsState } from '@server/live-room/live-states';
 import { BoardState } from '@server/live-room/live-states';
 import type { QuestionResponse } from '@server/live-room/question';
+import type { GetStatesUnion } from '@server/state';
+import { makeStates, state } from '@server/state';
 import { useEffect, useRef, useState } from 'react';
 import { trpc } from 'utils/trpc';
 
-interface LoadingState {
-  type: 'loading';
-}
-
-interface WaitingState {
-  type: 'waiting';
-}
-
-interface EndedState {
-  type: 'ended';
-}
-
-export interface ViewingResultsData {
-  type: 'viewing-results';
-  question: ShowingResultsState;
-}
-
 export interface QuestionVotingData {
-  type: 'question-voting';
   question: ShowingQuestionState;
   lastVote?: QuestionResponse;
   castVote(params: QuestionResponse): void;
 }
 
-export type VotingPageState = ViewingResultsData | QuestionVotingData | WaitingState | LoadingState | EndedState;
+export type VotingPageState = GetStatesUnion<typeof VotingPageState.enum>;
+export const VotingPageState = makeStates('vps', {
+  loading: state<{}>(),
+  waiting: state<{}>(),
+  ended: state<{}>(),
+  viewingResults: state<ShowingResultsState>(),
+  voting: state<QuestionVotingData>(),
+});
 
 interface LastVote {
   questionId: string;
@@ -60,23 +51,17 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
   const { isInitialVoteLoading } = useFetchInitialVote(props, state, setLastVote);
 
   if (!state) {
-    return {
-      type: 'loading',
-    };
+    return VotingPageState.loading({});
   }
 
   return BoardState.match<VotingPageState>(state, {
     blank: () => {
-      return {
-        type: 'waiting',
-      };
+      return VotingPageState.waiting({});
     },
 
     showingQuestion: (state) => {
       if (isInitialVoteLoading) {
-        return {
-          type: 'loading',
-        };
+        return VotingPageState.loading({});
       }
 
       const castVote = (response: QuestionResponse) => {
@@ -94,43 +79,30 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
         });
       };
 
-      return {
-        type: 'question-voting',
+      return VotingPageState.voting({
         question: state,
         lastVote: lastVote?.questionId === state.questionId ? lastVote.response : undefined,
         castVote,
-      };
+      });
     },
 
     showingResults: (state) => {
-      return {
-        type: 'viewing-results',
-        question: state,
-      };
+      return VotingPageState.viewingResults(state);
     },
 
     ended: () => {
-      return {
-        type: 'ended',
-      };
+      return VotingPageState.ended({});
     },
   });
 }
 
-type WithType<Type, T = {}> = T & { type: Type };
-
-enum InitialVoteFetchType {
-  WaitingForBoardState,
-  Ignoring,
-  Fetching,
-  Fetched,
-}
-
-type InitialVoteFetchState =
-  | WithType<InitialVoteFetchType.WaitingForBoardState>
-  | WithType<InitialVoteFetchType.Ignoring>
-  | WithType<InitialVoteFetchType.Fetching, { questionId: string }>
-  | WithType<InitialVoteFetchType.Fetched>;
+type InitialVoteFetchState = GetStatesUnion<typeof InitialVoteFetchState.enum>;
+const InitialVoteFetchState = makeStates('ivfs', {
+  waitingForBoardState: state<{}>(),
+  ignoring: state<{}>(),
+  fetching: state<{ questionId: string }>(),
+  fetched: state<{}>(),
+});
 
 /**
  * Fetch the initial voting state from the server, in case the voter has
@@ -144,9 +116,7 @@ function useFetchInitialVote(
   boardState: BoardState | null,
   setLastVote: (vote: LastVote | null) => void
 ) {
-  const [fetchInitialVoteState, setFetchInitialVoteState] = useState<InitialVoteFetchState>({
-    type: InitialVoteFetchType.WaitingForBoardState,
-  });
+  const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForBoardState({}));
 
   const initialVoteQuery = trpc.useQuery(
     [
@@ -156,44 +126,38 @@ function useFetchInitialVote(
         voterId: props.voterId,
 
         // If we're not fetching, then the query is disabled anyway and this arg doesnt matter
-        questionId:
-          fetchInitialVoteState.type === InitialVoteFetchType.Fetching ? fetchInitialVoteState.questionId : '',
+        questionId: InitialVoteFetchState.is.fetching(fetchState) ? fetchState.questionId : '',
       },
     ],
     {
-      enabled: fetchInitialVoteState.type === InitialVoteFetchType.Fetching,
+      enabled: InitialVoteFetchState.is.fetching(fetchState),
     }
   );
 
   useEffect(() => {
-    if (fetchInitialVoteState.type === InitialVoteFetchType.WaitingForBoardState && boardState) {
+    if (InitialVoteFetchState.is.waitingForBoardState(fetchState) && boardState) {
       if (BoardState.is.showingQuestion(boardState)) {
-        setFetchInitialVoteState({ type: InitialVoteFetchType.Fetching, questionId: boardState.questionId });
+        setFetchState(InitialVoteFetchState.fetching({ questionId: boardState.questionId }));
       } else {
-        setFetchInitialVoteState({ type: InitialVoteFetchType.Ignoring });
+        setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }
   }, [boardState]);
 
   useEffect(() => {
-    if (
-      initialVoteQuery.data !== undefined &&
-      fetchInitialVoteState.type === InitialVoteFetchType.Fetching &&
-      boardState
-    ) {
-      if (BoardState.is.showingQuestion(boardState) && boardState.questionId === fetchInitialVoteState.questionId) {
-        setFetchInitialVoteState({ type: InitialVoteFetchType.Fetched });
+    if (initialVoteQuery.data !== undefined && InitialVoteFetchState.is.fetching(fetchState) && boardState) {
+      if (BoardState.is.showingQuestion(boardState) && boardState.questionId === fetchState.questionId) {
+        setFetchState(InitialVoteFetchState.fetched({}));
         setLastVote(initialVoteQuery.data && { questionId: boardState.questionId, response: initialVoteQuery.data });
       } else {
-        setFetchInitialVoteState({ type: InitialVoteFetchType.Ignoring });
+        setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }
   }, [initialVoteQuery.data]);
 
   return {
     // We're loading if we're waiting for the board state, or if we're fetching
-    isInitialVoteLoading: [InitialVoteFetchType.WaitingForBoardState, InitialVoteFetchType.Fetching].includes(
-      fetchInitialVoteState.type
-    ),
+    isInitialVoteLoading:
+      InitialVoteFetchState.is.waitingForBoardState(fetchState) || InitialVoteFetchState.is.fetching(fetchState),
   };
 }

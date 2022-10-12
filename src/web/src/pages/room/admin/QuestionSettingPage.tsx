@@ -2,7 +2,8 @@ import type { ShowingQuestionState, ShowingResultsState } from '@server/live-roo
 import { BoardState } from '@server/live-room/live-states';
 import type { CreateQuestionParams } from '@server/live-room/question';
 import type { PublicStaticRoomData } from '@server/rooms';
-import { UnreachableError } from '@server/unreachableError';
+import type { GetStatesUnion } from '@server/state';
+import { makeStates, state } from '@server/state';
 import { AdminRouter } from 'components/adminRouter';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { AdminPageContainer, Button, Heading, Question } from 'components/styles';
@@ -13,27 +14,23 @@ import type { TypeOf } from 'zod';
 import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 
-interface LoadingState {
-  type: 'loading';
-}
-
-interface EndedState {
-  type: 'ended';
-}
-
 interface QuestionSettingData {
-  type: 'set-question';
   previousResults?: ShowingResultsState;
   setQuestion(params: CreateQuestionParams): void;
 }
 
 interface QuestionAskingData {
-  type: 'asking-question';
   question: ShowingQuestionState;
   endQuestion(): void;
 }
 
-type QuestionSettingPageState = QuestionSettingData | QuestionAskingData | LoadingState | EndedState;
+type QuestionSettingPageState = GetStatesUnion<typeof QuestionSettingPageState.enum>;
+const QuestionSettingPageState = makeStates('qsps', {
+  loading: state<{}>(),
+  ended: state<{}>(),
+  setQuestion: state<QuestionSettingData>(),
+  askingQuestion: state<QuestionAskingData>(),
+});
 
 function useQuestionSetter(props: { roomId: string; adminKey: string }): QuestionSettingPageState {
   const [state, setState] = useState<BoardState | null>(null);
@@ -51,9 +48,7 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
   });
 
   if (!state) {
-    return {
-      type: 'loading',
-    };
+    return QuestionSettingPageState.loading({});
   }
 
   const createQuestion = (params: CreateQuestionParams) => {
@@ -68,22 +63,20 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
 
   return BoardState.match<QuestionSettingPageState>(state, {
     blank: (state) => {
-      return {
-        type: 'set-question',
+      return QuestionSettingPageState.setQuestion({
         setQuestion: createQuestion,
-      };
+      });
     },
 
     showingResults: (state) => {
-      return {
-        type: 'set-question',
+      return QuestionSettingPageState.setQuestion({
         previousResults: state,
         setQuestion: createQuestion,
-      };
+      });
     },
 
     showingQuestion: (state) => {
-      const closeQuestion = () => {
+      const endQuestion = () => {
         closeQuestionMutation.mutate({
           adminKey: props.adminKey,
           roomId: props.roomId,
@@ -91,17 +84,14 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
         });
       };
 
-      return {
-        type: 'asking-question',
+      return QuestionSettingPageState.askingQuestion({
         question: state,
-        endQuestion: closeQuestion,
-      };
+        endQuestion,
+      });
     },
 
     ended: () => {
-      return {
-        type: 'ended',
-      };
+      return QuestionSettingPageState.ended({});
     },
   });
 }
@@ -117,19 +107,12 @@ export function QuestionSettingPage(props: { roomId: string; room: PublicStaticR
 }
 
 function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
-  // FIXME: Prettify the loading and ended states
-  switch (data.type) {
-    case 'loading':
-      return <div>Loading...</div>;
-    case 'ended':
-      return <div>Ended</div>;
-    case 'set-question':
-      return <SetQuestion data={data} />;
-    case 'asking-question':
-      return <AskingQuestion data={data} />;
-    default:
-      throw new UnreachableError(data);
-  }
+  return QuestionSettingPageState.match(data, {
+    loading: () => <Heading>Loading...</Heading>,
+    ended: () => <Heading>Ended</Heading>,
+    setQuestion: (data) => <SetQuestion data={data} />,
+    askingQuestion: (data) => <AskingQuestion data={data} />,
+  });
 }
 
 const schema = z.object({
