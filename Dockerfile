@@ -17,6 +17,16 @@ RUN yarn server prisma generate && yarn server build && yarn web build && mv nod
 RUN rm -rf src/web/package.json node_modules src/server/node_modules && \
   yarn install --frozen-lockfile --production
 
+# Hack for greatly reducing the size of the image. For some reason I couldn't find
+# a cleaner way to do this.
+RUN \
+  rm ./node_modules/.prisma/client/libquery_engine-linux-musl.so.node && \
+  rm ./node_modules/prisma/libquery_engine-linux-musl.so.node && \
+  rm ./node_modules/@prisma/engines/introspection-engine-linux-musl && \
+  rm ./node_modules/@prisma/engines/prisma-fmt-linux-musl && \
+  rm ./node_modules/@prisma/engines/libquery_engine-linux-musl.so.node && \
+  rm ./node_modules/@prisma/engines/migration-engine-linux-musl
+
 FROM node:16.17.0-alpine
 
 WORKDIR /app
