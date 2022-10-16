@@ -53,7 +53,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
               <div className="gap-4 w-full flex flex-col justify-center items-center">
                 <Field
                   className="input input-bordered w-full sm:w-96"
-                  placeholder="Student Email"
+                  placeholder="Student Email (firstname.lastname)"
                   type="email"
                   name="studentEmail"
                   value={form.values.studentEmail}
