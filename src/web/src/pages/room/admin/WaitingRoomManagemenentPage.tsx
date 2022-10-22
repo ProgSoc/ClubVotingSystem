@@ -4,6 +4,7 @@ import { AdminRouter } from 'components/adminRouter';
 import { AdminPageContainer, Button, Heading } from 'components/styles';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { locationEnumLabel } from 'utils/enumLabels';
 import { trpc } from 'utils/trpc';
 
 // Waiting = waiting for an admin to do something
@@ -135,7 +136,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
           {users.map((user) => (
             <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
               <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
-              <div className="">{user.details.location}</div>
+              <div className="">{locationEnumLabel[user.details.location]}</div>
               <div className="gap-4">
                 <Button
                   className="btn-primary"
@@ -168,7 +169,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
           <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
             <div className="flex-1">
               <Email email={user.details.studentEmail} className="ml-2 mr-auto" />
-              <div className="">{user.details.location}</div>
+              <div className="">{locationEnumLabel[user.details.location]}</div>
             </div>
             <div className="gap-4">
               <Button

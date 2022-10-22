@@ -3,6 +3,7 @@ FROM node:16.17.0-alpine as builder
 WORKDIR /app
 
 COPY package.json yarn.lock ./
+
 COPY src/server/package.json ./src/server/
 COPY src/web/package.json ./src/web/
 
@@ -10,7 +11,7 @@ RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN yarn server prisma generate && yarn server build && yarn web build && mv node_modules/.prisma ./
+RUN yarn server build && yarn web build && mv node_modules/.prisma ./
 
 
 # Cleanup all dev dependencies

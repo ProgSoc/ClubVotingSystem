@@ -19,7 +19,7 @@ jobs:
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
       - name: Build the Docker image
-        run: docker build . -t progsoc/club-voting-system:$(date +%s) -t progsoc/club-voting-system:latest
+        run: docker build . --no-cache -t ${{secrets.DOCKER_USER}}/club-voting-system:$(date +%s) -t ${{secrets.DOCKER_USER}}/club-voting-system:latest
 
       - name: Docker Push
-        run: docker push progsoc/club-voting-system
+        run: docker push ${{secrets.DOCKER_USER}}/club-voting-system

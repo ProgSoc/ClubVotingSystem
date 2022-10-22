@@ -32,8 +32,7 @@
     "@types/ws": "^8.5.3",
     "chokidar": "^3.5.3",
     "concurrently": "^7.4.0",
-    "nodemon": "^2.0.20",
-    "prisma": "^4.4.0"
+    "nodemon": "^2.0.20"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"

@@ -96,6 +96,7 @@ model CandidateVote {
 enum UserLocation {
   InPerson
   Online
+  Proxy
 }
 
 enum WaitingState {

@@ -3,6 +3,7 @@ import { Button, Heading, PageContainer } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import { routeBuilders } from 'routes';
+import { locationEnumLabel } from 'utils/enumLabels';
 import { trpc } from 'utils/trpc';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
@@ -35,6 +36,8 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
     navigate(routeBuilders.waitInWaitingRoom({ roomId: props.roomId, userId: result.id }));
   };
 
+  console.log(UserLocation);
+
   return (
     <PageContainer className="gap-4">
       <Heading>Join voting room</Heading>
@@ -62,11 +65,15 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                 <div className="flex items-center justify-center gap-4">
                   <label className="flex items-center gap-2">
                     <Field type="radio" name="location" value={UserLocation.InPerson} className="radio radio-primary" />
-                    <span className="label-text">In Person</span>
+                    <span className="label-text">{locationEnumLabel[UserLocation.InPerson]}</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <Field type="radio" name="location" value={UserLocation.Online} className="radio radio-primary" />
-                    Online
+                    <span className="label-text">{locationEnumLabel[UserLocation.Online]}</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <Field type="radio" name="location" value={UserLocation.Proxy} className="radio radio-primary" />
+                    <span className="label-text">{locationEnumLabel[UserLocation.Proxy]}</span>
                   </label>
                 </div>
                 <Button
