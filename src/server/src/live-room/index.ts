@@ -506,8 +506,9 @@ export class LiveRoom {
   }
 
   private async withQuestionLock<T>(fn: () => Promise<T>): Promise<T> {
+    // FIXME: Abstract these async locks to a separate class
     if (this.roomQuestionLock) {
-      const newPromise = this.roomQuestionLock.then(fn);
+      const newPromise = this.roomQuestionLock.catch(() => {}).then(fn);
       this.roomQuestionLock = newPromise;
       return newPromise;
     } else {

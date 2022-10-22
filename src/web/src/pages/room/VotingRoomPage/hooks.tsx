@@ -35,7 +35,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
   const castVoteMutation = trpc.useMutation(['vote.castVote']);
 
   const runSyncAsync = async (fn: () => Promise<void>) => {
-    const promise = voteLock.current.then(fn);
+    const promise = voteLock.current.catch(() => {}).then(fn);
     voteLock.current = promise;
     await promise;
   };

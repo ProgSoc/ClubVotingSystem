@@ -17,7 +17,7 @@ export class Listeners<T> {
   /** Run a promise in with previous promises so that events aren't sent out of order */
   private async runInSync(fn: () => Promise<void>) {
     if (this.previousPromise) {
-      this.previousPromise = this.previousPromise.then(fn);
+      this.previousPromise = this.previousPromise.catch(() => {}).then(fn);
     } else {
       this.previousPromise = fn();
     }
