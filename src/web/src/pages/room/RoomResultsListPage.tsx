@@ -9,7 +9,7 @@ export function RoomResultsListPage(props: { roomId: string; room: PublicStaticR
   return (
     <AdminPageContainer className="gap-4">
       <Heading>{props.room.name}</Heading>
-      <div className="flex flex-col gap-8 pb-8">
+      <div className="flex flex-col gap-8 pb-10">
         {!roomResults.data ? (
           <Question>Loading...</Question>
         ) : (
