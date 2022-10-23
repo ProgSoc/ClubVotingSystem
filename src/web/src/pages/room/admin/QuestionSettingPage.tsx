@@ -8,7 +8,7 @@ import { AdminRouter } from 'components/adminRouter';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, Heading, PageContainer, Question } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
-import { useState } from 'react';
+import React, { createRef, useState } from 'react';
 import { trpc } from 'utils/trpc';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
@@ -117,10 +117,18 @@ function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
 
 const schema = z.object({
   question: z.string().min(2),
-  candidates: z.array(z.object({ name: z.string().min(1), innerId: z.number() })).min(2),
+  candidates: z.array(z.object({ name: z.string().min(1) })).min(2),
 });
 
-type FormValues = TypeOf<typeof schema>;
+type CandidateInnerData = {
+  name: string;
+  innerId: number;
+  inputRef: React.RefObject<HTMLInputElement>;
+  forceSelect: boolean;
+};
+interface FormValues extends TypeOf<typeof schema> {
+  candidates: CandidateInnerData[];
+}
 
 let id = 0;
 const getId = () => id++;
@@ -145,72 +153,92 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
         initialValues={{
           question: '',
           candidates: [
-            { innerId: getId(), name: '' },
-            { innerId: getId(), name: '' },
+            { innerId: getId(), name: '', inputRef: createRef(), forceSelect: true },
+            { innerId: getId(), name: '', inputRef: createRef(), forceSelect: false },
           ],
         }}
         onSubmit={onSubmit}
         validationSchema={toFormikValidationSchema(schema)}
         validateOnMount={true}
       >
-        {(form) => (
-          <Form>
-            <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
-              <Field
-                className="input input-bordered w-full sm:w-96"
-                placeholder="Question"
-                name="question"
-                value={form.values.question}
-                onChange={form.handleChange}
-              />
+        {(form) => {
+          const addCandidate = (forceSelect: boolean) => {
+            const data: CandidateInnerData = { innerId: getId(), name: '', inputRef: createRef(), forceSelect };
+            form.setFieldValue('candidates', [...form.values.candidates, data]);
+          };
 
-              <div className="gap-2 flex flex-col">
-                {form.values.candidates.map((candidate, index) => (
-                  <div key={candidate.innerId} className="flex gap-2">
-                    <Field
-                      className="input input-bordered w-full sm:w-96"
-                      placeholder="Candidate"
-                      name={`candidates.${index}.name`}
-                      value={candidate.name}
-                      onChange={form.handleChange}
-                    />
-                    <Button
-                      type="button"
-                      disabled={submitting}
-                      onClick={() => {
-                        form.setFieldValue(
-                          'candidates',
-                          form.values.candidates.filter((c) => c.innerId !== candidate.innerId)
-                        );
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
+          return (
+            <Form>
+              <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
+                <Field
+                  className="input input-bordered w-full sm:w-96"
+                  placeholder="Question"
+                  name="question"
+                  value={form.values.question}
+                  onChange={form.handleChange}
+                />
+
+                <div className="gap-2 flex flex-col">
+                  {form.values.candidates.map((candidate, index) => (
+                    <div key={candidate.innerId} className="flex gap-2">
+                      <input
+                        className="input input-bordered w-full sm:w-96"
+                        placeholder="Candidate"
+                        name={`candidates.${index}.name`}
+                        value={candidate.name}
+                        onChange={form.handleChange}
+                        ref={(el) => {
+                          // Unfortunately any is necessary here, because current is set to readonly in react
+                          (candidate.inputRef as any).current = el;
+
+                          if (candidate.forceSelect) {
+                            el?.focus();
+                          }
+                        }}
+                        // select next input on tab
+                        onKeyDown={(e) => {
+                          if (e.key === 'Tab') {
+                            e.preventDefault();
+                            const nextInput = form.values.candidates[index + 1]?.inputRef.current;
+                            if (nextInput) {
+                              nextInput.focus();
+                            } else {
+                              addCandidate(true);
+                            }
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => {
+                          form.setFieldValue(
+                            'candidates',
+                            form.values.candidates.filter((c) => c.innerId !== candidate.innerId)
+                          );
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button className="btn-info" disabled={submitting} type="button" onClick={() => addCandidate(true)}>
+                    Add candidate
+                  </Button>
+                </div>
+
                 <Button
-                  className="btn-info"
-                  disabled={submitting}
-                  type="button"
-                  onClick={() => {
-                    form.setFieldValue('candidates', [...form.values.candidates, { innerId: getId(), name: '' }]);
-                  }}
+                  className="w-32 btn-primary"
+                  type="submit"
+                  disabled={submitting || Object.values(form.errors).length > 0}
+                  isLoading={submitting}
                 >
-                  Add candidate
+                  Create
                 </Button>
-              </div>
-
-              <Button
-                className="w-32 btn-primary"
-                type="submit"
-                disabled={submitting || Object.values(form.errors).length > 0}
-                isLoading={submitting}
-              >
-                Create
-              </Button>
-            </fieldset>
-          </Form>
-        )}
+              </fieldset>
+            </Form>
+          );
+        }}
       </Formik>
       {data.previousResults && (
         <div className="mt-8 flex flex-col items-center">
