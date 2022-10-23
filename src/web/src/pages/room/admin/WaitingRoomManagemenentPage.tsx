@@ -136,7 +136,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
           {users.map((user) => (
             <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
               <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
-              <div className="">{locationEnumLabel[user.details.location]}</div>
+              <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>
               <div className="gap-4">
                 <Button
                   className="btn-primary"
@@ -167,10 +167,8 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
         <Heading>Voters</Heading>
         {voters.map((user) => (
           <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
-            <div className="flex-1">
-              <Email email={user.details.studentEmail} className="ml-2 mr-auto" />
-              <div className="">{locationEnumLabel[user.details.location]}</div>
-            </div>
+            <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
+            <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>
             <div className="gap-4">
               <Button
                 className="btn-error"
