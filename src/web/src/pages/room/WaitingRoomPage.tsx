@@ -1,6 +1,6 @@
 import { RoomUserResolvedState } from '@server/live-room/user';
 import type { PublicStaticRoomData } from '@server/rooms';
-import { Heading, PageContainer } from 'components/styles';
+import { CenteredPageContainer, Heading } from 'components/styles';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routeBuilders } from 'routes';
@@ -36,27 +36,27 @@ export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: str
 
   if (!state) {
     return (
-      <PageContainer>
+      <CenteredPageContainer>
         <Heading>Waiting to be accepted...</Heading>
-      </PageContainer>
+      </CenteredPageContainer>
     );
   }
 
   return RoomUserResolvedState.match(state, {
     declined: () => (
-      <PageContainer>
+      <CenteredPageContainer>
         <Heading>Sorry, you were declined.</Heading>
-      </PageContainer>
+      </CenteredPageContainer>
     ),
     admitted: () => (
-      <PageContainer>
+      <CenteredPageContainer>
         <Heading>Admitted</Heading>
-      </PageContainer>
+      </CenteredPageContainer>
     ),
     kicked: () => (
-      <PageContainer>
+      <CenteredPageContainer>
         <Heading>Sorry, you were kicked.</Heading>
-      </PageContainer>
+      </CenteredPageContainer>
     ),
   });
 }

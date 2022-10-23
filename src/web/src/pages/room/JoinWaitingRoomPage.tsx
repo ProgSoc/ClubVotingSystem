@@ -1,5 +1,5 @@
 import { UserLocation } from '@prisma/client';
-import { Button, Heading, PageContainer } from 'components/styles';
+import { Button, CenteredPageContainer, Heading } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import { routeBuilders } from 'routes';
@@ -39,7 +39,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
   console.log(UserLocation);
 
   return (
-    <PageContainer className="gap-4">
+    <CenteredPageContainer className="gap-4">
       <Heading>Join voting room</Heading>
       <fieldset className="w-full" disabled={disabled}>
         <Formik<FormValues>
@@ -89,6 +89,6 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
           )}
         </Formik>
       </fieldset>
-    </PageContainer>
+    </CenteredPageContainer>
   );
 }

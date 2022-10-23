@@ -1,5 +1,5 @@
 import type { PublicStaticRoomData } from '@server/rooms';
-import { Heading, PageContainer } from 'components/styles';
+import { CenteredPageContainer, Heading } from 'components/styles';
 
 import { trpc } from './trpc';
 
@@ -18,9 +18,9 @@ export function withRoomFetched<Props extends { room: PublicStaticRoomData }>(Co
     const room = cachedRooms[props.roomId];
     if (!room) {
       return (
-        <PageContainer>
+        <CenteredPageContainer>
           <Heading>Loading room...</Heading>
-        </PageContainer>
+        </CenteredPageContainer>
       );
     } else {
       return <Component room={room} {...(props as any)} />;

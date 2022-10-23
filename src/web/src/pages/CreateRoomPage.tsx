@@ -1,4 +1,4 @@
-import { Button, Heading, PageContainer } from 'components/styles';
+import { Button, CenteredPageContainer, Heading } from 'components/styles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routeBuilders } from 'routes';
@@ -22,7 +22,7 @@ export function CreateRoomPage() {
   const disabled = mutation.isLoading || mutation.isSuccess;
 
   return (
-    <PageContainer className="gap-4">
+    <CenteredPageContainer className="gap-4">
       <Heading>Create a new room</Heading>
       <fieldset disabled={disabled} className="gap-2 w-full flex sm:flex-row flex-col justify-center items-center">
         <input
@@ -40,6 +40,6 @@ export function CreateRoomPage() {
           Create
         </Button>
       </fieldset>
-    </PageContainer>
+    </CenteredPageContainer>
   );
 }

@@ -6,7 +6,7 @@ import type { GetStatesUnion } from '@server/state';
 import { makeStates, state } from '@server/state';
 import { AdminRouter } from 'components/adminRouter';
 import { ResultsViewer } from 'components/ResultsViewer';
-import { AdminPageContainer, Button, Heading, Question } from 'components/styles';
+import { Button, Heading, PageContainer, Question } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useState } from 'react';
 import { trpc } from 'utils/trpc';
@@ -99,10 +99,10 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
 export function QuestionSettingPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
   const data = useQuestionSetter(props);
   return (
-    <AdminPageContainer>
+    <PageContainer>
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
       <QuestionSetter data={data} />
-    </AdminPageContainer>
+    </PageContainer>
   );
 }
 

@@ -97,7 +97,7 @@ function AnimationRouter() {
               : state === 'exited'
               ? styles.exited
               : undefined;
-          return <div className={twMerge('absolute h-full', style)}>{currentOutlet}</div>;
+          return <div className={twMerge('absolute min-h-full', style)}>{currentOutlet}</div>;
         }}
       </CSSTransition>
     </TransitionGroup>

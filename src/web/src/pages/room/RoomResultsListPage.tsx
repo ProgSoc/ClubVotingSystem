@@ -1,13 +1,13 @@
 import type { PublicStaticRoomData } from '@server/rooms';
 import { ResultsViewer } from 'components/ResultsViewer';
-import { AdminPageContainer, Heading, Question } from 'components/styles';
+import { Heading, PageContainer, Question } from 'components/styles';
 import { trpc } from 'utils/trpc';
 
 export function RoomResultsListPage(props: { roomId: string; room: PublicStaticRoomData }) {
   const roomResults = trpc.useQuery(['room.getResults', { roomId: props.roomId }]);
 
   return (
-    <AdminPageContainer className="gap-4">
+    <PageContainer className="gap-4">
       <Heading>{props.room.name}</Heading>
       <div className="flex flex-col gap-8">
         {!roomResults.data ? (
@@ -21,6 +21,6 @@ export function RoomResultsListPage(props: { roomId: string; room: PublicStaticR
           ))
         )}
       </div>
-    </AdminPageContainer>
+    </PageContainer>
   );
 }

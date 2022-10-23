@@ -2,7 +2,7 @@ import { BoardState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { QRCodeRender } from 'components/QRCode';
 import { ResultsViewer } from 'components/ResultsViewer';
-import { Heading, PageContainer, Question } from 'components/styles';
+import { CenteredPageContainer, Heading, Question } from 'components/styles';
 import { useState } from 'react';
 import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
@@ -10,7 +10,7 @@ import { trpc } from 'utils/trpc';
 
 export function BoardPage(props: { roomId: string; room: PublicStaticRoomData }) {
   return (
-    <PageContainer className="gap-4">
+    <CenteredPageContainer className="gap-4">
       <div className="lg:hidden text-error">This page is not mobile friendly lol</div>
       <Heading className="text-accent">{props.room.name}</Heading>
       <div className="w-full flex flex-row items-center">
@@ -21,7 +21,7 @@ export function BoardPage(props: { roomId: string; room: PublicStaticRoomData })
           <StatusPanel room={props.room} />
         </div>
       </div>
-    </PageContainer>
+    </CenteredPageContainer>
   );
 }
 

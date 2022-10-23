@@ -4,14 +4,18 @@ type BaseProps<T = {}> = React.PropsWithChildren<T> & {
   className?: string;
 };
 
-export const PageContainer = ({ children, className }: BaseProps) => (
-  <div className={twMerge('flex flex-col items-center justify-center text-center h-full w-screen p-8', className)}>
+export const CenteredPageContainer = ({ children, className }: BaseProps) => (
+  <div
+    className={twMerge('flex flex-col items-center justify-center text-center min-h-screen w-screen p-16', className)}
+  >
     {children}
   </div>
 );
 
-export const AdminPageContainer = ({ children, className }: BaseProps) => (
-  <div className={twMerge('flex flex-col items-center text-center h-full w-screen p-8', className)}>{children}</div>
+export const PageContainer = ({ children, className }: BaseProps) => (
+  <div className={twMerge('flex flex-col items-center text-center min-h-screen w-screen p-16', className)}>
+    {children}
+  </div>
 );
 
 export const Heading = ({ children, className }: BaseProps) => (

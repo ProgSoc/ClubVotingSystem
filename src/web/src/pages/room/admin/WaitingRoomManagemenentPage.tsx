@@ -1,7 +1,7 @@
 import type { RoomUserWithDetails } from '@server/live-room/user';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { AdminRouter } from 'components/adminRouter';
-import { AdminPageContainer, Button, Heading } from 'components/styles';
+import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { locationEnumLabel } from 'utils/enumLabels';
@@ -127,7 +127,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
   const { users, voters, admitUser, declineUser, kickVoter } = useUserWaitingRoom(props);
 
   return (
-    <AdminPageContainer>
+    <PageContainer>
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
 
       <div className="flex flex-col items-center w-full gap-4">
@@ -184,6 +184,6 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: PublicS
           </div>
         ))}
       </div>
-    </AdminPageContainer>
+    </PageContainer>
   );
 }

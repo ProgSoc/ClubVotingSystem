@@ -1,7 +1,7 @@
 import { BoardState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { AdminRouter } from 'components/adminRouter';
-import { AdminPageContainer, Button, Heading } from 'components/styles';
+import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
 import { routeBuilders } from 'routes';
 import { trpc } from 'utils/trpc';
@@ -23,7 +23,7 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
 
   return (
-    <AdminPageContainer className="gap-4">
+    <PageContainer className="gap-4">
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
       <p>People admitted into the room: {roomVoters}</p>
 
@@ -38,6 +38,6 @@ export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData
           <Button>View Results</Button>
         </a>
       </div>
-    </AdminPageContainer>
+    </PageContainer>
   );
 }

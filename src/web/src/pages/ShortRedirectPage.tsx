@@ -1,4 +1,4 @@
-import { Heading, PageContainer } from 'components/styles';
+import { CenteredPageContainer, Heading } from 'components/styles';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { trpc } from 'utils/trpc';
@@ -22,10 +22,10 @@ export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
   }, [roomQuery.data?.id]);
 
   return (
-    <PageContainer className="gap-2">
+    <CenteredPageContainer className="gap-2">
       <Heading>Redirecting...</Heading>
       {roomQuery.data && !roomQuery.data.id && <p>Room not found</p>}
-    </PageContainer>
+    </CenteredPageContainer>
   );
 }
 

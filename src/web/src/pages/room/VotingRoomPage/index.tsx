@@ -1,7 +1,7 @@
 import type { ShowingResultsState } from '@server/live-room/live-states';
 import type { PublicStaticRoomData } from '@server/rooms';
 import { ResultsViewer } from 'components/ResultsViewer';
-import { Button, Heading, PageContainer, Question } from 'components/styles';
+import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { routeBuilders } from 'routes';
@@ -28,9 +28,9 @@ export function VotingRoomPage(props: { roomId: string; userId: string; room: Pu
   }, [VotingPageState.is.kicked(data)]);
 
   return (
-    <PageContainer className="justify-start sm:justify-center pt-32 sm:pt-4">
+    <CenteredPageContainer className="pt-32 sm:pt-4">
       <QuestionVoter data={data} />
-    </PageContainer>
+    </CenteredPageContainer>
   );
 }
 
