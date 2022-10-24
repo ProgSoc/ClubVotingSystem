@@ -193,6 +193,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 
                           if (candidate.forceSelect) {
                             el?.focus();
+                            candidate.forceSelect = false;
                           }
                         }}
                         // select next input on tab
