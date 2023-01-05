@@ -1,5 +1,6 @@
 import { QuestionType } from '@prisma/client';
 import * as trpc from '@trpc/server';
+import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
 import type { LiveRoom } from '../live-room';
@@ -23,12 +24,12 @@ const roomUsersAdminRouter = trpc
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
-      return new trpc.Subscription<RoomUsersList>(async (emit) => {
-        const unsubscribe = await room.listenWaitingRoomAdmin((users) => {
-          emit.data(users);
+      return observable<RoomUsersList>((emit) => {
+        const unsubscribe = room.listenWaitingRoomAdmin((users) => {
+          emit.next(users);
         });
 
-        return unsubscribe;
+        return async () => (await unsubscribe)();
       });
     },
   })

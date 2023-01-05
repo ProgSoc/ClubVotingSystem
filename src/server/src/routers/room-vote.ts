@@ -1,4 +1,5 @@
 import * as trpc from '@trpc/server';
+import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
 import type { VoterState } from '../live-room/live-states';
@@ -14,11 +15,12 @@ export const roomVoteRouter = trpc
     }),
     async resolve({ ctx, input }) {
       const room = await getLiveRoomOrError(input.roomId);
-      return new trpc.Subscription<VoterState>(async (emit) => {
-        const unsubscribe = await room.listenVoter(input.voterId, (state) => {
-          emit.data(state);
+      return observable<VoterState>((emit) => {
+        const unsubscribe = room.listenVoter(input.voterId, (state) => {
+          emit.next(state);
         });
-        return unsubscribe;
+
+        return async () => (await unsubscribe)();
       });
     },
   })

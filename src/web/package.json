@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@trpc/client": "^9.27.4",
+    "@trpc/client": "^10.7.0",
     "@trpc/react": "^9.27.4",
     "@types/qrcode": "^1.5.0",
     "@types/react-transition-group": "^4.4.5",
