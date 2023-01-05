@@ -1,5 +1,4 @@
 import { UserLocation } from '@prisma/client';
-import * as trpc from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
@@ -7,14 +6,16 @@ import type { BoardState } from '../live-room/live-states';
 import { getAllResultsForRoom } from '../live-room/question';
 import type { PublicStaticRoomData } from '../rooms';
 import { createLiveRoom, getLiveRoomOrError, getRoomById, getRoomByShortId } from '../rooms';
+import { publicProcedure, router } from '../trpc';
 
-export const roomRouter = trpc
-  .router()
-  .mutation('create', {
-    input: z.object({
-      name: z.string().min(1),
-    }),
-    async resolve({ input }) {
+export const roomRouter = router({
+  create: publicProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await createLiveRoom(input.name);
       const publicData: PublicStaticRoomData = {
         id: room.id,
@@ -26,33 +27,39 @@ export const roomRouter = trpc
         ...publicData,
         adminKey: room.adminKey,
       };
-    },
-  })
-  .query('getRoomByShortId', {
-    input: z.object({
-      shortId: z.string(),
     }),
-    async resolve({ input }) {
+
+  getRoomByShortId: publicProcedure
+    .input(
+      z.object({
+        shortId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
       const room = await getRoomByShortId(input.shortId);
       return room;
-    },
-  })
-  .query('getRoomById', {
-    input: z.object({
-      id: z.string(),
     }),
-    async resolve({ input }) {
+
+  getRoomById: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
       const room = await getRoomById(input.id);
       return room;
-    },
-  })
-  .mutation('joinWaitingList', {
-    input: z.object({
-      roomId: z.string(),
-      studentEmail: z.string().email(),
-      location: z.nativeEnum(UserLocation),
     }),
-    async resolve({ input }) {
+
+  joinWaitingList: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        studentEmail: z.string().email(),
+        location: z.nativeEnum(UserLocation),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
 
       const user = await room.joinWaitingRoom({
@@ -60,21 +67,25 @@ export const roomRouter = trpc
         location: input.location,
       });
       return user;
-    },
-  })
-  .query('getResults', {
-    input: z.object({
-      roomId: z.string(),
     }),
-    async resolve({ input }) {
+
+  getResults: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
       return getAllResultsForRoom(input.roomId);
-    },
-  })
-  .subscription('listenBoardEvents', {
-    input: z.object({
-      roomId: z.string(),
     }),
-    async resolve({ input }) {
+
+  listenBoardEvents: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+      })
+    )
+    .subscription(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       return observable<BoardState>((emit) => {
         const unsubscribe = room.listenBoard((state) => {
@@ -82,5 +93,5 @@ export const roomRouter = trpc
         });
         return async () => (await unsubscribe)();
       });
-    },
-  });
+    }),
+});

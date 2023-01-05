@@ -11,13 +11,10 @@ export function WaitingRoomPage(props: { room: PublicStaticRoomData; roomId: str
 
   const [state, setState] = useState<RoomUserResolvedState | null>(null);
 
-  const response = trpc.useQuery([
-    'waitingRoom.waitResponse',
-    {
-      roomId: props.roomId,
-      userId: props.userId,
-    },
-  ]);
+  const response = trpc.waitingRoom.waitResponse.useQuery({
+    roomId: props.roomId,
+    userId: props.userId,
+  });
 
   useEffect(() => {
     if (response.data) {

@@ -1,5 +1,3 @@
-import * as trpc from '@trpc/server';
-import { initTRPC } from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
@@ -12,27 +10,16 @@ import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
 import { roomVoteRouter } from './routers/room-vote';
 import { roomWaitingListRouter } from './routers/room-waiting';
-
-const t = initTRPC.context().create({});
-
-export const router = t.router;
-export const mergeRouters = t.mergeRouters;
-export const publicProcedure = t.procedure;
-
-const legacyRouter = trpc
-  .router()
-  .merge('room.', roomRouter)
-  .merge('waitingRoom.', roomWaitingListRouter)
-  .merge('vote.', roomVoteRouter)
-  .merge('admin.', roomAdminRouter)
-  .interop();
+import { mergeRouters, router } from './trpc';
 
 const mainRouter = router({
-  greeting: publicProcedure.query(() => 'hello from tRPC v10!'),
+  waitingRoom: roomWaitingListRouter,
+  room: roomRouter,
+  vote: roomVoteRouter,
+  admin: roomAdminRouter,
 });
 
-// Merge v9 router with v10 router
-export const appRouter = mergeRouters(legacyRouter, mainRouter);
+export const appRouter = mergeRouters(mainRouter);
 
 export type AppRouter = typeof appRouter;
 

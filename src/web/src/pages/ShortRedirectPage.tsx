@@ -12,7 +12,7 @@ interface ShortRedirectPageProps {
 export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
   const navigate = useNavigate();
 
-  const roomQuery = trpc.useQuery(['room.getRoomByShortId', { shortId: props.shortId }]);
+  const roomQuery = trpc.room.getRoomByShortId.useQuery({ shortId: props.shortId });
 
   useEffect(() => {
     if (roomQuery.data?.id) {

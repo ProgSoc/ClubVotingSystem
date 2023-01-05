@@ -35,17 +35,20 @@ const QuestionSettingPageState = makeStates('qsps', {
 function useQuestionSetter(props: { roomId: string; adminKey: string }): QuestionSettingPageState {
   const [state, setState] = useState<BoardState | null>(null);
 
-  const createQuestionMutation = trpc.useMutation(['admin.questions.createQuestion']);
-  const closeQuestionMutation = trpc.useMutation(['admin.questions.closeQuestion']);
+  const createQuestionMutation = trpc.admin.questions.createQuestion.useMutation();
+  const closeQuestionMutation = trpc.admin.questions.closeQuestion.useMutation();
 
-  trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
-    onNext: (data) => {
-      setState(data);
-    },
-    onError: (err) => {
-      console.error(err);
-    },
-  });
+  trpc.room.listenBoardEvents.useSubscription(
+    { roomId: props.roomId },
+    {
+      onData: (data) => {
+        setState(data);
+      },
+      onError: (err) => {
+        console.error(err);
+      },
+    }
+  );
 
   if (!state) {
     return QuestionSettingPageState.loading({});

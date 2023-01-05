@@ -19,7 +19,7 @@ type FormValues = TypeOf<typeof schema>;
 export function JoinWaitingRoomPage(props: { roomId: string }) {
   const navigate = useNavigate();
 
-  const mutation = trpc.useMutation(['room.joinWaitingList']);
+  const mutation = trpc.room.joinWaitingList.useMutation();
 
   const disabled = mutation.isLoading || mutation.isSuccess;
 

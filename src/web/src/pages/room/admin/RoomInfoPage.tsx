@@ -9,16 +9,19 @@ import { trpc } from 'utils/trpc';
 export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
   const [roomVoters, setRoomVoters] = useState(0);
 
-  trpc.useSubscription(['room.listenBoardEvents', { roomId: props.roomId }], {
-    onNext: (data) => {
-      BoardState.match(data, {
-        blank: (data) => setRoomVoters(data.totalPeople),
-        showingQuestion: (data) => setRoomVoters(data.totalPeople),
-        showingResults: (data) => setRoomVoters(data.totalPeople),
-        ended: (data) => setRoomVoters(0),
-      });
-    },
-  });
+  trpc.room.listenBoardEvents.useSubscription(
+    { roomId: props.roomId },
+    {
+      onData: (data) => {
+        BoardState.match(data, {
+          blank: (data) => setRoomVoters(data.totalPeople),
+          showingQuestion: (data) => setRoomVoters(data.totalPeople),
+          showingResults: (data) => setRoomVoters(data.totalPeople),
+          ended: (data) => setRoomVoters(0),
+        });
+      },
+    }
+  );
 
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
 
