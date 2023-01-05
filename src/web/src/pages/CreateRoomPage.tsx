@@ -10,7 +10,7 @@ export function CreateRoomPage() {
   const [pageName, setPageName] = useState('');
   const navigate = useNavigate();
 
-  const mutation = trpc.useMutation(['room.create']);
+  const mutation = trpc.room.create.useMutation();
 
   const onSubmit = async () => {
     const result = await mutation.mutateAsync({ name: pageName.trim() });

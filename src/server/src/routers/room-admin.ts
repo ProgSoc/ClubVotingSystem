@@ -1,10 +1,11 @@
 import { QuestionType } from '@prisma/client';
-import * as trpc from '@trpc/server';
+import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
 import type { LiveRoom } from '../live-room';
 import type { RoomUsersList } from '../live-room/user';
 import { getLiveRoomOrError } from '../rooms';
+import { publicProcedure, router } from '../trpc';
 
 function validateAdminKey(room: LiveRoom, adminKey: string): void {
   if (room.adminKey !== adminKey) {
@@ -12,86 +13,91 @@ function validateAdminKey(room: LiveRoom, adminKey: string): void {
   }
 }
 
-const roomUsersAdminRouter = trpc
-  .router()
-  .subscription('listenWaitingRoom', {
-    input: z.object({
-      roomId: z.string(),
-      adminKey: z.string(),
-    }),
-    async resolve({ input }) {
+const roomUsersAdminRouter = router({
+  listenWaitingRoom: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        adminKey: z.string(),
+      })
+    )
+    .subscription(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
-      return new trpc.Subscription<RoomUsersList>(async (emit) => {
-        const unsubscribe = await room.listenWaitingRoomAdmin((users) => {
-          emit.data(users);
+      return observable<RoomUsersList>((emit) => {
+        const unsubscribe = room.listenWaitingRoomAdmin((users) => {
+          emit.next(users);
         });
 
-        return unsubscribe;
+        return async () => (await unsubscribe)();
       });
-    },
-  })
-  .mutation('admitUser', {
-    input: z.object({
-      adminKey: z.string(),
-      roomId: z.string(),
-      userId: z.string(),
     }),
-    async resolve({ input }) {
+  admitUser: publicProcedure
+    .input(
+      z.object({
+        adminKey: z.string(),
+        roomId: z.string(),
+        userId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
       await room.admitWaitingRoomUser(input.userId);
-    },
-  })
-  .mutation('declineUser', {
-    input: z.object({
-      adminKey: z.string(),
-      roomId: z.string(),
-      userId: z.string(),
     }),
-    async resolve({ input }) {
+  declineUser: publicProcedure
+    .input(
+      z.object({
+        adminKey: z.string(),
+        roomId: z.string(),
+        userId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
       await room.declineWaitingRoomUser(input.userId);
-    },
-  })
-  .mutation('kickVoter', {
-    input: z.object({
-      adminKey: z.string(),
-      roomId: z.string(),
-      userId: z.string(),
     }),
-    async resolve({ input }) {
+  kickVoter: publicProcedure
+    .input(
+      z.object({
+        adminKey: z.string(),
+        roomId: z.string(),
+        userId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
       await room.kickVoter(input.userId);
-    },
-  });
-
-const roomQuestionsAdminRouter = trpc
-  .router()
-  .mutation('createQuestion', {
-    input: z.object({
-      roomId: z.string(),
-      adminKey: z.string(),
-      question: z.string().min(1),
-      details: z.union([
-        z.object({
-          type: z.literal(QuestionType.SingleVote),
-        }),
-
-        // TODO: Add more types. Having a duplicate here so that zod doesnt complain.
-        z.object({
-          type: z.literal(QuestionType.SingleVote),
-        }),
-      ]),
-      candidates: z.array(z.string().min(1)).min(1),
     }),
-    async resolve({ input }) {
+});
+
+export const roomQuestionsAdminRouter = router({
+  createQuestion: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        adminKey: z.string(),
+        question: z.string().min(1),
+        details: z.union([
+          z.object({
+            type: z.literal(QuestionType.SingleVote),
+          }),
+
+          // TODO: Add more types. Having a duplicate here so that zod doesnt complain.
+          z.object({
+            type: z.literal(QuestionType.SingleVote),
+          }),
+        ]),
+        candidates: z.array(z.string().min(1)).min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
@@ -100,23 +106,25 @@ const roomQuestionsAdminRouter = trpc
         details: input.details,
         candidates: input.candidates,
       });
-    },
-  })
-  .mutation('closeQuestion', {
-    input: z.object({
-      roomId: z.string(),
-      adminKey: z.string(),
-      questionId: z.string(),
     }),
-    async resolve({ input }) {
+
+  closeQuestion: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        adminKey: z.string(),
+        questionId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
       const room = await getLiveRoomOrError(input.roomId);
       validateAdminKey(room, input.adminKey);
 
       await room.closeCurrentQuestion(input.questionId);
-    },
-  });
+    }),
+});
 
-export const roomAdminRouter = trpc
-  .router()
-  .merge('users.', roomUsersAdminRouter)
-  .merge('questions.', roomQuestionsAdminRouter);
+export const roomAdminRouter = router({
+  users: roomUsersAdminRouter,
+  questions: roomQuestionsAdminRouter,
+});

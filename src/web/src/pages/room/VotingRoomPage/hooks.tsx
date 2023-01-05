@@ -32,7 +32,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
   const [lastVote, setLastVote] = useState<LastVote | null>(null);
   const voteLock = useRef<Promise<void>>(Promise.resolve());
 
-  const castVoteMutation = trpc.useMutation(['vote.castVote']);
+  const castVoteMutation = trpc.vote.castVote.useMutation();
 
   const runSyncAsync = async (fn: () => Promise<void>) => {
     const promise = voteLock.current.catch(() => {}).then(fn);
@@ -40,14 +40,17 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
     await promise;
   };
 
-  trpc.useSubscription(['vote.listen', { roomId: props.roomId, voterId: props.voterId }], {
-    onNext: (data) => {
-      setState(data);
-    },
-    onError: (err) => {
-      console.error(err);
-    },
-  });
+  trpc.vote.listen.useSubscription(
+    { roomId: props.roomId, voterId: props.voterId },
+    {
+      onData: (data) => {
+        setState(data);
+      },
+      onError: (err) => {
+        console.error(err);
+      },
+    }
+  );
 
   const { isInitialVoteLoading } = useFetchInitialVote(props, state, setLastVote);
 
@@ -113,17 +116,14 @@ function useFetchInitialVote(
 ) {
   const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForVoterState({}));
 
-  const initialVoteQuery = trpc.useQuery(
-    [
-      'vote.getMyVote',
-      {
-        roomId: props.roomId,
-        voterId: props.voterId,
+  const initialVoteQuery = trpc.vote.getMyVote.useQuery(
+    {
+      roomId: props.roomId,
+      voterId: props.voterId,
 
-        // If we're not fetching, then the query is disabled anyway and this arg doesnt matter
-        questionId: InitialVoteFetchState.is.fetching(fetchState) ? fetchState.questionId : '',
-      },
-    ],
+      // If we're not fetching, then the query is disabled anyway and this arg doesnt matter
+      questionId: InitialVoteFetchState.is.fetching(fetchState) ? fetchState.questionId : '',
+    },
     {
       enabled: InitialVoteFetchState.is.fetching(fetchState),
     }

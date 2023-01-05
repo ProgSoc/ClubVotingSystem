@@ -56,14 +56,17 @@ function JoinPanel(props: { room: PublicStaticRoomData; className?: string }) {
 function StatusPanel(props: { room: PublicStaticRoomData }) {
   const [state, setState] = useState<BoardState | null>(null);
 
-  trpc.useSubscription(['room.listenBoardEvents', { roomId: props.room.id }], {
-    onNext: (data) => {
-      setState(data);
-    },
-    onError: (err) => {
-      console.error(err);
-    },
-  });
+  trpc.room.listenBoardEvents.useSubscription(
+    { roomId: props.room.id },
+    {
+      onData: (data) => {
+        setState(data);
+      },
+      onError: (err) => {
+        console.error(err);
+      },
+    }
+  );
 
   if (!state) {
     return <Heading>Loading...</Heading>;

@@ -1,4 +1,3 @@
-import * as trpc from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
@@ -11,13 +10,16 @@ import { roomRouter } from './routers/room';
 import { roomAdminRouter } from './routers/room-admin';
 import { roomVoteRouter } from './routers/room-vote';
 import { roomWaitingListRouter } from './routers/room-waiting';
+import { mergeRouters, router } from './trpc';
 
-const appRouter = trpc
-  .router()
-  .merge('room.', roomRouter)
-  .merge('waitingRoom.', roomWaitingListRouter)
-  .merge('vote.', roomVoteRouter)
-  .merge('admin.', roomAdminRouter);
+const mainRouter = router({
+  waitingRoom: roomWaitingListRouter,
+  room: roomRouter,
+  vote: roomVoteRouter,
+  admin: roomAdminRouter,
+});
+
+export const appRouter = mergeRouters(mainRouter);
 
 export type AppRouter = typeof appRouter;
 

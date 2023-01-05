@@ -4,7 +4,7 @@ import { Heading, PageContainer, Question } from 'components/styles';
 import { trpc } from 'utils/trpc';
 
 export function RoomResultsListPage(props: { roomId: string; room: PublicStaticRoomData }) {
-  const roomResults = trpc.useQuery(['room.getResults', { roomId: props.roomId }]);
+  const roomResults = trpc.room.getResults.useQuery({ roomId: props.roomId });
 
   return (
     <PageContainer className="gap-4">
