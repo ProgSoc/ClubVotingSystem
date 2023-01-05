@@ -1,5 +1,6 @@
 import { UserLocation } from '@prisma/client';
 import * as trpc from '@trpc/server';
+import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
 import type { BoardState } from '../live-room/live-states';
@@ -75,11 +76,11 @@ export const roomRouter = trpc
     }),
     async resolve({ input }) {
       const room = await getLiveRoomOrError(input.roomId);
-      return new trpc.Subscription<BoardState>(async (emit) => {
-        const unsubscribe = await room.listenBoard((state) => {
-          emit.data(state);
+      return observable<BoardState>((emit) => {
+        const unsubscribe = room.listenBoard((state) => {
+          emit.next(state);
         });
-        return unsubscribe;
+        return async () => (await unsubscribe)();
       });
     },
   });
