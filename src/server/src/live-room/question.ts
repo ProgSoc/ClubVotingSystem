@@ -79,6 +79,8 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
   const votesWithoutAbstain = uniqueVoters.size;
   const votesWithAbstain = question.interactions.length;
 
+  console.log(question.interactions);
+
   // The abstain count includes both people explicitly selecting abstain and people who haven't interacted with the question
   const abstainCount = Math.max(0, question.votersPresentAtEnd - votesWithoutAbstain);
 
@@ -221,7 +223,6 @@ export async function closeQuestion(questionId: string, votersPresent: number): 
     data: { closed: true, votersPresentAtEnd: votersPresent },
     include: prismaQuestionInclude,
   });
-
   return mapPrismaQuestionInclude(question);
 }
 

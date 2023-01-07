@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { getLiveRoomOrError } from '../rooms';
+import { operations } from '../room';
 import { publicProcedure, router } from '../trpc';
 
 export const roomWaitingListRouter = router({
@@ -12,14 +12,16 @@ export const roomWaitingListRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const room = await getLiveRoomOrError(input.roomId);
+      return operations.waitForAdmission(input.roomId, input.userId);
 
-      const result = await room.waitForWaitingRoomUser(input.userId);
+      // const room = await getLiveRoomOrError(input.roomId);
 
-      if (!result) {
-        throw new Error('User not found');
-      }
+      // const result = await room.waitForWaitingRoomUser(input.userId);
 
-      return result;
+      // if (!result) {
+      //   throw new Error('User not found');
+      // }
+
+      // return result;
     }),
 });
