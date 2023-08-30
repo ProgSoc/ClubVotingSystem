@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createWSClient, httpBatchLink, wsLink } from '@trpc/client';
+import { createWSClient, wsLink } from '@trpc/client/links/wsLink';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
@@ -20,11 +20,13 @@ const wsClient = createWSClient({
 
 const trpcClient = trpc.createClient({
   links: [
+    // httpBatchLink({
+    //   url: `${secure ? 'https' : 'http'}://${trpcHost}/trpc`,
+    // }),
     wsLink({
-      client: wsClient,
-    }),
-    httpBatchLink({
-      url: `${secure ? 'https' : 'http'}://${trpcHost}/trpc`,
+      client: createWSClient({
+        url: `${secure ? 'wss' : 'ws'}://${trpcHost}/trpc/socket`,
+      }),
     }),
   ],
 });
