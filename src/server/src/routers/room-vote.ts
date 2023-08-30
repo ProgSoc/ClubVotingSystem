@@ -22,15 +22,6 @@ export const roomVoteRouter = router({
 
         return unsubscribe;
       });
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // return observable<VoterState>((emit) => {
-      //   const unsubscribe = room.listenVoter(input.voterId, (state) => {
-      //     emit.next(state);
-      //   });
-
-      //   return async () => (await unsubscribe)();
-      // });
     }),
   getMyVote: publicProcedure
     .input(
@@ -42,8 +33,6 @@ export const roomVoteRouter = router({
     )
     .query(async ({ input: { roomId, voterId, questionId } }) => {
       return operations.withRoomVoterFunctions(roomId, (fns) => fns.getQuestionVote(questionId, voterId));
-      // const room = await getLiveRoomOrError(roomId);
-      // return room.getVoterVote(voterId, questionId);
     }),
   castVote: publicProcedure
     .input(
@@ -58,7 +47,5 @@ export const roomVoteRouter = router({
       return operations.withRoomVoterFunctions(input.roomId, (fns) =>
         fns.castVote(input.voterId, input.questionId, input.response)
       );
-      // const room = await getLiveRoomOrError(input.roomId);
-      // const result = await room.castVote(input.questionId, input.voterId, input.response);
     }),
 });

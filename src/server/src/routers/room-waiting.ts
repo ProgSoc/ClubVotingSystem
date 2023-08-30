@@ -13,15 +13,5 @@ export const roomWaitingListRouter = router({
     )
     .query(async ({ input }) => {
       return operations.waitForAdmission(input.roomId, input.userId);
-
-      // const room = await getLiveRoomOrError(input.roomId);
-
-      // const result = await room.waitForWaitingRoomUser(input.userId);
-
-      // if (!result) {
-      //   throw new Error('User not found');
-      // }
-
-      // return result;
     }),
 });

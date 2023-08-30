@@ -16,18 +16,6 @@ export const roomRouter = router({
     )
     .mutation(async ({ input }) => {
       return operations.createNewRoom(input.name);
-
-      // const room = await createLiveRoom(input.name);
-      // const publicData: PublicStaticRoomData = {
-      //   id: room.id,
-      //   shortId: room.shortId,
-      //   name: room.name,
-      //   createdAt: room.createdAt.toISOString(),
-      // };
-      // return {
-      //   ...publicData,
-      //   adminKey: room.adminKey,
-      // };
     }),
 
   getRoomByShortId: publicProcedure
@@ -38,8 +26,6 @@ export const roomRouter = router({
     )
     .query(async ({ input }) => {
       return operations.getRoomByShortId(input.shortId);
-      // const room = await getRoomByShortId(input.shortId);
-      // return room;
     }),
 
   getRoomById: publicProcedure
@@ -50,8 +36,6 @@ export const roomRouter = router({
     )
     .query(async ({ input }) => {
       return operations.withRoomVoterFunctions(input.id, (fns) => fns.getRoomPublicInfo());
-      // const room = await getRoomById(input.id);
-      // return room;
     }),
 
   joinWaitingList: publicProcedure
@@ -69,14 +53,6 @@ export const roomRouter = router({
           studentEmail: input.studentEmail,
         })
       );
-
-      // const room = await getLiveRoomOrError(input.roomId);
-
-      // const user = await room.joinWaitingRoom({
-      //   studentEmail: input.studentEmail,
-      //   location: input.location,
-      // });
-      // return user;
     }),
 
   getResults: publicProcedure
@@ -106,13 +82,5 @@ export const roomRouter = router({
 
         return unsubscribe;
       });
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // return observable<BoardState>((emit) => {
-      //   const unsubscribe = room.listenBoard((state) => {
-      //     emit.next(state);
-      //   });
-      //   return async () => (await unsubscribe)();
-      // });
     }),
 });

@@ -22,17 +22,6 @@ const roomUsersAdminRouter = router({
 
         return unsubscribe;
       });
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // validateAdminKey(room, input.adminKey);
-
-      // return observable<RoomUsersList>((emit) => {
-      //   const unsubscribe = room.listenWaitingRoomAdmin((users) => {
-      //     emit.next(users);
-      //   });
-
-      //   return async () => (await unsubscribe)();
-      // });
     }),
   admitUser: publicProcedure
     .input(
@@ -44,11 +33,6 @@ const roomUsersAdminRouter = router({
     )
     .mutation(async ({ input }) => {
       await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.admitUser(input.userId));
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // validateAdminKey(room, input.adminKey);
-
-      // await room.admitWaitingRoomUser(input.userId);
     }),
   declineUser: publicProcedure
     .input(
@@ -60,11 +44,6 @@ const roomUsersAdminRouter = router({
     )
     .mutation(async ({ input }) => {
       await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.declineUser(input.userId));
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // validateAdminKey(room, input.adminKey);
-
-      // await room.declineWaitingRoomUser(input.userId);
     }),
   kickVoter: publicProcedure
     .input(
@@ -76,11 +55,6 @@ const roomUsersAdminRouter = router({
     )
     .mutation(async ({ input }) => {
       await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.kickVoter(input.userId));
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // validateAdminKey(room, input.adminKey);
-
-      // await room.kickVoter(input.userId);
     }),
 });
 
@@ -112,15 +86,6 @@ export const roomQuestionsAdminRouter = router({
           candidates: input.candidates,
         })
       );
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // validateAdminKey(room, input.adminKey);
-
-      // await room.startNewQuestion({
-      //   question: input.question,
-      //   details: input.details,
-      //   candidates: input.candidates,
-      // });
     }),
 
   closeQuestion: publicProcedure
@@ -133,11 +98,6 @@ export const roomQuestionsAdminRouter = router({
     )
     .mutation(async ({ input }) => {
       await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.closeQuestion());
-
-      // const room = await getLiveRoomOrError(input.roomId);
-      // validateAdminKey(room, input.adminKey);
-
-      // await room.closeCurrentQuestion(input.questionId);
     }),
 });
 
