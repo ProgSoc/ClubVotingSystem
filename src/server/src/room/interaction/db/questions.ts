@@ -2,9 +2,8 @@ import type { CandidateVote, Question, QuestionCandidate, QuestionInteraction } 
 import { QuestionType } from '@prisma/client';
 
 import { NoQuestionOpenError, QuestionAlreadyClosedError } from '../../../errors';
-import type { VotingCandidate } from '../../../live-room/live-states';
-import type { QuestionResponse } from '../../../live-room/question';
-import type { ResultsView } from '../../../live-room/results';
+import type { QuestionResponse, ResultsView } from '../../../live/question';
+import type { VotingCandidate } from '../../../live/states';
 import { prisma } from '../../../prisma';
 import { UnreachableError } from '../../../unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
@@ -38,7 +37,7 @@ export interface RoomQuestion {
   originalPrismaQuestionObject: PrismaQuestionInclude;
 }
 
-export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion {
+function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion {
   // Count the number of unique voters by inserting them into a set
   const uniqueVoters = new Set<string>();
   question.candidates.forEach((candidate) => {
@@ -102,7 +101,7 @@ export function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQ
 }
 
 export function makeQuestionModificationFunctions(roomId: string) {
-  let currentQuestionPromise: Promise<PrismaQuestionInclude | null> | null = null;
+  let currentQuestionPromise: Promise<RoomQuestion | null> | null = null;
 
   async function fetchCurrentQuestion() {
     const question = await prisma.question.findFirst({
@@ -112,7 +111,12 @@ export function makeQuestionModificationFunctions(roomId: string) {
       orderBy: { createdAt: 'desc' },
       include: prismaQuestionInclude,
     });
-    return question;
+
+    if (!question) {
+      return null;
+    }
+
+    return mapPrismaQuestionInclude(question);
   }
 
   const fns = {
@@ -121,6 +125,17 @@ export function makeQuestionModificationFunctions(roomId: string) {
         currentQuestionPromise = fetchCurrentQuestion();
       }
       return currentQuestionPromise;
+    },
+    allQuestions: async () => {
+      const questions = await prisma.question.findMany({
+        where: {
+          roomId,
+        },
+        orderBy: { createdAt: 'desc' },
+        include: prismaQuestionInclude,
+      });
+      const mapped = questions.map((q) => mapPrismaQuestionInclude(q));
+      return mapped;
     },
     createNewQuestion: async (params: CreateQuestionParams) => {
       const questionPromise = prisma.question.create({
@@ -136,7 +151,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
         },
         include: prismaQuestionInclude,
       });
-      currentQuestionPromise = questionPromise;
+      currentQuestionPromise = questionPromise.then(mapPrismaQuestionInclude);
       return mapPrismaQuestionInclude(await questionPromise);
     },
     closeQuestion: async (questionId: string, votersPresent: number) => {
@@ -145,7 +160,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
         data: { closed: true, votersPresentAtEnd: votersPresent },
         include: prismaQuestionInclude,
       });
-      currentQuestionPromise = questionPromise;
+      currentQuestionPromise = questionPromise.then(mapPrismaQuestionInclude);
       return mapPrismaQuestionInclude(await questionPromise);
     },
 
@@ -184,7 +199,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (response.type !== question.format && response.type !== 'Abstain') {
+        if (response.type !== question.details.type && response.type !== 'Abstain') {
           throw new Error('Invalid response type');
         }
 
@@ -208,7 +223,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
       });
     },
 
-    async getQuestionVote(questionId: string, voterId: string) {
+    async getQuestionVote(questionId: string, voterId: string): Promise<QuestionResponse | null> {
       const question = await fns.currentQuestion();
 
       if (!question || question.id !== questionId) {
@@ -216,7 +231,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
       }
 
       const votes: CandidateVote[] = [];
-      question.candidates.forEach((c) => {
+      question.originalPrismaQuestionObject.candidates.forEach((c) => {
         const vote = c.votes.find((v) => v.voterId === voterId);
         if (vote) {
           votes.push(vote);
@@ -224,7 +239,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
       });
 
       if (votes.length === 0) {
-        if (question.interactions.find((i) => i.voterId === voterId)) {
+        if (question.originalPrismaQuestionObject.interactions.find((i) => i.voterId === voterId)) {
           // If there are no votes but the user interacted, then the user abstained
           return {
             type: 'Abstain',
@@ -234,14 +249,14 @@ export function makeQuestionModificationFunctions(roomId: string) {
         }
       }
 
-      switch (question.format) {
+      switch (question.details.type) {
         case QuestionType.SingleVote:
           return {
             type: QuestionType.SingleVote,
             candidateId: votes[0].candidateId,
           };
         default:
-          throw new UnreachableError(question.format);
+          throw new UnreachableError(question.details.type);
       }
     },
   };

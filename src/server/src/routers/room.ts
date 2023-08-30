@@ -2,8 +2,9 @@ import { UserLocation } from '@prisma/client';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
-import type { BoardState } from '../live-room/live-states';
+import type { BoardState } from '../live/states';
 import { operations } from '../room';
+import { withRoomVoterFunctions } from '../room/interaction/user';
 import { publicProcedure, router } from '../trpc';
 
 export const roomRouter = router({
@@ -85,9 +86,10 @@ export const roomRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return [];
-
-      // return getAllResultsForRoom(input.roomId);
+      return withRoomVoterFunctions(input.roomId, async (fns) => {
+        const questions = await fns.getAllQuestionResults();
+        return questions.filter((q) => !q.closed);
+      });
     }),
 
   listenBoardEvents: publicProcedure

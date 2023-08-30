@@ -1,6 +1,6 @@
-import type { ShowingQuestionState, ShowingResultsState } from '@server/live-room/live-states';
-import { VoterState } from '@server/live-room/live-states';
-import type { QuestionResponse } from '@server/live-room/question';
+import type { QuestionResponse } from '@server/live/question';
+import type { ShowingQuestionState, ShowingResultsState } from '@server/live/states';
+import { VoterState } from '@server/live/states';
 import type { GetStatesUnion } from '@server/state';
 import { makeStates, state } from '@server/state';
 import { useEffect, useRef, useState } from 'react';

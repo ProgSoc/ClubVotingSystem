@@ -1,5 +1,5 @@
-import type { RoomUserWithDetails } from '@server/live-room/user';
-import type { PublicStaticRoomData } from '@server/rooms';
+import type { RoomUserWithDetails } from '@server/live/user';
+import type { RoomPublicInfo } from '@server/room/types';
 import { AdminRouter } from 'components/adminRouter';
 import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
@@ -126,7 +126,7 @@ function Email(props: { email: string; className?: string }) {
   }
 }
 
-export function WaitingRoomManagementPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
+export function WaitingRoomManagementPage(props: { roomId: string; room: RoomPublicInfo; adminKey: string }) {
   const { users, voters, admitUser, declineUser, kickVoter } = useUserWaitingRoom(props);
 
   return (

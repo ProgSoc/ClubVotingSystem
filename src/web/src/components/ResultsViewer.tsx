@@ -1,4 +1,4 @@
-import type { ResultsView } from '@server/live-room/results';
+import type { ResultsView } from '@server/live/question';
 import { UnreachableError } from '@server/unreachableError';
 import { twMerge } from 'tailwind-merge';
 

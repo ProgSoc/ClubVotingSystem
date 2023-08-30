@@ -2,16 +2,9 @@ import { QuestionType } from '@prisma/client';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
-import type { LiveRoom } from '../live-room';
-import type { RoomUsersList } from '../live-room/user';
+import type { RoomUsersList } from '../live/user';
 import { operations } from '../room';
 import { publicProcedure, router } from '../trpc';
-
-function validateAdminKey(room: LiveRoom, adminKey: string): void {
-  if (room.adminKey !== adminKey) {
-    throw new Error('Invalid admin key');
-  }
-}
 
 const roomUsersAdminRouter = router({
   listenWaitingRoom: publicProcedure

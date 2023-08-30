@@ -1,7 +1,6 @@
 import type { GetStatesUnion } from '../state';
 import { makeStates, state } from '../state';
-import type { QuestionFormatDetails } from './question';
-import type { ResultsView } from './results';
+import type { QuestionFormatDetails, ResultsView } from './question';
 
 export interface VotingCandidate {
   id: string;

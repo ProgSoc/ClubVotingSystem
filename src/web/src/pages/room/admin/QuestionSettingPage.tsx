@@ -1,7 +1,6 @@
-import type { ShowingQuestionState, ShowingResultsState } from '@server/live-room/live-states';
-import { BoardState } from '@server/live-room/live-states';
-import type { CreateQuestionParams } from '@server/live-room/question';
-import type { PublicStaticRoomData } from '@server/rooms';
+import type { ShowingQuestionState, ShowingResultsState } from '@server/live/states';
+import { BoardState } from '@server/live/states';
+import type { CreateQuestionParams, RoomPublicInfo } from '@server/room/types';
 import type { GetStatesUnion } from '@server/state';
 import { makeStates, state } from '@server/state';
 import { AdminRouter } from 'components/adminRouter';
@@ -99,7 +98,7 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
   });
 }
 
-export function QuestionSettingPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
+export function QuestionSettingPage(props: { roomId: string; room: RoomPublicInfo; adminKey: string }) {
   const data = useQuestionSetter(props);
   return (
     <PageContainer>

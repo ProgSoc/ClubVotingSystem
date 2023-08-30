@@ -1,7 +1,7 @@
-import type { BoardState, VoterState } from '../live-room/live-states';
-import type { RoomUsersList } from '../live-room/user';
 import type { RoomUserState } from '../room/interaction/db/users';
 import { makeNotificationService } from './notificationService';
+import type { BoardState, VoterState } from './states';
+import type { RoomUsersList } from './user';
 
 export const roomWaitingListNotifications = makeNotificationService<RoomUsersList>().withKey(
   (args: { roomId: string }) => args.roomId

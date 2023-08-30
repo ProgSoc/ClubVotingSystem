@@ -1,10 +1,10 @@
 import { NoQuestionOpenError, QuestionAlreadyOpenError, RoomIsClosedError } from '../../errors';
 import { roomBoardEventsNotifications, roomVoterNotifications, roomWaitingListNotifications } from '../../live';
-import type { ShowingQuestionState, ShowingResultsState } from '../../live-room/live-states';
-import { BoardState, VoterState } from '../../live-room/live-states';
+import type { ShowingQuestionState, ShowingResultsState } from '../../live/states';
+import { BoardState, VoterState } from '../../live/states';
 import { AyncKeyLock } from '../../lock';
 import type { RoomQuestion } from './db/questions';
-import { makeQuestionModificationFunctions, mapPrismaQuestionInclude } from './db/questions';
+import { makeQuestionModificationFunctions } from './db/questions';
 import { makeCurrentRoomFunctions } from './db/room';
 import { makeVoterInteractionFunctions } from './db/users';
 
@@ -104,15 +104,18 @@ export function makeQuestionHelpers(roomId: string) {
         return BoardState.blank({ totalPeople: users.admitted.length });
       }
 
-      const questionMapped = await mapPrismaQuestionInclude(question);
-
       if (question.closed) {
-        const state = await fns.getShowingResultsState(questionMapped);
+        const state = await fns.getShowingResultsState(question);
         return BoardState.showingResults(state);
       } else {
-        const state = await fns.getShowingQuestionState(questionMapped);
+        const state = await fns.getShowingQuestionState(question);
         return BoardState.showingQuestion(state);
       }
+    },
+
+    async getAllResults(): Promise<RoomQuestion[]> {
+      const questions = await questionFns.allQuestions();
+      return questions;
     },
   };
 

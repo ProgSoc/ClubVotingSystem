@@ -1,8 +1,8 @@
 import { VoterNotFoundError } from '../../errors';
 import { roomBoardEventsNotifications, roomVoterNotifications, userWaitingListNotifications } from '../../live';
-import type { BoardState } from '../../live-room/live-states';
-import { VoterState } from '../../live-room/live-states';
-import type { QuestionResponse } from '../../live-room/question';
+import type { QuestionResponse } from '../../live/question';
+import type { BoardState } from '../../live/states';
+import { VoterState } from '../../live/states';
 import type { RoomPublicInfo } from '../types';
 import type { JoinWaitingRoomParams, RoomUserResolvedState } from './db/users';
 import { userRoomStateToResolvedState } from './db/users';
@@ -50,6 +50,17 @@ function makeRoomVoterFunctions(roomId: string) {
     },
 
     getQuestionVote: questionFns.getQuestionVote,
+    async getAllQuestionResults() {
+      const questions = await questionFns.allQuestions();
+      return questions.map((question) => {
+        return {
+          questionId: question.id,
+          question: question.question,
+          results: question.results,
+          closed: question.closed,
+        };
+      });
+    },
 
     async castVote(voterId: string, questionId: string, vote: QuestionResponse) {
       const voter = await voterFns.getUserByVoterId(voterId);
