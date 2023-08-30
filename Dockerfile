@@ -23,10 +23,7 @@ RUN rm -rf src/web/package.json node_modules src/server/node_modules && \
 RUN \
   rm ./node_modules/.prisma/client/libquery_engine-linux-musl.so.node && \
   rm ./node_modules/prisma/libquery_engine-linux-musl.so.node && \
-  rm ./node_modules/@prisma/engines/introspection-engine-linux-musl && \
-  rm ./node_modules/@prisma/engines/prisma-fmt-linux-musl && \
-  rm ./node_modules/@prisma/engines/libquery_engine-linux-musl.so.node && \
-  rm ./node_modules/@prisma/engines/migration-engine-linux-musl
+  rm ./node_modules/@prisma/engines/libquery_engine-linux-musl.so.node
 
 FROM node:16.17.0-alpine
 
