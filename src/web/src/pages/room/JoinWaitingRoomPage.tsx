@@ -33,7 +33,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
       studentEmail: data.studentEmail,
     });
 
-    navigate(routeBuilders.waitInWaitingRoom({ roomId: props.roomId, userId: result.id }));
+    navigate(routeBuilders.waitInWaitingRoom({ roomId: props.roomId, userId: result.userId }));
   };
 
   console.log(UserLocation);

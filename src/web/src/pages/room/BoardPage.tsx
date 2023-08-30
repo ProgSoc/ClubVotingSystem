@@ -1,5 +1,5 @@
-import { BoardState } from '@server/live-room/live-states';
-import type { PublicStaticRoomData } from '@server/rooms';
+import { BoardState } from '@server/live/states';
+import type { RoomPublicInfo } from '@server/room/types';
 import { QRCodeRender } from 'components/QRCode';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { CenteredPageContainer, Heading, Question } from 'components/styles';
@@ -8,7 +8,7 @@ import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
 import { trpc } from 'utils/trpc';
 
-export function BoardPage(props: { roomId: string; room: PublicStaticRoomData }) {
+export function BoardPage(props: { roomId: string; room: RoomPublicInfo }) {
   return (
     <CenteredPageContainer className="gap-4">
       <div className="lg:hidden text-error">This page is not mobile friendly lol</div>
@@ -25,7 +25,7 @@ export function BoardPage(props: { roomId: string; room: PublicStaticRoomData })
   );
 }
 
-function JoinPanel(props: { room: PublicStaticRoomData; className?: string }) {
+function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
   const joinLink = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
   return (
@@ -53,7 +53,7 @@ function JoinPanel(props: { room: PublicStaticRoomData; className?: string }) {
   );
 }
 
-function StatusPanel(props: { room: PublicStaticRoomData }) {
+function StatusPanel(props: { room: RoomPublicInfo }) {
   const [state, setState] = useState<BoardState | null>(null);
 
   trpc.room.listenBoardEvents.useSubscription(

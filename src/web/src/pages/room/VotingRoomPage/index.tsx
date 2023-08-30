@@ -1,5 +1,5 @@
-import type { ShowingResultsState } from '@server/live-room/live-states';
-import type { PublicStaticRoomData } from '@server/rooms';
+import type { ShowingResultsState } from '@server/live/states';
+import type { RoomPublicInfo } from '@server/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
 import { useEffect, useMemo } from 'react';
@@ -11,7 +11,7 @@ import type { QuestionVotingData } from './hooks';
 import { VotingPageState } from './hooks';
 import { useVoterState } from './hooks';
 
-export function VotingRoomPage(props: { roomId: string; userId: string; room: PublicStaticRoomData; voterId: string }) {
+export function VotingRoomPage(props: { roomId: string; userId: string; room: RoomPublicInfo; voterId: string }) {
   const data = useVoterState(props);
 
   // Navigate to waiting room if the user was kicked

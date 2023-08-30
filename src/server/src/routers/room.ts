@@ -2,10 +2,9 @@ import { UserLocation } from '@prisma/client';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
-import type { BoardState } from '../live-room/live-states';
-import { getAllResultsForRoom } from '../live-room/question';
-import type { PublicStaticRoomData } from '../rooms';
-import { createLiveRoom, getLiveRoomOrError, getRoomById, getRoomByShortId } from '../rooms';
+import type { BoardState } from '../live/states';
+import { operations } from '../room';
+import { withRoomVoterFunctions } from '../room/interaction/user';
 import { publicProcedure, router } from '../trpc';
 
 export const roomRouter = router({
@@ -16,17 +15,7 @@ export const roomRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const room = await createLiveRoom(input.name);
-      const publicData: PublicStaticRoomData = {
-        id: room.id,
-        shortId: room.shortId,
-        name: room.name,
-        createdAt: room.createdAt.toISOString(),
-      };
-      return {
-        ...publicData,
-        adminKey: room.adminKey,
-      };
+      return operations.createNewRoom(input.name);
     }),
 
   getRoomByShortId: publicProcedure
@@ -36,8 +25,7 @@ export const roomRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const room = await getRoomByShortId(input.shortId);
-      return room;
+      return operations.getRoomByShortId(input.shortId);
     }),
 
   getRoomById: publicProcedure
@@ -47,8 +35,7 @@ export const roomRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const room = await getRoomById(input.id);
-      return room;
+      return operations.withRoomVoterFunctions(input.id, (fns) => fns.getRoomPublicInfo());
     }),
 
   joinWaitingList: publicProcedure
@@ -60,13 +47,12 @@ export const roomRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const room = await getLiveRoomOrError(input.roomId);
-
-      const user = await room.joinWaitingRoom({
-        studentEmail: input.studentEmail,
-        location: input.location,
-      });
-      return user;
+      return operations.withRoomVoterFunctions(input.roomId, (fns) =>
+        fns.joinWaitingList({
+          location: input.location,
+          studentEmail: input.studentEmail,
+        })
+      );
     }),
 
   getResults: publicProcedure
@@ -76,7 +62,10 @@ export const roomRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return getAllResultsForRoom(input.roomId);
+      return withRoomVoterFunctions(input.roomId, async (fns) => {
+        const questions = await fns.getAllQuestionResults();
+        return questions.filter((q) => !q.closed);
+      });
     }),
 
   listenBoardEvents: publicProcedure
@@ -86,12 +75,12 @@ export const roomRouter = router({
       })
     )
     .subscription(async ({ input }) => {
-      const room = await getLiveRoomOrError(input.roomId);
       return observable<BoardState>((emit) => {
-        const unsubscribe = room.listenBoard((state) => {
+        const unsubscribe = operations.subscribeToBoardNotifications(input.roomId, (state) => {
           emit.next(state);
         });
-        return async () => (await unsubscribe)();
+
+        return unsubscribe;
       });
     }),
 });

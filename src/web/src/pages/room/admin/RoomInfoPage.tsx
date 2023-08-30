@@ -1,12 +1,12 @@
-import { BoardState } from '@server/live-room/live-states';
-import type { PublicStaticRoomData } from '@server/rooms';
+import { BoardState } from '@server/live/states';
+import type { RoomPublicInfo } from '@server/room/types';
 import { AdminRouter } from 'components/adminRouter';
 import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
 import { routeBuilders } from 'routes';
 import { trpc } from 'utils/trpc';
 
-export function RoomInfoPage(props: { roomId: string; room: PublicStaticRoomData; adminKey: string }) {
+export function RoomInfoPage(props: { roomId: string; room: RoomPublicInfo; adminKey: string }) {
   const [roomVoters, setRoomVoters] = useState(0);
 
   trpc.room.listenBoardEvents.useSubscription(

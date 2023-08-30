@@ -1,9 +1,9 @@
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
-import type { VoterState } from '../live-room/live-states';
-import { questionResponse } from '../live-room/question';
-import { getLiveRoomOrError } from '../rooms';
+import { questionResponse } from '../live/question';
+import type { VoterState } from '../live/states';
+import { operations } from '../room';
 import { publicProcedure, router } from '../trpc';
 
 export const roomVoteRouter = router({
@@ -15,13 +15,12 @@ export const roomVoteRouter = router({
       })
     )
     .subscription(async ({ ctx, input }) => {
-      const room = await getLiveRoomOrError(input.roomId);
       return observable<VoterState>((emit) => {
-        const unsubscribe = room.listenVoter(input.voterId, (state) => {
+        const unsubscribe = operations.subscribeToVoterNotifications(input.roomId, input.voterId, (state) => {
           emit.next(state);
         });
 
-        return async () => (await unsubscribe)();
+        return unsubscribe;
       });
     }),
   getMyVote: publicProcedure
@@ -33,8 +32,7 @@ export const roomVoteRouter = router({
       })
     )
     .query(async ({ input: { roomId, voterId, questionId } }) => {
-      const room = await getLiveRoomOrError(roomId);
-      return room.getVoterVote(voterId, questionId);
+      return operations.withRoomVoterFunctions(roomId, (fns) => fns.getQuestionVote(questionId, voterId));
     }),
   castVote: publicProcedure
     .input(
@@ -46,8 +44,8 @@ export const roomVoteRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const room = await getLiveRoomOrError(input.roomId);
-
-      const result = await room.castVote(input.questionId, input.voterId, input.response);
+      return operations.withRoomVoterFunctions(input.roomId, (fns) =>
+        fns.castVote(input.voterId, input.questionId, input.response)
+      );
     }),
 });

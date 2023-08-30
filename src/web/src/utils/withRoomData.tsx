@@ -1,11 +1,11 @@
-import type { PublicStaticRoomData } from '@server/rooms';
+import type { RoomPublicInfo } from '@server/room/types';
 import { CenteredPageContainer, Heading } from 'components/styles';
 
 import { trpc } from './trpc';
 
-const cachedRooms: Record<string, PublicStaticRoomData | undefined> = {};
+const cachedRooms: Record<string, RoomPublicInfo | undefined> = {};
 
-export function withRoomFetched<Props extends { room: PublicStaticRoomData }>(Component: React.ComponentType<Props>) {
+export function withRoomFetched<Props extends { room: RoomPublicInfo }>(Component: React.ComponentType<Props>) {
   return function RoomFetched(props: { roomId: string } & Omit<Props, 'room'>) {
     const roomQuery = trpc.room.getRoomById.useQuery(
       { id: props.roomId },
@@ -31,6 +31,6 @@ export function withRoomFetched<Props extends { room: PublicStaticRoomData }>(Co
   };
 }
 
-export function cacheFetchedRoom(room: PublicStaticRoomData) {
+export function cacheFetchedRoom(room: RoomPublicInfo) {
   cachedRooms[room.id] = room;
 }
