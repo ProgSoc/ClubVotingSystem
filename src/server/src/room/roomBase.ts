@@ -3,6 +3,8 @@ import { customAlphabet } from 'nanoid';
 import { RoomNotFoundError } from '../errors';
 import { prisma } from '../prisma';
 import type { RoomAdminInfo, RoomPublicInfo } from './types';
+import db from '../db/client';
+import { room } from '../db/schema';
 
 const makeAdminKeyId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 48);
 
@@ -12,21 +14,26 @@ const makePublicShortId = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz',
 export async function createNewRoom(name: string): Promise<RoomAdminInfo> {
   // Loop until we find a unique public key. If we fail after 100 attempts, then there are serious issues.
   for (let i = 0; i < 100; i++) {
-    const room = await prisma.room.create({
-      data: {
-        name,
-        adminKey: makeAdminKeyId(),
-        shortId: makePublicShortId(),
-      },
-    });
+    const createdRooms = await db.insert(room).values({
+      id: makeAdminKeyId(),
+      name,
+      adminKey: makeAdminKeyId(),
+      shortId: makePublicShortId(),
+    }).returning();
+
+    const firstRoom = createdRooms[0];
+
+    if (!firstRoom) {
+      throw new Error('Unexpected error: Failed to create a new room')
+    }
 
     return {
-      id: room.id,
-      shortId: room.shortId,
-      name: room.name,
-      adminKey: room.adminKey,
-      createdAt: room.createdAt.toISOString(),
-      closedAt: room.closedAt?.toISOString() ?? null,
+      id: firstRoom.id,
+      shortId: firstRoom.shortId,
+      name: firstRoom.name,
+      adminKey: firstRoom.adminKey,
+      createdAt: firstRoom.createdAt,
+      closedAt: firstRoom.closedAt,
     };
   }
 
@@ -34,21 +41,19 @@ export async function createNewRoom(name: string): Promise<RoomAdminInfo> {
 }
 
 export async function getRoomByShortId(shortId: string): Promise<RoomPublicInfo | null> {
-  const room = await prisma.room.findUnique({
-    where: {
-      shortId,
-    },
-  });
+  const fetchedRoom = await db.query.room.findFirst({
+    where: (room, {eq}) => eq(room.shortId, shortId),
+  })
 
-  if (!room) {
+  if (!fetchedRoom) {
     throw new RoomNotFoundError(shortId);
   }
 
   return {
-    id: room.id,
-    shortId: room.shortId,
-    name: room.name,
-    createdAt: room.createdAt.toISOString(),
-    closedAt: room.closedAt?.toISOString() ?? null,
+    id: fetchedRoom.id,
+    shortId: fetchedRoom.shortId,
+    name: fetchedRoom.name,
+    createdAt: fetchedRoom.createdAt,
+    closedAt: fetchedRoom.closedAt,
   };
 }

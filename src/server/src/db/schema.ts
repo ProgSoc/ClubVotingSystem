@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, foreignKey, boolean, primaryKey } from "drizzle-orm/pg-core"
 
 export const waitingState = pgEnum("WaitingState", ['Kicked', 'Declined', 'Admitted', 'Waiting'])
@@ -18,6 +19,17 @@ export const roomUser = pgTable("RoomUser", {
 	}
 });
 
+export const roomUserRelations = relations(roomUser, ({one, many}) => ({
+	room: one(room, {
+		fields: [roomUser.roomId],
+		references: [room.id],
+	}),
+	voter: one(voter, {
+		fields: [roomUser.voterId],
+		references: [voter.id],
+	}),
+}))
+
 export const room = pgTable("Room", {
 	id: text("id").primaryKey().notNull(),
 	shortId: text("shortId").notNull(),
@@ -32,15 +44,37 @@ export const room = pgTable("Room", {
 	}
 });
 
+export const roomRelations = relations(room, ({one, many}) => ({
+	roomUsers: many(roomUser),
+	questions: many(question),
+}))
+
 export const voter = pgTable("Voter", {
 	id: text("id").primaryKey().notNull(),
 });
+
+export const voterRelations = relations(voter, ({one, many}) => ({
+	roomUser: one(roomUser, {
+		fields: [voter.id],
+		references: [roomUser.voterId],
+	}),
+	questionInteractions: many(questionInteraction),
+	candidateVotes: many(candidateVote),
+}))
 
 export const questionCandidate = pgTable("QuestionCandidate", {
 	id: text("id").primaryKey().notNull(),
 	name: text("name").notNull(),
 	questionId: text("questionId").references(() => question.id, { onDelete: "set null", onUpdate: "cascade" } ),
 });
+
+export const questionCandidateRelations = relations(questionCandidate, ({one, many}) => ({
+	question: one(question, {
+		fields: [questionCandidate.questionId],
+		references: [question.id],
+	}),
+	candidateVotes: many(candidateVote),
+}))
 
 export const question = pgTable("Question", {
 	id: text("id").primaryKey().notNull(),
@@ -52,6 +86,16 @@ export const question = pgTable("Question", {
 	votersPresentAtEnd: integer("votersPresentAtEnd").default(0).notNull(),
 });
 
+export const questionRelations = relations(question, ({one, many}) => ({
+	room: one(room, {
+		fields: [question.roomId],
+		references: [room.id],
+	}),
+	questionCandidates: many(questionCandidate),
+	questionInteractions: many(questionInteraction),
+	candidateVotes: many(candidateVote),
+}))
+
 export const questionInteraction = pgTable("QuestionInteraction", {
 	questionId: text("questionId").notNull().references(() => question.id, { onDelete: "restrict", onUpdate: "cascade" } ),
 	voterId: text("voterId").notNull().references(() => voter.id, { onDelete: "restrict", onUpdate: "cascade" } ),
@@ -62,6 +106,17 @@ export const questionInteraction = pgTable("QuestionInteraction", {
 	}
 });
 
+export const questionInteractionRelations = relations(questionInteraction, ({one, many}) => ({
+	question: one(question, {
+		fields: [questionInteraction.questionId],
+		references: [question.id],
+	}),
+	voter: one(voter, {
+		fields: [questionInteraction.voterId],
+		references: [voter.id],
+	}),
+}))
+
 export const candidateVote = pgTable("CandidateVote", {
 	candidateId: text("candidateId").notNull().references(() => questionCandidate.id, { onDelete: "restrict", onUpdate: "cascade" } ),
 	voterId: text("voterId").notNull().references(() => voter.id, { onDelete: "restrict", onUpdate: "cascade" } ),
@@ -71,3 +126,14 @@ export const candidateVote = pgTable("CandidateVote", {
 		candidateVotePkey: primaryKey(table.candidateId, table.voterId)
 	}
 });
+
+export const candidateVoteRelations = relations(candidateVote, ({one, many}) => ({
+	candidate: one(questionCandidate, {
+		fields: [candidateVote.candidateId],
+		references: [questionCandidate.id],
+	}),
+	voter: one(voter, {
+		fields: [candidateVote.voterId],
+		references: [voter.id],
+	}),
+}))
