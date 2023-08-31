@@ -17,8 +17,11 @@
     "jsx": "react-jsx",
     "baseUrl": "./src",
     "paths": {
-      "@prisma/*": ["../../../node_modules/.prisma/*"],
-      "@server/*": ["../../server/src/*"]
+      // "@prisma/*": ["../../../node_modules/.prisma/*"],
+      // "@server/*": ["../../server/src/*"],
+      // "@web/*": ["./src/*"]
+      "@/*": ["./*"],
+      "@": ["./*"]
     }
   },
   "include": ["src", "../server/src", "../../test.ts"],

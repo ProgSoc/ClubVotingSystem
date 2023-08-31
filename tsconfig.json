@@ -1,19 +1,11 @@
 {
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "noImplicitAny": true,
-    "outDir": "dist",
-    "strict": true,
-    "noEmit": true,
-    "preserveConstEnums": true,
-    "removeComments": true,
-    "sourceMap": true,
-    "target": "ESNext"
-  },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js"],
-  "exclude": ["node_modules", "test/**/*.test.tsx", "test/**/*.test.ts", "./.eslintrc.js"]
+  
+    "references": [
+        {
+            "path": "./src/server/tsconfig.json",
+        },
+        {
+            "path": "./src/web/tsconfig.json"
+        },
+    ]
 }

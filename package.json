@@ -8,8 +8,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "web": "cd src/web && yarn",
-    "server": "cd src/server && yarn",
+    "web": "yarn workspace web",
+    "server": "yarn workspace server",
     "tsc": "yarn web tsc && yarn server tsc",
     "lint:fix": "eslint . --fix"
   },
