@@ -307,6 +307,8 @@ export function makeQuestionModificationFunctions(roomId: string) {
           )
         );
 
+        
+
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (response.type !== question.details.type && response.type !== 'Abstain') {
           throw new Error('Invalid response type');
