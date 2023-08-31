@@ -9,7 +9,7 @@ import { UnreachableError } from '@/unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
 import db from '@/db/client';
 import { candidateVote, question, questionCandidate, questionInteraction } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { SelectCandidateVote, SelectQuestion, SelectQuestionCandidate, SelectQuestionInteraction } from '@/db/types';
 
 const prismaQuestionInclude = {
@@ -255,7 +255,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
 
       //   switch (response.type) {
       //     case 'Abstain':
-      //       // Do nothing, the votes have already been cleared
+      //       // Do nothing, the votes have already been cleare
       //       break;
       //     case 'SingleVote':
       //       await db.insert(candidateVote).values({
@@ -291,9 +291,23 @@ export function makeQuestionModificationFunctions(roomId: string) {
           .onConflictDoNothing();
 
         // Delete all previous votes from the voter for the question
-        await tx
-          .delete(candidateVote)
-          .where(eq(candidateVote.voterId, voterId), eq(candidateVote.candidate.questionId, questionId));
+        const previousVotes = await tx
+          .select({ candidateId: candidateVote.candidateId, voterId: candidateVote.voterId })
+          .from(candidateVote)
+          .where(and(eq(candidateVote.voterId, voterId), eq(questionCandidate.questionId, questionId)))
+          .innerJoin(questionCandidate, eq(questionCandidate.id, candidateVote.candidateId));
+
+        await tx.transaction(async (tx2) => {
+          tx2.delete(candidateVote).where(
+            and(
+              inArray(
+                candidateVote.candidateId,
+                previousVotes.map((v) => v.candidateId)
+              ),
+              eq(candidateVote.voterId, voterId)
+            )
+          );
+        });
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (response.type !== question.details.type && response.type !== 'Abstain') {
