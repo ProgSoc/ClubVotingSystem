@@ -1,4 +1,4 @@
-import { SelectQuestion } from '@/db/types';
+import type { SelectQuestion } from '@/db/types';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 

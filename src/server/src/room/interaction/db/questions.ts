@@ -6,7 +6,7 @@ import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
 import db from '@/db/client';
 import { candidateVote, question, questionCandidate, questionInteraction } from '@/db/schema';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import { SelectCandidateVote, SelectQuestion, SelectQuestionCandidate, SelectQuestionInteraction } from '@/db/types';
+import type { SelectCandidateVote, SelectQuestion, SelectQuestionCandidate, SelectQuestionInteraction } from '@/db/types';
 
 export interface RoomQuestion {
   id: string;

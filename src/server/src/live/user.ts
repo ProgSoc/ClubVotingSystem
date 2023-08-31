@@ -1,4 +1,4 @@
-import { userLocation, waitingState } from '@/db/schema';
+import type { userLocation, waitingState } from '@/db/schema';
 
 import type { GetStatesUnion } from '../state';
 import { makeStates, state } from '../state';
