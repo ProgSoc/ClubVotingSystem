@@ -1,12 +1,16 @@
 import { InvalidStateError, NoQuestionOpenError, QuestionAlreadyClosedError } from '@/errors';
-import type { QuestionResponse, ResultsView } from '@/live/question';
+import type { CreateQuestionParams, QuestionFormatDetails, QuestionResponse, ResultsView } from '@/live/question';
 import type { VotingCandidate } from '@/live/states';
 import { UnreachableError } from '@/unreachableError';
-import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
 import db from '@/db/client';
 import { candidateVote, question, questionCandidate, questionInteraction } from '@/db/schema';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import type { SelectCandidateVote, SelectQuestion, SelectQuestionCandidate, SelectQuestionInteraction } from '@/db/types';
+import type {
+  SelectCandidateVote,
+  SelectQuestion,
+  SelectQuestionCandidate,
+  SelectQuestionInteraction,
+} from '@/db/types';
 
 export interface RoomQuestion {
   id: string;
@@ -56,9 +60,9 @@ function mapDrizzleQuestionInclude(question: DrizzleQuestionInclude): RoomQuesti
 
   const makeDetails = (): QuestionFormatDetails => {
     switch (question.format) {
-      case "SingleVote":
+      case 'SingleVote':
         return {
-          type: "SingleVote",
+          type: 'SingleVote',
         };
       default:
         throw new UnreachableError(question.format);
@@ -67,9 +71,9 @@ function mapDrizzleQuestionInclude(question: DrizzleQuestionInclude): RoomQuesti
 
   const makeResults = (): ResultsView => {
     switch (question.format) {
-      case "SingleVote":
+      case 'SingleVote':
         return {
-          type: "SingleVote",
+          type: 'SingleVote',
           results: question.candidates.map((candidate) => ({
             id: candidate.id,
             name: candidate.name,
@@ -196,7 +200,6 @@ export function makeQuestionModificationFunctions(roomId: string) {
     },
 
     async voteForQuestion(questionId: string, voterId: string, response: QuestionResponse) {
-
       return db.transaction(async (tx) => {
         const question = await fns.currentQuestion();
 
@@ -233,8 +236,6 @@ export function makeQuestionModificationFunctions(roomId: string) {
             eq(candidateVote.voterId, voterId)
           )
         );
-
-        
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (response.type !== question.details.type && response.type !== 'Abstain') {
@@ -286,9 +287,9 @@ export function makeQuestionModificationFunctions(roomId: string) {
       }
 
       switch (question.details.type) {
-        case "SingleVote":
+        case 'SingleVote':
           return {
-            type: "SingleVote",
+            type: 'SingleVote',
             candidateId: votes[0].candidateId,
           };
         default:

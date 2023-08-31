@@ -1,6 +1,6 @@
+import { CreateQuestionParams } from '@/live/question';
 import { roomVoterNotifications, roomWaitingListNotifications, userWaitingListNotifications } from '../../live';
 import { VoterState } from '../../live/states';
-import type { CreateQuestionParams } from '../types';
 import type { RoomUsersList } from './db/users';
 import { RoomUserState } from './db/users';
 import { makeQuestionHelpers, roomLock } from './helpers';

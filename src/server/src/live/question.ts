@@ -2,18 +2,24 @@ import type { SelectQuestion } from '@/db/types';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 
-export interface SingleVoteQuestionFormat {
-  type: SelectQuestion["format"];
-}
+export type SingleVoteQuestionFormat = {
+  type: 'SingleVote';
+};
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;
+
+export type CreateQuestionParams = {
+  question: string;
+  candidates: string[];
+  details: QuestionFormatDetails;
+};
 
 const abstainQuestionResponse = z.object({
   type: z.literal('Abstain'),
 });
 
 const singleVoteQuestionResponse = z.object({
-  type: z.literal("SingleVote"),
+  type: z.literal('SingleVote'),
   candidateId: z.string(),
 });
 

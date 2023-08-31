@@ -43,7 +43,7 @@ export const roomRouter = router({
       z.object({
         roomId: z.string(),
         studentEmail: z.string().email(),
-        location: z.enum(userLocation["enumValues"]),
+        location: z.enum(userLocation['enumValues']),
       })
     )
     .mutation(async ({ input }) => {

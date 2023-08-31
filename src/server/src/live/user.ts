@@ -18,12 +18,12 @@ interface WithVoterId extends WithUserId {
 
 export interface WaitingRoomUser {
   id: string;
-  state: typeof waitingState['enumValues'];
+  state: "Kicked" | "Declined" | "Admitted" | "Waiting";
 }
 
 interface UserPrivateDetails {
   studentEmail: string;
-  location: typeof userLocation['enumValues'][number];
+  location: 'Proxy' | 'Online' | 'InPerson';
 }
 
 export interface RoomUserWithDetails extends WithUserId {

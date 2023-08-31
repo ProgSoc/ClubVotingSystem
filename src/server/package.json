@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
-    "@trpc/server": "^10.7.0",
+    "@trpc/server": "^10.38.1",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "dotenv-cli": "^6.0.0",

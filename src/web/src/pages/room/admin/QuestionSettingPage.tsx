@@ -1,6 +1,6 @@
 import type { ShowingQuestionState, ShowingResultsState } from 'server/src/live/states';
 import { BoardState } from 'server/src/live/states';
-import type { CreateQuestionParams, RoomPublicInfo } from 'server/src/room/types';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import type { GetStatesUnion } from 'server/src/state';
 import { makeStates, state } from 'server/src/state';
 import { AdminRouter } from 'components/adminRouter';
@@ -12,6 +12,7 @@ import { trpc } from 'utils/trpc';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
+import { CreateQuestionParams } from 'server/src/live/question';
 
 interface QuestionSettingData {
   previousResults?: ShowingResultsState;
