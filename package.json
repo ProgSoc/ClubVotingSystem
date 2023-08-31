@@ -1,19 +1,9 @@
 {
   "name": "club-voting-system",
   "private": true,
-  "workspaces": [
-    "src/*"
-  ],
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "scripts": {
-    "web": "yarn workspace web",
-    "server": "yarn workspace server",
-    "common": "yarn workspace common",
-    "tsc": "yarn web tsc --noEmit && yarn server tsc --noEmit",
-    "lint:fix": "eslint . --fix"
-  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
