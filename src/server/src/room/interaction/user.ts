@@ -19,8 +19,8 @@ function makeRoomVoterFunctions(roomId: string) {
         id: room.id,
         shortId: room.shortId,
         name: room.name,
-        createdAt: room.createdAt.toISOString(),
-        closedAt: room.closedAt?.toISOString() ?? null,
+        createdAt: room.createdAt,
+        closedAt: room.closedAt,
       };
     },
 

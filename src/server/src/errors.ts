@@ -59,3 +59,9 @@ export class QuestionAlreadyClosedError extends Error {
     super('Question already closed');
   }
 }
+
+export class InvalidStateError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}

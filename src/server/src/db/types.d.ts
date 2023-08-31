@@ -1,5 +1,5 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm"
-import { candidateVote, question, questionCandidate, questionInteraction, room, roomUser, voter } from "../schema"
+import { candidateVote, question, questionCandidate, questionInteraction, room, roomUser, voter } from "./schema"
 
 type SelectRoomUser = InferSelectModel<typeof roomUser>
 type InsertRoomUser = InferInsertModel<typeof roomUser>
