@@ -1,5 +1,5 @@
-import { BoardState } from '@server/live/states';
-import type { RoomPublicInfo } from '@server/room/types';
+import { BoardState } from 'server/src/live/states';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import { QRCodeRender } from 'components/QRCode';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { CenteredPageContainer, Heading, Question } from 'components/styles';

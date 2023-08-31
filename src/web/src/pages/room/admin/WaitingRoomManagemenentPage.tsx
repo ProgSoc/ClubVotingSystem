@@ -1,5 +1,5 @@
-import type { RoomUserWithDetails } from '@server/live/user';
-import type { RoomPublicInfo } from '@server/room/types';
+import type { RoomUserWithDetails } from 'server/src/live/user';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import { AdminRouter } from 'components/adminRouter';
 import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
