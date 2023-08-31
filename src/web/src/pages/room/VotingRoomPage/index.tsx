@@ -3,7 +3,7 @@ import type { RoomPublicInfo } from 'server/src/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
 import { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
 
