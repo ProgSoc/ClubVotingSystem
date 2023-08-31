@@ -1,5 +1,5 @@
 import type { RoomPublicInfo } from 'server/src/room/types';
-import { CenteredPageContainer, Heading } from 'components/styles';
+import { CenteredPageContainer, Heading } from '@/components/styles';
 
 import { trpc } from './trpc';
 

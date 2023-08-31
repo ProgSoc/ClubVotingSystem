@@ -1,8 +1,8 @@
-import { CenteredPageContainer, Heading } from 'components/styles';
+import { CenteredPageContainer, Heading } from '@/components/styles';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { trpc } from 'utils/trpc';
-import { cacheFetchedRoom } from 'utils/withRoomData';
+import { trpc } from '@/utils/trpc';
+import { cacheFetchedRoom } from '@/utils/withRoomData';
 
 interface ShortRedirectPageProps {
   makePath: (roomId: string) => string;

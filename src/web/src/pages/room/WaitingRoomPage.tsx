@@ -1,10 +1,10 @@
 import { RoomUserResolvedState } from 'server/src/live/user';
 import type { RoomPublicInfo } from 'server/src/room/types';
-import { CenteredPageContainer, Heading } from 'components/styles';
+import { CenteredPageContainer, Heading } from '@/components/styles';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { routeBuilders } from 'routes';
-import { trpc } from 'utils/trpc';
+import { routeBuilders } from '@/routes';
+import { trpc } from '@/utils/trpc';
 
 export function WaitingRoomPage(props: { room: RoomPublicInfo; roomId: string; userId: string }) {
   const navigate = useNavigate();

@@ -4,7 +4,7 @@ import { VoterState } from 'server/src/live/states';
 import type { GetStatesUnion } from 'server/src/state';
 import { makeStates, state } from 'server/src/state';
 import { useEffect, useRef, useState } from 'react';
-import { trpc } from 'utils/trpc';
+import { trpc } from '@/utils/trpc';
 
 export interface QuestionVotingData {
   question: ShowingQuestionState;

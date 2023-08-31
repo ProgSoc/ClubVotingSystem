@@ -1,11 +1,11 @@
 import type { RoomUserWithDetails } from 'server/src/live/user';
 import type { RoomPublicInfo } from 'server/src/room/types';
-import { AdminRouter } from 'components/adminRouter';
-import { Button, Heading, PageContainer } from 'components/styles';
+import { AdminRouter } from '@/components/adminRouter';
+import { Button, Heading, PageContainer } from '@/components/styles';
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { locationEnumLabel } from 'utils/enumLabels';
-import { trpc } from 'utils/trpc';
+import { locationEnumLabel } from '@/utils/enumLabels';
+import { trpc } from '@/utils/trpc';
 
 // Waiting = waiting for an admin to do something
 enum WaitingUserState {

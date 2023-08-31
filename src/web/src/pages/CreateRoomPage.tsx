@@ -1,9 +1,9 @@
-import { Button, CenteredPageContainer, Heading } from 'components/styles';
+import { Button, CenteredPageContainer, Heading } from '@/components/styles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { routeBuilders } from 'routes';
-import { trpc } from 'utils/trpc';
-import { cacheFetchedRoom } from 'utils/withRoomData';
+import { routeBuilders } from '@/routes';
+import { trpc } from '@/utils/trpc';
+import { cacheFetchedRoom } from '@/utils/withRoomData';
 
 export function CreateRoomPage() {
   // Make a form for entering page name and submitting it

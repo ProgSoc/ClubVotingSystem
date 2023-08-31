@@ -1,10 +1,10 @@
 import { BoardState } from 'server/src/live/states';
 import type { RoomPublicInfo } from 'server/src/room/types';
-import { AdminRouter } from 'components/adminRouter';
-import { Button, Heading, PageContainer } from 'components/styles';
+import { AdminRouter } from '@/components/adminRouter';
+import { Button, Heading, PageContainer } from '@/components/styles';
 import { useState } from 'react';
-import { routeBuilders } from 'routes';
-import { trpc } from 'utils/trpc';
+import { routeBuilders } from '@/routes';
+import { trpc } from '@/utils/trpc';
 
 export function RoomInfoPage(props: { roomId: string; room: RoomPublicInfo; adminKey: string }) {
   const [roomVoters, setRoomVoters] = useState(0);

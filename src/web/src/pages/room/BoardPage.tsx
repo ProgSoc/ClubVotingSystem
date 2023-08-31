@@ -1,12 +1,12 @@
 import { BoardState } from 'server/src/live/states';
 import type { RoomPublicInfo } from 'server/src/room/types';
-import { QRCodeRender } from 'components/QRCode';
-import { ResultsViewer } from 'components/ResultsViewer';
-import { CenteredPageContainer, Heading, Question } from 'components/styles';
+import { QRCodeRender } from '@/components/QRCode';
+import { ResultsViewer } from '@/components/ResultsViewer';
+import { CenteredPageContainer, Heading, Question } from '@/components/styles';
 import { useState } from 'react';
-import { routeBuilders } from 'routes';
+import { routeBuilders } from '@/routes';
 import { twMerge } from 'tailwind-merge';
-import { trpc } from 'utils/trpc';
+import { trpc } from '@/utils/trpc';
 
 export function BoardPage(props: { roomId: string; room: RoomPublicInfo }) {
   return (

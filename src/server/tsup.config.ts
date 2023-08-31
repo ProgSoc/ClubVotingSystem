@@ -6,6 +6,7 @@ export default defineConfig(({ watch }) => ({
   sourcemap: true,
   clean: true,
   format: ['cjs'],
+  dts: true,
   platform: 'node',
   onSuccess: watch ? 'node --enable-source-maps dist/server' : undefined,
   loader: {

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { routeBuilders } from 'routes';
+import { routeBuilders } from '@/routes';
 import { twMerge } from 'tailwind-merge';
 
 const AdminLink = (props: { path: string; name: string }) => {

@@ -1,8 +1,8 @@
-import { Button, CenteredPageContainer, Heading } from 'components/styles';
+import { Button, CenteredPageContainer, Heading } from '@/components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
-import { routeBuilders } from 'routes';
-import { trpc } from 'utils/trpc';
+import { routeBuilders } from '@/routes';
+import { trpc } from '@/utils/trpc';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';

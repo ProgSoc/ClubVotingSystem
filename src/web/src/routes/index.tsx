@@ -11,7 +11,7 @@ import { ShortRedirectPage } from '@/pages/ShortRedirectPage';
 import { createBrowserRouter, useLocation, useOutlet } from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { twMerge } from 'tailwind-merge';
-import { withRoomFetched } from 'utils/withRoomData';
+import { withRoomFetched } from '@/utils/withRoomData';
 
 import { buildBuilders, buildRoutes, path, route } from './routeBuilder';
 
