@@ -296,9 +296,11 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     getUserByVoterId: async (voterId: string) => {
-      return db.query.roomUser.findFirst({
-        where: eq(roomUser.voterId, voterId),
-      });
+      const [{RoomUser}] = await db.select().from(roomUser).fullJoin(voter, () => eq(roomUser.id, voter.id)).where(eq(voter.id, voterId))
+      if (!RoomUser) {
+        return null
+      }
+      return RoomUser;
     },
   };
 

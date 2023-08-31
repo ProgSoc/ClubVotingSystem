@@ -226,16 +226,18 @@ export function makeQuestionModificationFunctions(roomId: string) {
           .from(candidateVote)
           .where(and(eq(candidateVote.voterId, voterId), eq(questionCandidate.questionId, questionId)))
           .innerJoin(questionCandidate, eq(questionCandidate.id, candidateVote.candidateId));
-
-        tx.delete(candidateVote).where(
-          and(
-            inArray(
-              candidateVote.candidateId,
-              previousVotes.map((v) => v.candidateId)
-            ),
-            eq(candidateVote.voterId, voterId)
-          )
-        );
+          if (previousVotes.length) {
+            await tx.delete(candidateVote).where(
+              and(
+                inArray(
+                  candidateVote.candidateId,
+                  previousVotes.map((v) => v.candidateId)
+                ),
+                eq(candidateVote.voterId, voterId)
+              )
+            );
+          }
+       
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (response.type !== question.details.type && response.type !== 'Abstain') {
