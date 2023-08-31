@@ -10,7 +10,7 @@
   "scripts": {
     "web": "yarn workspace web",
     "server": "yarn workspace server",
-    "tsc": "yarn web tsc && yarn server tsc",
+    "tsc": "yarn web tsc --noEmit && yarn server tsc --noEmit",
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {

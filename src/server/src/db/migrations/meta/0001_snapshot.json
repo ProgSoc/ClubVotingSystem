@@ -1,0 +1,416 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "id": "fc0f184d-ca66-41ce-8e39-c978772508f1",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "CandidateVote": {
+      "name": "CandidateVote",
+      "schema": "",
+      "columns": {
+        "candidateId": {
+          "name": "candidateId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voterId": {
+          "name": "voterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "CandidateVote_candidateId_QuestionCandidate_id_fk": {
+          "name": "CandidateVote_candidateId_QuestionCandidate_id_fk",
+          "tableFrom": "CandidateVote",
+          "tableTo": "QuestionCandidate",
+          "columnsFrom": [
+            "candidateId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "CandidateVote_voterId_Voter_id_fk": {
+          "name": "CandidateVote_voterId_Voter_id_fk",
+          "tableFrom": "CandidateVote",
+          "tableTo": "Voter",
+          "columnsFrom": [
+            "voterId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "CandidateVote_candidateId_voterId": {
+          "name": "CandidateVote_candidateId_voterId",
+          "columns": [
+            "candidateId",
+            "voterId"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "Question": {
+      "name": "Question",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "question": {
+          "name": "question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "closed": {
+          "name": "closed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "roomId": {
+          "name": "roomId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "format": {
+          "name": "format",
+          "type": "QuestionType",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "votersPresentAtEnd": {
+          "name": "votersPresentAtEnd",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Question_roomId_Room_id_fk": {
+          "name": "Question_roomId_Room_id_fk",
+          "tableFrom": "Question",
+          "tableTo": "Room",
+          "columnsFrom": [
+            "roomId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "QuestionCandidate": {
+      "name": "QuestionCandidate",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "questionId": {
+          "name": "questionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "QuestionCandidate_questionId_Question_id_fk": {
+          "name": "QuestionCandidate_questionId_Question_id_fk",
+          "tableFrom": "QuestionCandidate",
+          "tableTo": "Question",
+          "columnsFrom": [
+            "questionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "QuestionInteraction": {
+      "name": "QuestionInteraction",
+      "schema": "",
+      "columns": {
+        "questionId": {
+          "name": "questionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voterId": {
+          "name": "voterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "QuestionInteraction_questionId_Question_id_fk": {
+          "name": "QuestionInteraction_questionId_Question_id_fk",
+          "tableFrom": "QuestionInteraction",
+          "tableTo": "Question",
+          "columnsFrom": [
+            "questionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "QuestionInteraction_voterId_Voter_id_fk": {
+          "name": "QuestionInteraction_voterId_Voter_id_fk",
+          "tableFrom": "QuestionInteraction",
+          "tableTo": "Voter",
+          "columnsFrom": [
+            "voterId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "QuestionInteraction_questionId_voterId": {
+          "name": "QuestionInteraction_questionId_voterId",
+          "columns": [
+            "questionId",
+            "voterId"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "Room": {
+      "name": "Room",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "shortId": {
+          "name": "shortId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "adminKey": {
+          "name": "adminKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "closedAt": {
+          "name": "closedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "Room_shortId_key": {
+          "name": "Room_shortId_key",
+          "columns": [
+            "shortId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "RoomUser": {
+      "name": "RoomUser",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "studentEmail": {
+          "name": "studentEmail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "WaitingState",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "roomId": {
+          "name": "roomId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voterId": {
+          "name": "voterId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location": {
+          "name": "location",
+          "type": "UserLocation",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "RoomUser_voterId_key": {
+          "name": "RoomUser_voterId_key",
+          "columns": [
+            "voterId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "RoomUser_roomId_Room_id_fk": {
+          "name": "RoomUser_roomId_Room_id_fk",
+          "tableFrom": "RoomUser",
+          "tableTo": "Room",
+          "columnsFrom": [
+            "roomId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "RoomUser_voterId_Voter_id_fk": {
+          "name": "RoomUser_voterId_Voter_id_fk",
+          "tableFrom": "RoomUser",
+          "tableTo": "Voter",
+          "columnsFrom": [
+            "voterId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "Voter": {
+      "name": "Voter",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "QuestionType": {
+      "name": "QuestionType",
+      "values": {
+        "SingleVote": "SingleVote"
+      }
+    },
+    "UserLocation": {
+      "name": "UserLocation",
+      "values": {
+        "Proxy": "Proxy",
+        "Online": "Online",
+        "InPerson": "InPerson"
+      }
+    },
+    "WaitingState": {
+      "name": "WaitingState",
+      "values": {
+        "Kicked": "Kicked",
+        "Declined": "Declined",
+        "Admitted": "Admitted",
+        "Waiting": "Waiting"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}

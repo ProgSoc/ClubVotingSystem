@@ -1,0 +1,20 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1693464970759,
+      "tag": "0000_cooing_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1693465086833,
+      "tag": "0001_huge_butterfly",
+      "breakpoints": true
+    }
+  ]
+}

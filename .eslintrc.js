@@ -53,14 +53,14 @@ module.exports = {
     {
       files: ['*.ts', '*.tsx'],
       parser: '@typescript-eslint/parser',
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-        ecmaVersion: 2021,
-        sourceType: 'module',
-        project: './tsconfig.json',
-      },
+      // parserOptions: {
+      //   ecmaFeatures: {
+      //     jsx: true,
+      //   },
+      //   ecmaVersion: 2021,
+      //   sourceType: 'module',
+      //   project: './tsconfig.json',
+      // },
       extends: [
         'eslint:recommended',
         'plugin:react/recommended',
@@ -136,5 +136,7 @@ module.exports = {
       },
     },
   ],
-  rules: {},
+  rules: {
+    "eslint/linebreak-style": "off",
+  },
 };
