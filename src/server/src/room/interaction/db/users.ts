@@ -6,6 +6,10 @@ import { prisma } from '../../../prisma';
 import type { GetStatesUnion } from '../../../state';
 import { makeStates, state } from '../../../state';
 import { UnreachableError } from '../../../unreachableError';
+import db from '../../../db/client';
+import { roomUser, voter } from '../../../db/schema';
+import { and, eq, isNotNull } from 'drizzle-orm';
+import { createId } from '@paralleldrive/cuid2';
 
 export interface JoinWaitingRoomParams {
   studentEmail: string;
@@ -107,35 +111,38 @@ export function makeVoterInteractionFunctions(roomId: string) {
   let currentRoomUsersListPromise: Promise<RoomUsersListWithVoterIds> | null = null;
 
   async function fetchCurrentList(): Promise<RoomUsersListWithVoterIds> {
-    const roomUsers = await prisma.roomUser.findMany({
-      where: { roomId },
-    });
+    const addmitted = await db
+      .select({
+        id: roomUser.id,
+        details: {
+          studentEmail: roomUser.studentEmail,
+          location: roomUser.location,
+        },
+        voterId: roomUser.voterId,
+      })
+      .from(roomUser)
+      .where(and(eq(roomUser.roomId, roomId), eq(roomUser.state, 'Admitted'), isNotNull(roomUser.voterId)));
+
+    const waiting = await db
+      .select({
+        id: roomUser.id,
+        details: {
+          studentEmail: roomUser.studentEmail,
+          location: roomUser.location,
+        },
+      })
+      .from(roomUser)
+      .where(and(eq(roomUser.roomId, roomId), eq(roomUser.state, 'Waiting')));
+
     return {
-      admitted: roomUsers
-        .filter((u) => u.state === 'Admitted')
-        .map((u) => ({
-          id: u.id,
-          details: {
-            studentEmail: u.studentEmail,
-            location: u.location,
-          },
-          voterId: u.voterId!,
-        })),
-      waiting: roomUsers
-        .filter((u) => u.state === 'Waiting')
-        .map((u) => ({
-          id: u.id,
-          details: {
-            studentEmail: u.studentEmail,
-            location: u.location,
-          },
-        })),
+      admitted: addmitted as RoomVoterWithDetails[], // TODO: Fix null check
+      waiting: waiting,
     };
   }
 
   async function getUser(userId: string): Promise<RoomUser> {
-    const user = await prisma.roomUser.findUnique({
-      where: { id: userId },
+    const user = await db.query.roomUser.findFirst({
+      where: eq(roomUser.id, userId),
     });
 
     if (!user) {
@@ -165,14 +172,19 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     joinWaitingList: async (params: JoinWaitingRoomParams) => {
-      const waitingUser = await prisma.roomUser.create({
-        data: {
-          studentEmail: params.studentEmail,
-          location: params.location,
-          roomId,
-          state: WaitingState.Waiting,
-        },
-      });
+      const waitingUsers = await db.insert(roomUser).values({
+        studentEmail: params.studentEmail,
+        location: params.location,
+        roomId,
+        state: WaitingState.Waiting,
+        id: createId()
+      }).returning()
+
+      const waitingUser = waitingUsers[0]
+
+      if (!waitingUser) {
+        throw new Error('Failed to create waiting user')
+      }
 
       currentRoomUsersListPromise = null;
 
@@ -180,9 +192,9 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     getUserAdmissionStatus: async (userId: string): Promise<RoomUserState> => {
-      const user = await prisma.roomUser.findUnique({
-        where: { id: userId },
-      });
+      const user = await db.query.roomUser.findFirst({
+        where: eq(roomUser.id, userId)
+      })
 
       if (!user) {
         throw new UserNotFoundError(userId);
@@ -192,79 +204,103 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     admitUser: async (userId: string) => {
-      return prisma.$transaction(async (prisma): Promise<{ voterId: string }> => {
-        const user = await getUser(userId);
+      /**
+       * Remember that everything here is wrapped in a transaction.
+       */
+      return db.transaction(async (tx): Promise<{ voterId: string }> => {
+        const user = await tx.query.roomUser.findFirst({
+          where: eq(roomUser.id, userId),
+        })
 
-        if (user.state !== WaitingState.Waiting) {
+        if (!user) {
+          throw new UserNotFoundError(userId);
+        }
+
+        if (user.state !== "Waiting") {
           throw new UserNotInWaitingRoom(userId);
         }
 
-        const waitingRoomUser = await prisma.roomUser.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            state: WaitingState.Admitted,
-            voter: {
-              create: {},
-            },
-          },
-        });
+        const [updatedWaitingRoomUser] = await tx.update(roomUser).set({
+          state: "Admitted",
+        }).where(eq(roomUser.id, userId)).returning()
+
+        if (!updatedWaitingRoomUser) {
+          throw new Error('Failed to update waiting room user')
+        }
+
+        // Create a voter for the user
+        const [firstVoter] = await tx.insert(voter).values({
+          id: updatedWaitingRoomUser.id,
+        }).returning({voterId: voter.id})
+
+        if (!firstVoter) {
+          throw new Error('Failed to create voter')
+        }
 
         return {
           // We assume that the voter was created
-          voterId: waitingRoomUser.voterId!,
+          voterId: firstVoter.voterId,
         };
       });
     },
 
     declineUser: async (userId: string) => {
-      return prisma.$transaction(async (prisma) => {
-        const user = await getUser(userId);
+      return db.transaction(async (tx) => {
+        const user = await tx.query.roomUser.findFirst({
+          where: eq(roomUser.id, userId),
+        })
 
-        if (user.state !== WaitingState.Waiting) {
+        if (!user) {
+          throw new UserNotFoundError(userId);
+        }
+
+        if (user.state !== "Waiting") {
           throw new UserNotInWaitingRoom(userId);
         }
 
-        await prisma.roomUser.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            state: WaitingState.Declined,
-          },
-        });
-      });
+        const [updatedWaitingRoomUser] = await tx.update(roomUser).set({
+          state: "Declined",
+        }).where(eq(roomUser.id, userId)).returning()
+
+        if (!updatedWaitingRoomUser) {
+          throw new Error('Failed to update waiting room user')
+        }
+      })
     },
 
     kickVoter: async (userId: string) => {
-      return prisma.$transaction(async (prisma) => {
-        const user = await getUser(userId);
+      return db.transaction(async (tx) => {
+        const user = await tx.query.roomUser.findFirst({
+          where: eq(roomUser.id, userId),
+        })
 
-        if (user.state !== WaitingState.Admitted) {
+        if (!user) {
+          throw new UserNotFoundError(userId);
+        }
+
+        if (user.state !== "Admitted") {
           throw new UserNotAVoter(userId);
         }
 
-        await prisma.roomUser.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            state: WaitingState.Kicked,
-          },
-        });
-      });
+        const [updatedWaitingRoomUser] = await tx.update(roomUser).set({
+          state: "Kicked",
+        }).where(eq(roomUser.id, userId)).returning()
+
+        if (!updatedWaitingRoomUser) {
+          throw new Error('Failed to update waiting room user')
+        }
+      })
     },
 
     getVoterByUserId: async (userId: string) => {
-      return prisma.voter.findFirst({
-        where: { user: { id: userId, roomId } },
+      return db.query.voter.findFirst({
+        where: eq(voter.id, userId),
       });
     },
 
     getUserByVoterId: async (voterId: string) => {
-      return prisma.roomUser.findFirst({
-        where: { voterId, roomId },
+      return db.query.roomUser.findFirst({
+        where: eq(roomUser.voterId, voterId),
       });
     },
   };

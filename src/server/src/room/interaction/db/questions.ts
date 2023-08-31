@@ -7,6 +7,8 @@ import type { VotingCandidate } from '../../../live/states';
 import { prisma } from '../../../prisma';
 import { UnreachableError } from '../../../unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
+import db from '../../../db/client';
+import { candidateVote } from '../../../db/schema';
 
 const prismaQuestionInclude = {
   interactions: true,
@@ -208,12 +210,10 @@ export function makeQuestionModificationFunctions(roomId: string) {
             // Do nothing, the votes have already been cleared
             break;
           case 'SingleVote':
-            await prisma.candidateVote.create({
-              data: {
-                voterId,
-                candidateId: response.candidateId,
-              },
-            });
+            await db.insert(candidateVote).values({
+              candidateId: response.candidateId,
+              voterId,
+            })
             break;
           default:
             throw new UnreachableError(response);
