@@ -1,4 +1,4 @@
-import type { QuestionType } from '@prisma/client';
+import { questionType } from "@/db/schema";
 
 export type RoomPublicInfo = {
   id: string;
@@ -13,7 +13,7 @@ export type RoomAdminInfo = RoomPublicInfo & {
 };
 
 export interface SingleVoteQuestionFormat {
-  type: typeof QuestionType['SingleVote'];
+  type: typeof questionType.enumValues[number];
 }
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;

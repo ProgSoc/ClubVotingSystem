@@ -1,9 +1,9 @@
-import { QuestionType } from '@prisma/client';
+import { SelectQuestion } from '@/db/types';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
 
 export interface SingleVoteQuestionFormat {
-  type: typeof QuestionType['SingleVote'];
+  type: SelectQuestion["format"];
 }
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;
@@ -13,7 +13,7 @@ const abstainQuestionResponse = z.object({
 });
 
 const singleVoteQuestionResponse = z.object({
-  type: z.literal(QuestionType.SingleVote),
+  type: z.literal("SingleVote"),
   candidateId: z.string(),
 });
 

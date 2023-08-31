@@ -1,31 +1,12 @@
-import type { CandidateVote, Question, QuestionCandidate, QuestionInteraction } from '@prisma/client';
-import { QuestionType } from '@prisma/client';
-
 import { InvalidStateError, NoQuestionOpenError, QuestionAlreadyClosedError } from '@/errors';
 import type { QuestionResponse, ResultsView } from '@/live/question';
 import type { VotingCandidate } from '@/live/states';
-import { prisma } from '@/prisma';
 import { UnreachableError } from '@/unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
 import db from '@/db/client';
 import { candidateVote, question, questionCandidate, questionInteraction } from '@/db/schema';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { SelectCandidateVote, SelectQuestion, SelectQuestionCandidate, SelectQuestionInteraction } from '@/db/types';
-
-const prismaQuestionInclude = {
-  interactions: true,
-  candidates: {
-    include: {
-      votes: true,
-    },
-  },
-} as const;
-type PrismaQuestionInclude = Question & {
-  candidates: (QuestionCandidate & {
-    votes: CandidateVote[];
-  })[];
-  interactions: QuestionInteraction[];
-};
 
 export interface RoomQuestion {
   id: string;
@@ -75,9 +56,9 @@ function mapDrizzleQuestionInclude(question: DrizzleQuestionInclude): RoomQuesti
 
   const makeDetails = (): QuestionFormatDetails => {
     switch (question.format) {
-      case QuestionType.SingleVote:
+      case "SingleVote":
         return {
-          type: QuestionType.SingleVote,
+          type: "SingleVote",
         };
       default:
         throw new UnreachableError(question.format);
@@ -86,9 +67,9 @@ function mapDrizzleQuestionInclude(question: DrizzleQuestionInclude): RoomQuesti
 
   const makeResults = (): ResultsView => {
     switch (question.format) {
-      case QuestionType.SingleVote:
+      case "SingleVote":
         return {
-          type: QuestionType.SingleVote,
+          type: "SingleVote",
           results: question.candidates.map((candidate) => ({
             id: candidate.id,
             name: candidate.name,
@@ -215,60 +196,6 @@ export function makeQuestionModificationFunctions(roomId: string) {
     },
 
     async voteForQuestion(questionId: string, voterId: string, response: QuestionResponse) {
-      // return prisma.$transaction(async (prisma) => {
-      //   const question = await fns.currentQuestion();
-
-      //   if (!question) {
-      //     throw new NoQuestionOpenError();
-      //   }
-
-      //   if (question.id !== questionId) {
-      //     throw new QuestionAlreadyClosedError();
-      //   }
-
-      //   // Create the interaction (if doesnt exist) to add to the vote count
-      //   await prisma.questionInteraction.upsert({
-      //     create: {
-      //       question: { connect: { id: questionId } },
-      //       voter: { connect: { id: voterId } },
-      //     },
-      //     update: {},
-      //     where: {
-      //       questionId_voterId: { questionId, voterId },
-      //     },
-      //   });
-
-      //   // Delete all previous votes from the voter for the question
-      //   await prisma.candidateVote.deleteMany({
-      //     where: {
-      //       voterId,
-      //       candidate: {
-      //         questionId,
-      //       },
-      //     },
-      //   });
-
-      //   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      //   if (response.type !== question.details.type && response.type !== 'Abstain') {
-      //     throw new Error('Invalid response type');
-      //   }
-
-      //   switch (response.type) {
-      //     case 'Abstain':
-      //       // Do nothing, the votes have already been cleare
-      //       break;
-      //     case 'SingleVote':
-      //       await db.insert(candidateVote).values({
-      //         candidateId: response.candidateId,
-      //         voterId,
-      //       });
-      //       break;
-      //     default:
-      //       throw new UnreachableError(response);
-      //   }
-
-      //   currentQuestionPromise = null;
-      // });
 
       return db.transaction(async (tx) => {
         const question = await fns.currentQuestion();
@@ -339,7 +266,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
         return null;
       }
 
-      const votes: CandidateVote[] = [];
+      const votes: SelectCandidateVote[] = [];
       question.originalPrismaQuestionObject.candidates.forEach((c) => {
         const vote = c.votes.find((v) => v.voterId === voterId);
         if (vote) {
@@ -359,9 +286,9 @@ export function makeQuestionModificationFunctions(roomId: string) {
       }
 
       switch (question.details.type) {
-        case QuestionType.SingleVote:
+        case "SingleVote":
           return {
-            type: QuestionType.SingleVote,
+            type: "SingleVote",
             candidateId: votes[0].candidateId,
           };
         default:

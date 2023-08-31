@@ -1,19 +1,16 @@
-import type { RoomUser, UserLocation } from '@prisma/client';
-import { WaitingState } from '@prisma/client';
-
 import { UserNotAVoter, UserNotFoundError, UserNotInWaitingRoom } from '../../../errors';
-import { prisma } from '../../../prisma';
 import type { GetStatesUnion } from '../../../state';
 import { makeStates, state } from '../../../state';
 import { UnreachableError } from '../../../unreachableError';
 import db from '../../../db/client';
-import { roomUser, voter } from '../../../db/schema';
+import { roomUser, userLocation, voter, waitingState } from '../../../db/schema';
 import { and, eq, isNotNull } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { SelectRoomUser } from '@/db/types';
 
 export interface JoinWaitingRoomParams {
   studentEmail: string;
-  location: UserLocation;
+  location: typeof userLocation['enumValues'][number];
 }
 
 interface WithUserId {
@@ -26,12 +23,12 @@ interface WithVoterId extends WithUserId {
 
 export interface WaitingRoomUser {
   id: string;
-  state: typeof WaitingState['Waiting'];
+  state: typeof waitingState['enumValues'][number];
 }
 
 interface UserPrivateDetails {
   studentEmail: string;
-  location: UserLocation;
+  location: typeof userLocation['enumValues'][number];
 }
 
 export interface RoomUserWithDetails extends WithUserId {
@@ -71,24 +68,24 @@ export interface RoomUsersListWithVoterIds {
   admitted: RoomVoterWithDetails[];
 }
 
-function getRoomStateFromUser(user: RoomUser): RoomUserState {
+function getRoomStateFromUser(user: SelectRoomUser): RoomUserState {
   switch (user.state) {
-    case WaitingState.Waiting:
+    case "Waiting":
       return RoomUserState.waiting({
         id: user.id,
       });
-    case WaitingState.Admitted:
+    case "Admitted":
       return RoomUserState.admitted({
         id: user.id,
 
         // When admitted, it's assumed that user is not null
         voterId: user.voterId!,
       });
-    case WaitingState.Declined:
+    case "Declined":
       return RoomUserState.declined({
         id: user.id,
       });
-    case WaitingState.Kicked:
+    case "Kicked":
       return RoomUserState.kicked({
         id: user.id,
       });
@@ -140,7 +137,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
     };
   }
 
-  async function getUser(userId: string): Promise<RoomUser> {
+  async function getUser(userId: string): Promise<SelectRoomUser> {
     const user = await db.query.roomUser.findFirst({
       where: eq(roomUser.id, userId),
     });
@@ -176,7 +173,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
         studentEmail: params.studentEmail,
         location: params.location,
         roomId,
-        state: WaitingState.Waiting,
+        state: "Waiting",
         id: createId()
       }).returning()
 

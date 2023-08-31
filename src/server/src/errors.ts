@@ -1,4 +1,4 @@
-import type { Room } from '@prisma/client';
+import { SelectRoom } from "./db/types";
 
 export class RoomNotFoundError extends Error {
   constructor(readonly roomId: string) {
@@ -7,7 +7,7 @@ export class RoomNotFoundError extends Error {
 }
 
 export class RoomIsClosedError extends Error {
-  constructor(readonly room: Room) {
+  constructor(readonly room: SelectRoom) {
     super('This room is closed');
   }
 }

@@ -1,7 +1,6 @@
 import { customAlphabet } from 'nanoid';
 
 import { RoomNotFoundError } from '../errors';
-import { prisma } from '../prisma';
 import type { RoomAdminInfo, RoomPublicInfo } from './types';
 import db from '../db/client';
 import { room } from '../db/schema';

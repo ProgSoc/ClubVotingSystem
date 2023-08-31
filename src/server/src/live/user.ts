@@ -1,11 +1,11 @@
-import type { UserLocation, WaitingState } from '@prisma/client';
+import { userLocation, waitingState } from '@/db/schema';
 
 import type { GetStatesUnion } from '../state';
 import { makeStates, state } from '../state';
 
 export interface JoinWaitingRoomParams {
   studentEmail: string;
-  location: UserLocation;
+  location: typeof userLocation['enumValues'];
 }
 
 interface WithUserId {
@@ -18,12 +18,12 @@ interface WithVoterId extends WithUserId {
 
 export interface WaitingRoomUser {
   id: string;
-  state: typeof WaitingState['Waiting'];
+  state: typeof waitingState['enumValues'];
 }
 
 interface UserPrivateDetails {
   studentEmail: string;
-  location: UserLocation;
+  location: typeof userLocation['enumValues'][number];
 }
 
 export interface RoomUserWithDetails extends WithUserId {

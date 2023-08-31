@@ -1,4 +1,3 @@
-import { QuestionType } from '@prisma/client';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
@@ -67,12 +66,12 @@ export const roomQuestionsAdminRouter = router({
         question: z.string().min(1),
         details: z.union([
           z.object({
-            type: z.literal(QuestionType.SingleVote),
+            type: z.literal("SingleVote"),
           }),
 
           // TODO: Add more types. Having a duplicate here so that zod doesnt complain.
           z.object({
-            type: z.literal(QuestionType.SingleVote),
+            type: z.literal("SingleVote"),
           }),
         ]),
         candidates: z.array(z.string().min(1)).min(1),

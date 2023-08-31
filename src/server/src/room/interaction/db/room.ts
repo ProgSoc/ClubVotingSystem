@@ -1,7 +1,4 @@
-import type { Room } from '@prisma/client';
-
 import { InvalidAdminKeyError, RoomNotFoundError } from '../../../errors';
-import { prisma } from '../../../prisma';
 import db from '../../../db/client';
 import { SelectRoom } from '../../../db/types';
 
