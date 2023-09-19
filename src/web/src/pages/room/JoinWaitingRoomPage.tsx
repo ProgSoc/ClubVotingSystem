@@ -54,9 +54,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
           {(form) => (
             <Form>
               <div className="gap-4 w-full flex flex-col justify-center items-center">
-                <div
-                  className="flex flex-col gap-4"
-                >
+                <div className="flex flex-col gap-4">
                   <Field
                     className="input input-bordered w-full sm:w-96 text-sm md:text-base"
                     placeholder="Student Email (firstname.lastname)"
@@ -67,7 +65,12 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                   />
                   <div className="flex items-start justify-center gap-4">
                     <label className="flex items-center gap-2">
-                      <Field type="radio" name="location" value={UserLocation.InPerson} className="radio radio-primary" />
+                      <Field
+                        type="radio"
+                        name="location"
+                        value={UserLocation.InPerson}
+                        className="radio radio-primary"
+                      />
                       <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.InPerson]}</span>
                     </label>
                     <label className="flex items-center gap-2">

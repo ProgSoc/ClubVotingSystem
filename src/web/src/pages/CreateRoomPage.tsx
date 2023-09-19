@@ -24,7 +24,7 @@ export function CreateRoomPage() {
   return (
     <CenteredPageContainer className="gap-4">
       <Heading>Create a new room</Heading>
-        <fieldset disabled={disabled} className="gap-2 w-full flex flex-col justify-center items-center">
+      <fieldset disabled={disabled} className="gap-2 w-full flex flex-col justify-center items-center">
         <input
           className="input input-bordered w-full sm:w-96"
           type="text"

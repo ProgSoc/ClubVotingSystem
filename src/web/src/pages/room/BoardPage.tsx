@@ -25,30 +25,37 @@ function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
   return (
     <div
-      className={twMerge('flex flex-col items-center md:bg-base-300 shadow-lg px-8 py-10 md:p-10 pt-1 md:pt-5 rounded-2xl', props.className)}
+      className={twMerge(
+        'flex flex-col items-center md:bg-base-300 shadow-lg px-8 py-10 md:p-10 pt-1 md:pt-5 rounded-2xl',
+        props.className
+      )}
     >
-      <div
-        className="flex flex-col gap-5 py-10 items-center"
-      >
-        <Heading
-          className="text-3xl md:text-4xl pb-3"
-        >Join voting room</Heading>
+      <div className="flex flex-col gap-5 py-10 items-center">
+        <Heading className="text-3xl md:text-4xl pb-3">Join voting room</Heading>
         <QRCodeRender content={joinLink} />
         {joinLink && (
           <p>
-            <a target="_blank" rel="noreferrer" href={joinLink} className="text-sm md:text-xl underline text-info font-mono">
+            <a
+              target="_blank"
+              rel="noreferrer"
+              href={joinLink}
+              className="text-sm md:text-xl underline text-info font-mono"
+            >
               {joinLink}
             </a>
           </p>
         )}
       </div>
-      <div
-        className="flex flex-col gap-2 items-center"
-      >
+      <div className="flex flex-col gap-2 items-center">
         <Heading className="text-2xl md:text-3xl">View board</Heading>
         {joinLink && (
           <p>
-            <a target="_blank" rel="noreferrer" href={boardLink} className="text-sm md:text-xl underline text-info font-mono">
+            <a
+              target="_blank"
+              rel="noreferrer"
+              href={boardLink}
+              className="text-sm md:text-xl underline text-info font-mono"
+            >
               {boardLink}
             </a>
           </p>
@@ -79,11 +86,8 @@ function StatusPanel(props: { room: RoomPublicInfo }) {
 
   return BoardState.match(state, {
     blank: () => (
-      <div
-        className="flex flex-col"
-      >
+      <div className="flex flex-col">
         <Heading>Waiting for a question...</Heading>
-
       </div>
     ),
 

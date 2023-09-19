@@ -150,9 +150,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
   };
 
   return (
-    <div
-      className="flex flex-col lg:flex-row items-center gap-24"
-    >
+    <div className="flex flex-col lg:flex-row items-center gap-24">
       <Formik<FormValues>
         initialValues={{
           question: '',
@@ -172,9 +170,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
           };
 
           return (
-            <Form
-              className="flex flex-col m-8 md:bg-base-300 shadow-lg md:p-10 md:pt-5 rounded-2xl"
-            >
+            <Form className="flex flex-col m-8 md:bg-base-300 shadow-lg md:p-10 md:pt-5 rounded-2xl">
               <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
                 <Field
                   className="input input-bordered input-primary w-full text-center self-start my-8"
@@ -251,8 +247,8 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
         <div>
           <Heading>Previous results</Heading>
           <div className="mt-8 flex flex-col gap-8 items-center">
-              <Question>{data.previousResults.question}</Question>
-              <ResultsViewer results={data.previousResults.results} />
+            <Question>{data.previousResults.question}</Question>
+            <ResultsViewer results={data.previousResults.results} />
           </div>
         </div>
       )}

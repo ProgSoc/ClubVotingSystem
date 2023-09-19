@@ -134,9 +134,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: RoomPub
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
 
       <div className="flex flex-col items-center w-full m-8 gap-24">
-        <div
-          className="flex flex-col gap-8"
-        >
+        <div className="flex flex-col gap-8">
           <Heading>Waiting Room</Heading>
           <div className="gap-2 flex flex-col">
             {users.map((user) => (
@@ -171,9 +169,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: RoomPub
             ))}
           </div>
         </div>
-        <div
-          className="flex flex-col gap-8"
-        >
+        <div className="flex flex-col gap-8">
           <Heading>Voters</Heading>
           {voters.map((user) => (
             <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
