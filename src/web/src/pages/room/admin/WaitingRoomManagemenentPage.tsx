@@ -133,57 +133,65 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: RoomPub
     <PageContainer>
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
 
-      <div className="flex flex-col items-center w-full gap-4">
-        <Heading>Waiting Room</Heading>
-        <div className="gap-2 flex flex-col">
-          {users.map((user) => (
+      <div className="flex flex-col items-center w-full m-8 gap-24">
+        <div
+          className="flex flex-col gap-8"
+        >
+          <Heading>Waiting Room</Heading>
+          <div className="gap-2 flex flex-col">
+            {users.map((user) => (
+              <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
+                <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
+                <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>
+                <div className="gap-4">
+                  <Button
+                    className="btn-primary"
+                    onClick={async () => {
+                      if (user.uiLoadingState === WaitingUserState.Waiting) {
+                        admitUser(user.id);
+                      }
+                    }}
+                    isLoading={user.uiLoadingState === WaitingUserState.Admitting}
+                  >
+                    Admit
+                  </Button>
+                  <Button
+                    className="btn-error"
+                    onClick={async () => {
+                      if (user.uiLoadingState === WaitingUserState.Waiting) {
+                        declineUser(user.id);
+                      }
+                    }}
+                    isLoading={user.uiLoadingState === WaitingUserState.Declining}
+                  >
+                    Decline
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div
+          className="flex flex-col gap-8"
+        >
+          <Heading>Voters</Heading>
+          {voters.map((user) => (
             <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
               <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
               <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>
               <div className="gap-4">
                 <Button
-                  className="btn-primary"
-                  onClick={async () => {
-                    if (user.uiLoadingState === WaitingUserState.Waiting) {
-                      admitUser(user.id);
-                    }
-                  }}
-                  isLoading={user.uiLoadingState === WaitingUserState.Admitting}
-                >
-                  Admit
-                </Button>
-                <Button
                   className="btn-error"
                   onClick={async () => {
-                    if (user.uiLoadingState === WaitingUserState.Waiting) {
-                      declineUser(user.id);
-                    }
+                    kickVoter(user.id);
                   }}
-                  isLoading={user.uiLoadingState === WaitingUserState.Declining}
                 >
-                  Decline
+                  Kick
                 </Button>
               </div>
             </div>
           ))}
         </div>
-        <Heading>Voters</Heading>
-        {voters.map((user) => (
-          <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
-            <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
-            <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>
-            <div className="gap-4">
-              <Button
-                className="btn-error"
-                onClick={async () => {
-                  kickVoter(user.id);
-                }}
-              >
-                Kick
-              </Button>
-            </div>
-          </div>
-        ))}
       </div>
     </PageContainer>
   );

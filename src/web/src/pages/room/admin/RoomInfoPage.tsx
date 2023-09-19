@@ -32,14 +32,20 @@ export function RoomInfoPage(props: { roomId: string; room: RoomPublicInfo; admi
 
       <div className="flex flex-col items-center gap-4">
         <div>
-          <Heading>View board</Heading>
-          <a target="_blank" rel="noreferrer" href={boardLink} className="text-2xl underline text-info font-mono">
+          <Heading
+            className="text-2xl md:text-3xl m-3"
+          >View board</Heading>
+          <a target="_blank" rel="noreferrer" href={boardLink} className="text-sm md:text-xl underline text-info font-mono">
             {boardLink}
           </a>
         </div>
         <a target="_blank" rel="noreferrer" href={routeBuilders.viewRoomResults({ roomId: props.room.id })}>
-          <Button>View Results</Button>
         </a>
+          <Button
+            className="btn btn-accent m-3"
+          >
+            View Results
+          </Button>
       </div>
     </PageContainer>
   );

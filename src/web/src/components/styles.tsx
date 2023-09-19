@@ -19,7 +19,7 @@ export const PageContainer = ({ children, className }: BaseProps) => (
 );
 
 export const Heading = ({ children, className }: BaseProps) => (
-  <h1 className={twMerge('text-4xl font-bold', className)}>{children}</h1>
+  <h1 className={twMerge('text-2xl md:text-4xl font-bold', className)}>{children}</h1>
 );
 
 export const Question = ({ children, className }: BaseProps) => (
