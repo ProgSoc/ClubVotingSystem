@@ -14,15 +14,8 @@ const queryClient = new QueryClient();
 const trpcHost = import.meta.env.DEV ? 'localhost:8080' : location.host;
 const secure = location.protocol === 'https:';
 
-const wsClient = createWSClient({
-  url: `${secure ? 'wss' : 'ws'}://${trpcHost}/trpc/socket`,
-});
-
 const trpcClient = trpc.createClient({
   links: [
-    // httpBatchLink({
-    //   url: `${secure ? 'https' : 'http'}://${trpcHost}/trpc`,
-    // }),
     wsLink({
       client: createWSClient({
         url: `${secure ? 'wss' : 'ws'}://${trpcHost}/trpc/socket`,
