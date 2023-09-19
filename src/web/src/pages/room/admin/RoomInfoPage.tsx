@@ -40,12 +40,12 @@ export function RoomInfoPage(props: { roomId: string; room: RoomPublicInfo; admi
           </a>
         </div>
         <a target="_blank" rel="noreferrer" href={routeBuilders.viewRoomResults({ roomId: props.room.id })}>
-        </a>
           <Button
             className="btn btn-accent m-3"
-          >
+            >
             View Results
           </Button>
+        </a>
       </div>
     </PageContainer>
   );
