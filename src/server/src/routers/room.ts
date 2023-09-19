@@ -42,7 +42,7 @@ export const roomRouter = router({
     .input(
       z.object({
         roomId: z.string(),
-        studentEmail: z.string().email(),
+        email: z.string().email(),
         location: z.nativeEnum(UserLocation),
       })
     )
@@ -50,7 +50,7 @@ export const roomRouter = router({
       return operations.withRoomVoterFunctions(input.roomId, (fns) =>
         fns.joinWaitingList({
           location: input.location,
-          studentEmail: input.studentEmail,
+          studentEmail: input.email,
         })
       );
     }),

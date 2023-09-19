@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 
 const schema = z.object({
-  studentEmail: z.string().email(),
+  email: z.string().email(),
   location: z.nativeEnum(UserLocation),
 });
 
@@ -30,7 +30,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
     const result = await mutation.mutateAsync({
       roomId: props.roomId,
       location: data.location,
-      studentEmail: data.studentEmail,
+      email: data.email,
     });
 
     navigate(routeBuilders.waitInWaitingRoom({ roomId: props.roomId, userId: result.userId }));
@@ -44,7 +44,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
       <fieldset className="w-full" disabled={disabled}>
         <Formik<FormValues>
           initialValues={{
-            studentEmail: '',
+            email: '',
             location: undefined as any,
           }}
           onSubmit={onSubmit}
@@ -59,8 +59,8 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                     className="input input-bordered w-full sm:w-96 text-sm md:text-base"
                     placeholder="Student Email (firstname.lastname)"
                     type="email"
-                    name="studentEmail"
-                    value={form.values.studentEmail}
+                    name="email"
+                    value={form.values.email}
                     onChange={form.handleChange}
                   />
                   <div className="flex items-start justify-center gap-4">
