@@ -10,16 +10,11 @@ import { trpc } from 'utils/trpc';
 
 export function BoardPage(props: { roomId: string; room: RoomPublicInfo }) {
   return (
-    <CenteredPageContainer className="gap-4">
-      <div className="lg:hidden text-error">This page is not mobile friendly lol</div>
-      <Heading className="text-accent">{props.room.name}</Heading>
-      <div className="w-full flex flex-row items-center">
-        <div className="w-1/2 flex flex-row-reverse text-right pr-8">
-          <JoinPanel room={props.room} />
-        </div>
-        <div className="w-1/2 flex flex-row text-left pl-8">
-          <StatusPanel room={props.room} />
-        </div>
+    <CenteredPageContainer>
+      <Heading className="text-accent mb-8">{props.room.name}</Heading>
+      <div className="flex flex-col lg:flex-row items-center gap-24">
+        <JoinPanel room={props.room} />
+        <StatusPanel room={props.room} />
       </div>
     </CenteredPageContainer>
   );
@@ -29,21 +24,31 @@ function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
   const joinLink = location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
   return (
-    <div className={twMerge('flex flex-col items-end gap-4 bg-base-300 p-8 rounded-2xl shadow-lg', props.className)}>
-      <Heading>Join voting Room</Heading>
-      <QRCodeRender content={joinLink} />
-      {joinLink && (
-        <p>
-          <a target="_blank" rel="noreferrer" href={joinLink} className="text-3xl underline text-info font-mono">
-            {joinLink}
-          </a>
-        </p>
-      )}
-      <div className="gap-2">
-        <Heading className="text-2xl">View board</Heading>
+    <div
+      className={twMerge('flex flex-col items-center md:bg-base-300 shadow-lg px-8 py-10 md:p-10 pt-1 md:pt-5 rounded-2xl', props.className)}
+    >
+      <div
+        className="flex flex-col gap-5 py-10 items-center"
+      >
+        <Heading
+          className="text-3xl md:text-4xl pb-3"
+        >Join voting room</Heading>
+        <QRCodeRender content={joinLink} />
         {joinLink && (
           <p>
-            <a target="_blank" rel="noreferrer" href={boardLink} className="text-xl underline text-info font-mono">
+            <a target="_blank" rel="noreferrer" href={joinLink} className="text-sm md:text-xl underline text-info font-mono">
+              {joinLink}
+            </a>
+          </p>
+        )}
+      </div>
+      <div
+        className="flex flex-col gap-2 items-center"
+      >
+        <Heading className="text-2xl md:text-3xl">View board</Heading>
+        {joinLink && (
+          <p>
+            <a target="_blank" rel="noreferrer" href={boardLink} className="text-sm md:text-xl underline text-info font-mono">
               {boardLink}
             </a>
           </p>
@@ -73,7 +78,14 @@ function StatusPanel(props: { room: RoomPublicInfo }) {
   }
 
   return BoardState.match(state, {
-    blank: () => <Heading>Waiting for a question...</Heading>,
+    blank: () => (
+      <div
+        className="flex flex-col"
+      >
+        <Heading>Waiting for a question...</Heading>
+
+      </div>
+    ),
 
     showingQuestion: (state) => (
       <div className="flex flex-col gap-4">

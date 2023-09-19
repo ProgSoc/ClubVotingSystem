@@ -54,36 +54,40 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
           {(form) => (
             <Form>
               <div className="gap-4 w-full flex flex-col justify-center items-center">
-                <Field
-                  className="input input-bordered w-full sm:w-96"
-                  placeholder="Student Email (firstname.lastname)"
-                  type="email"
-                  name="studentEmail"
-                  value={form.values.studentEmail}
-                  onChange={form.handleChange}
-                />
-                <div className="flex items-center justify-center gap-4">
-                  <label className="flex items-center gap-2">
-                    <Field type="radio" name="location" value={UserLocation.InPerson} className="radio radio-primary" />
-                    <span className="label-text">{locationEnumLabel[UserLocation.InPerson]}</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <Field type="radio" name="location" value={UserLocation.Online} className="radio radio-primary" />
-                    <span className="label-text">{locationEnumLabel[UserLocation.Online]}</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <Field type="radio" name="location" value={UserLocation.Proxy} className="radio radio-primary" />
-                    <span className="label-text">{locationEnumLabel[UserLocation.Proxy]}</span>
-                  </label>
-                </div>
-                <Button
-                  className="btn-primary w-32"
-                  type="submit"
-                  disabled={disabled || Object.values(form.errors).length > 0}
-                  isLoading={mutation.isLoading}
+                <div
+                  className="flex flex-col gap-4"
                 >
-                  Join
-                </Button>
+                  <Field
+                    className="input input-bordered w-full sm:w-96 text-sm md:text-base"
+                    placeholder="Student Email (firstname.lastname)"
+                    type="email"
+                    name="studentEmail"
+                    value={form.values.studentEmail}
+                    onChange={form.handleChange}
+                  />
+                  <div className="flex items-start justify-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <Field type="radio" name="location" value={UserLocation.InPerson} className="radio radio-primary" />
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.InPerson]}</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <Field type="radio" name="location" value={UserLocation.Online} className="radio radio-primary" />
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.Online]}</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <Field type="radio" name="location" value={UserLocation.Proxy} className="radio radio-primary" />
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.Proxy]}</span>
+                    </label>
+                  </div>
+                  <Button
+                    className="btn-primary w-28 self-center m-3"
+                    type="submit"
+                    disabled={disabled || Object.values(form.errors).length > 0}
+                    isLoading={mutation.isLoading}
+                  >
+                    Join
+                  </Button>
+                </div>
               </div>
             </Form>
           )}

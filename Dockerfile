@@ -20,10 +20,10 @@ RUN rm -rf src/web/package.json node_modules src/server/node_modules && \
 
 # Hack for greatly reducing the size of the image. For some reason I couldn't find
 # a cleaner way to do this.
-RUN \
-  rm ./node_modules/.prisma/client/libquery_engine-linux-musl.so.node && \
-  rm ./node_modules/prisma/libquery_engine-linux-musl.so.node && \
-  rm ./node_modules/@prisma/engines/libquery_engine-linux-musl.so.node
+# RUN \
+#   rm ./node_modules/.prisma/client/libquery_engine-linux-musl.so.node && \
+#   rm ./node_modules/prisma/libquery_engine-linux-musl.so.node && \
+#   rm ./node_modules/@prisma/engines/libquery_engine-linux-musl.so.node
 
 FROM node:16.17.0-alpine
 

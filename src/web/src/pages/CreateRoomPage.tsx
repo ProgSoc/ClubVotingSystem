@@ -10,7 +10,7 @@ export function CreateRoomPage() {
   const [pageName, setPageName] = useState('');
   const navigate = useNavigate();
 
-  const mutation = trpc.room.create.useMutation();
+  const mutation = trpc.room.createNewRoom.useMutation();
 
   const onSubmit = async () => {
     const result = await mutation.mutateAsync({ name: pageName.trim() });
@@ -24,7 +24,7 @@ export function CreateRoomPage() {
   return (
     <CenteredPageContainer className="gap-4">
       <Heading>Create a new room</Heading>
-      <fieldset disabled={disabled} className="gap-2 w-full flex sm:flex-row flex-col justify-center items-center">
+        <fieldset disabled={disabled} className="gap-2 w-full flex flex-col justify-center items-center">
         <input
           className="input input-bordered w-full sm:w-96"
           type="text"
@@ -32,7 +32,7 @@ export function CreateRoomPage() {
           onChange={(e) => setPageName(e.target.value)}
         />
         <Button
-          className="btn btn-primary"
+          className="btn btn-primary m-3"
           disabled={invalid || disabled}
           onClick={onSubmit}
           isLoading={mutation.isLoading}

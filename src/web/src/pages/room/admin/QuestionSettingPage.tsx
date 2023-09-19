@@ -150,7 +150,9 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
   };
 
   return (
-    <>
+    <div
+      className="flex flex-col lg:flex-row items-center gap-24"
+    >
       <Formik<FormValues>
         initialValues={{
           question: '',
@@ -170,10 +172,12 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
           };
 
           return (
-            <Form>
+            <Form
+              className="flex flex-col m-8 md:bg-base-300 shadow-lg md:p-10 md:pt-5 rounded-2xl"
+            >
               <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
                 <Field
-                  className="input input-bordered w-full sm:w-96"
+                  className="input input-bordered input-primary w-full text-center self-start my-8"
                   placeholder="Question"
                   name="question"
                   value={form.values.question}
@@ -231,7 +235,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
                 </div>
 
                 <Button
-                  className="w-32 btn-primary"
+                  className="w-32 btn-primary m-5"
                   type="submit"
                   disabled={submitting || Object.values(form.errors).length > 0}
                   isLoading={submitting}
@@ -244,15 +248,15 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
         }}
       </Formik>
       {data.previousResults && (
-        <div className="mt-8 flex flex-col items-center">
-          <Heading className="mb-2">Previous results</Heading>
-          <Question>{data.previousResults.question}</Question>
-          <div className="mt-2">
-            <ResultsViewer results={data.previousResults.results} />
+        <div>
+          <Heading>Previous results</Heading>
+          <div className="mt-8 flex flex-col gap-8 items-center">
+              <Question>{data.previousResults.question}</Question>
+              <ResultsViewer results={data.previousResults.results} />
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

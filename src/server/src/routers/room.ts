@@ -8,7 +8,7 @@ import { withRoomVoterFunctions } from '../room/interaction/user';
 import { publicProcedure, router } from '../trpc';
 
 export const roomRouter = router({
-  create: publicProcedure
+  createNewRoom: publicProcedure
     .input(
       z.object({
         name: z.string().min(1),
