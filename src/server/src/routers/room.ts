@@ -64,7 +64,7 @@ export const roomRouter = router({
     .query(async ({ input }) => {
       return withRoomVoterFunctions(input.roomId, async (fns) => {
         const questions = await fns.getAllQuestionResults();
-        return questions.filter((q) => !q.closed);
+        return questions.filter((q) => q.closed);
       });
     }),
 
