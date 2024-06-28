@@ -49,7 +49,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
           validationSchema={toFormikValidationSchema(schema)}
           validateOnMount={true}
         >
-          {(form) => (
+          {form => (
             <Form>
               <div className="gap-4 w-full flex flex-col justify-center items-center">
                 <div className="flex flex-col gap-4">
@@ -69,7 +69,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                         value={'InPerson' satisfies UserLocation}
                         className="radio radio-primary"
                       />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel['InPerson']}</span>
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.InPerson}</span>
                     </label>
                     <label className="flex items-center gap-2">
                       <Field
@@ -78,7 +78,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                         value={'Online' satisfies UserLocation}
                         className="radio radio-primary"
                       />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel['Online']}</span>
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.Online}</span>
                     </label>
                     <label className="flex items-center gap-2">
                       <Field
@@ -87,7 +87,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                         value={'Proxy' satisfies UserLocation}
                         className="radio radio-primary"
                       />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel['Proxy']}</span>
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.Proxy}</span>
                     </label>
                   </div>
                   <Button

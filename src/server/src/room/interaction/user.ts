@@ -79,7 +79,7 @@ function makeRoomVoterFunctions(roomId: string) {
 
 export function withRoomVoterFunctions<T>(
   roomId: string,
-  withLock: (fns: ReturnType<typeof makeRoomVoterFunctions>) => Promise<T>
+  withLock: (fns: ReturnType<typeof makeRoomVoterFunctions>) => Promise<T>,
 ): Promise<T> {
   return roomLock.lock(roomId, async () => {
     const fns = makeRoomVoterFunctions(roomId);
@@ -117,19 +117,19 @@ export function waitForAdmission(roomId: string, userId: string) {
 export function subscribeToBoardNotifications(roomId: string, callback: (users: BoardState) => void) {
   return roomBoardEventsNotifications.subscribe(
     { roomId },
-    () => withRoomVoterFunctions(roomId, async (fns) => fns.getCurrentBoardState()),
-    callback
+    () => withRoomVoterFunctions(roomId, async fns => fns.getCurrentBoardState()),
+    callback,
   );
 }
 
 export function subscribeToVoterNotifications(
   roomId: string,
   votingKey: string,
-  callback: (users: VoterState) => void
+  callback: (users: VoterState) => void,
 ) {
   return roomVoterNotifications.subscribe(
-    { roomId, votingKey: votingKey },
-    () => withRoomVoterFunctions(roomId, async (fns) => fns.getCurrentVoterState(votingKey)),
-    callback
+    { roomId, votingKey },
+    () => withRoomVoterFunctions(roomId, async fns => fns.getCurrentVoterState(votingKey)),
+    callback,
   );
 }

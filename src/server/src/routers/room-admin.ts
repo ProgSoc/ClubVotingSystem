@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { RoomUsersList } from '../live/user';
 import { operations } from '../room';
 import { publicProcedure, router } from '../trpc';
-import { QuestionFormat } from '../dbschema/interfaces';
+import type { QuestionFormat } from '../dbschema/interfaces';
 
 const roomUsersAdminRouter = router({
   listenWaitingRoom: publicProcedure
@@ -12,13 +12,12 @@ const roomUsersAdminRouter = router({
       z.object({
         roomId: z.string(),
         adminKey: z.string(),
-      })
+      }),
     )
     .subscription(async ({ input }) => {
       return observable<RoomUsersList>((emit) => {
-        const unsubscribe = operations.subscribeToUserListNotifications(input.roomId, input.adminKey, (users) =>
-          emit.next(users)
-        );
+        const unsubscribe = operations.subscribeToUserListNotifications(input.roomId, input.adminKey, users =>
+          emit.next(users));
 
         return unsubscribe;
       });
@@ -29,10 +28,10 @@ const roomUsersAdminRouter = router({
         adminKey: z.string(),
         roomId: z.string(),
         userId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.admitUser(input.userId));
+      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, fns => fns.admitUser(input.userId));
     }),
   declineUser: publicProcedure
     .input(
@@ -40,10 +39,10 @@ const roomUsersAdminRouter = router({
         adminKey: z.string(),
         roomId: z.string(),
         userId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.declineUser(input.userId));
+      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, fns => fns.declineUser(input.userId));
     }),
   kickVoter: publicProcedure
     .input(
@@ -51,10 +50,10 @@ const roomUsersAdminRouter = router({
         adminKey: z.string(),
         roomId: z.string(),
         userId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.kickVoter(input.userId));
+      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, fns => fns.kickVoter(input.userId));
     }),
 });
 
@@ -76,16 +75,15 @@ export const roomQuestionsAdminRouter = router({
           }),
         ]),
         candidates: z.array(z.string().min(1)).min(1),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) =>
+      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, fns =>
         fns.startNewQuestion({
           question: input.question,
           details: input.details,
           candidates: input.candidates,
-        })
-      );
+        }));
     }),
 
   closeQuestion: publicProcedure
@@ -94,10 +92,10 @@ export const roomQuestionsAdminRouter = router({
         roomId: z.string(),
         adminKey: z.string(),
         questionId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, (fns) => fns.closeQuestion());
+      await operations.withRoomAdminFunctions(input.roomId, input.adminKey, fns => fns.closeQuestion());
     }),
 });
 

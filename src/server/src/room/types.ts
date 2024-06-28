@@ -1,12 +1,12 @@
-import { QuestionFormat } from "../dbschema/interfaces";
+import type { QuestionFormat } from '../dbschema/interfaces';
 
-export type RoomPublicInfo = {
+export interface RoomPublicInfo {
   id: string;
   shortId: string;
   name: string;
   createdAt: string;
   closedAt: string | null;
-};
+}
 
 export type RoomAdminInfo = RoomPublicInfo & {
   adminKey: string;
@@ -18,8 +18,8 @@ export interface SingleVoteQuestionFormat {
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;
 
-export type CreateQuestionParams = {
+export interface CreateQuestionParams {
   question: string;
   candidates: string[];
   details: QuestionFormatDetails;
-};
+}
