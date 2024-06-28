@@ -35,10 +35,10 @@ function makeRoomVoterFunctions(roomId: string) {
     },
 
     getCurrentBoardState: helpers.getCurrentBoardState,
-    async getCurrentVoterState(voterId: string) {
-      const voter = await voterFns.getUserByVoterId(voterId);
+    async getCurrentVoterState(votingKey: string) {
+      const voter = await voterFns.getUserByVotingKey(votingKey);
       if (!voter) {
-        throw new VoterNotFoundError(voterId);
+        throw new VoterNotFoundError(votingKey);
       }
 
       if (voter.state === 'Kicked') {
@@ -62,13 +62,13 @@ function makeRoomVoterFunctions(roomId: string) {
       });
     },
 
-    async castVote(voterId: string, questionId: string, vote: QuestionResponse) {
-      const voter = await voterFns.getUserByVoterId(voterId);
+    async castVote(votingKey: string, questionId: string, vote: QuestionResponse) {
+      const voter = await voterFns.getUserByVotingKey(votingKey);
       if (!voter) {
-        throw new VoterNotFoundError(voterId);
+        throw new VoterNotFoundError(votingKey);
       }
 
-      await questionFns.voteForQuestion(questionId, voterId, vote);
+      await questionFns.voteForQuestion(questionId, voter.id, vote);
 
       await helpers.notifyEveryoneOfBoardChange();
     },
@@ -122,10 +122,14 @@ export function subscribeToBoardNotifications(roomId: string, callback: (users: 
   );
 }
 
-export function subscribeToVoterNotifications(roomId: string, voterId: string, callback: (users: VoterState) => void) {
+export function subscribeToVoterNotifications(
+  roomId: string,
+  votingKey: string,
+  callback: (users: VoterState) => void
+) {
   return roomVoterNotifications.subscribe(
-    { roomId, voterId },
-    () => withRoomVoterFunctions(roomId, async (fns) => fns.getCurrentVoterState(voterId)),
+    { roomId, votingKey: votingKey },
+    () => withRoomVoterFunctions(roomId, async (fns) => fns.getCurrentVoterState(votingKey)),
     callback
   );
 }

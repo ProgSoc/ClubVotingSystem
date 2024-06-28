@@ -11,7 +11,7 @@ import type { QuestionVotingData } from './hooks';
 import { VotingPageState } from './hooks';
 import { useVoterState } from './hooks';
 
-export function VotingRoomPage(props: { roomId: string; userId: string; room: RoomPublicInfo; voterId: string }) {
+export function VotingRoomPage(props: { roomId: string; userId: string; room: RoomPublicInfo; votingKey: string }) {
   const data = useVoterState(props);
 
   // Navigate to waiting room if the user was kicked

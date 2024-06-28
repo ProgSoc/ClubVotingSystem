@@ -1,4 +1,4 @@
-import type { QuestionType } from '@prisma/client';
+import { QuestionFormat } from "../dbschema/interfaces";
 
 export type RoomPublicInfo = {
   id: string;
@@ -13,7 +13,7 @@ export type RoomAdminInfo = RoomPublicInfo & {
 };
 
 export interface SingleVoteQuestionFormat {
-  type: typeof QuestionType['SingleVote'];
+  type: Extract<QuestionFormat, 'SingleVote'>;
 }
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;

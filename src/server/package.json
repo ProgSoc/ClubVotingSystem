@@ -10,6 +10,8 @@
     "prisma": "dotenv -e ../../.env -- prisma",
     "build": "bun prisma generate && tsc && swc src -d dist && cp -r src/prisma/migrations dist/prisma/migrations && cp -r src/prisma/schema.prisma dist/prisma/schema.prisma",
     "clean": "rm -rf dist",
+    "edgedb-migrate": "edgedb migration create && edgedb migrate && bun gen-edgedb",
+    "gen-edgedb": "bunx @edgedb/generate interfaces && bunx @edgedb/generate edgeql-js"
   },
   "dependencies": {
     "@prisma/client": "^5.2.0",
@@ -17,6 +19,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "dotenv-cli": "^6.0.0",
+    "edgedb": "^1.5.7",
     "express": "^4.18.1",
     "nanoid": "^3.3.4",
     "prisma": "^5.2.0",
@@ -24,6 +27,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "@edgedb/generate": "^0.5.3",
     "@swc/cli": "^0.1.57",
     "@swc/core": "^1.3.6",
     "@types/cors": "^2.8.12",
@@ -33,6 +37,7 @@
     "chokidar": "^3.5.3",
     "concurrently": "^7.4.0",
     "nodemon": "^2.0.20",
+    "prettier": "^3.3.2",
     "source-map-support": "^0.5.21"
   },
   "prisma": {

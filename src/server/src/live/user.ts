@@ -1,5 +1,4 @@
-import type { UserLocation, WaitingState } from '@prisma/client';
-
+import type { UserLocation, WaitingState } from '../dbschema/interfaces';
 import type { GetStatesUnion } from '../state';
 import { makeStates, state } from '../state';
 
@@ -12,13 +11,13 @@ interface WithUserId {
   id: string;
 }
 
-interface WithVoterId extends WithUserId {
-  voterId: string;
+interface WithvotingKey extends WithUserId {
+  votingKey: string;
 }
 
 export interface WaitingRoomUser {
   id: string;
-  state: typeof WaitingState['Waiting'];
+  state: Extract<WaitingState, 'Waiting'>;
 }
 
 interface UserPrivateDetails {
@@ -31,12 +30,12 @@ export interface RoomUserWithDetails extends WithUserId {
 }
 
 export interface RoomVoterWithDetails extends RoomUserWithDetails {
-  voterId: string;
+  votingKey: string;
 }
 
 export type RoomUserResolvedState = GetStatesUnion<typeof RoomUserResolvedState.enum>;
 export const RoomUserResolvedState = makeStates('rurs', {
-  admitted: state<WithVoterId>(),
+  admitted: state<WithvotingKey>(),
   declined: state<WithUserId>(),
   kicked: state<WithUserId>(),
 });
@@ -44,7 +43,7 @@ export const RoomUserResolvedState = makeStates('rurs', {
 export type RoomUserState = GetStatesUnion<typeof RoomUserState.enum>;
 export const RoomUserState = makeStates('rurs', {
   waiting: state<WithUserId>(),
-  admitted: state<WithVoterId>(),
+  admitted: state<WithvotingKey>(),
   declined: state<WithUserId>(),
   kicked: state<WithUserId>(),
 });

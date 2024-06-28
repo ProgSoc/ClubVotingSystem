@@ -1,7 +1,7 @@
-import { UserLocation } from '@prisma/client';
+import type { UserLocation } from '@server/dbschema/interfaces';
 
-export const locationEnumLabel: Record<typeof UserLocation[keyof typeof UserLocation], string> = {
-  [UserLocation.InPerson]: 'In Person',
-  [UserLocation.Online]: 'Online',
-  [UserLocation.Proxy]: 'Proxy',
+export const locationEnumLabel: Record<UserLocation, string> = {
+  InPerson: 'In Person',
+  Online: 'Online',
+  Proxy: 'Proxy',
 };

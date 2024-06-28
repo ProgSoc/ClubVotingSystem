@@ -11,12 +11,12 @@ export const roomVoteRouter = router({
     .input(
       z.object({
         roomId: z.string(),
-        voterId: z.string(),
+        votingKey: z.string(),
       })
     )
     .subscription(async ({ ctx, input }) => {
       return observable<VoterState>((emit) => {
-        const unsubscribe = operations.subscribeToVoterNotifications(input.roomId, input.voterId, (state) => {
+        const unsubscribe = operations.subscribeToVoterNotifications(input.roomId, input.votingKey, (state) => {
           emit.next(state);
         });
 
@@ -27,25 +27,25 @@ export const roomVoteRouter = router({
     .input(
       z.object({
         roomId: z.string(),
-        voterId: z.string(),
+        votingKey: z.string(),
         questionId: z.string(),
       })
     )
-    .query(async ({ input: { roomId, voterId, questionId } }) => {
-      return operations.withRoomVoterFunctions(roomId, (fns) => fns.getQuestionVote(questionId, voterId));
+    .query(async ({ input: { roomId, votingKey, questionId } }) => {
+      return operations.withRoomVoterFunctions(roomId, (fns) => fns.getQuestionVote(questionId, votingKey));
     }),
   castVote: publicProcedure
     .input(
       z.object({
         roomId: z.string(),
-        voterId: z.string(),
+        votingKey: z.string(),
         questionId: z.string(),
         response: questionResponse,
       })
     )
     .mutation(async ({ input }) => {
       return operations.withRoomVoterFunctions(input.roomId, (fns) =>
-        fns.castVote(input.voterId, input.questionId, input.response)
+        fns.castVote(input.votingKey, input.questionId, input.response)
       );
     }),
 });

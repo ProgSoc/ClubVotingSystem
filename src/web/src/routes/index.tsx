@@ -51,7 +51,7 @@ const routes = {
     component: withRoomFetched(WaitingRoomPage),
   }),
   votingRoom: route({
-    path: path`/room/${'roomId'}/vote/${'userId'}/${'voterId'}`,
+    path: path`/room/${'roomId'}/vote/${'userId'}/${'votingKey'}`,
     component: withRoomFetched(VotingRoomPage),
   }),
   shortView: route({
@@ -93,10 +93,10 @@ function AnimationRouter() {
             state === 'entering'
               ? styles.entering
               : state === 'exiting'
-              ? styles.exiting
-              : state === 'exited'
-              ? styles.exited
-              : undefined;
+                ? styles.exiting
+                : state === 'exited'
+                  ? styles.exited
+                  : undefined;
           return <div className={twMerge('absolute min-h-full', style)}>{currentOutlet}</div>;
         }}
       </CSSTransition>

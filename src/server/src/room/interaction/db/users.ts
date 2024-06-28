@@ -1,11 +1,19 @@
-import type { RoomUser, UserLocation } from '@prisma/client';
-import { WaitingState } from '@prisma/client';
-
+import { nanoid } from 'nanoid';
+import { UserLocation, WaitingState } from '../../../dbschema/interfaces';
 import { UserNotAVoter, UserNotFoundError, UserNotInWaitingRoom } from '../../../errors';
-import { prisma } from '../../../prisma';
 import type { GetStatesUnion } from '../../../state';
 import { makeStates, state } from '../../../state';
 import { UnreachableError } from '../../../unreachableError';
+import {
+  DbRoomUser,
+  dbSetUserState,
+  dbGetRoomUserById,
+  dbGetRoomUserByVotingKey,
+  dbGetAllRoomUsers,
+  RoomUserDetails,
+  dbCreateUser,
+} from './queries';
+import e from '../../../dbschema/edgeql-js';
 
 export interface JoinWaitingRoomParams {
   studentEmail: string;
@@ -16,31 +24,26 @@ interface WithUserId {
   id: string;
 }
 
-interface WithVoterId extends WithUserId {
-  voterId: string;
+interface WithvotingKey extends WithUserId {
+  votingKey: string;
 }
 
 export interface WaitingRoomUser {
   id: string;
-  state: typeof WaitingState['Waiting'];
-}
-
-interface UserPrivateDetails {
-  studentEmail: string;
-  location: UserLocation;
+  state: Extract<WaitingState, 'Waiting'>;
 }
 
 export interface RoomUserWithDetails extends WithUserId {
-  details: UserPrivateDetails;
+  details: RoomUserDetails;
 }
 
 export interface RoomVoterWithDetails extends RoomUserWithDetails {
-  voterId: string;
+  votingKey: string;
 }
 
 export type RoomUserResolvedState = GetStatesUnion<typeof RoomUserResolvedState.enum>;
 export const RoomUserResolvedState = makeStates('rurs', {
-  admitted: state<WithVoterId>(),
+  admitted: state<WithvotingKey>(),
   declined: state<WithUserId>(),
   kicked: state<WithUserId>(),
 });
@@ -48,7 +51,7 @@ export const RoomUserResolvedState = makeStates('rurs', {
 export type RoomUserState = GetStatesUnion<typeof RoomUserState.enum>;
 export const RoomUserState = makeStates('rus', {
   waiting: state<WithUserId>(),
-  admitted: state<WithVoterId>(),
+  admitted: state<WithvotingKey>(),
   declined: state<WithUserId>(),
   kicked: state<WithUserId>(),
 });
@@ -60,31 +63,31 @@ export interface RoomUsersList {
 
 /**
  * This type is distinct from RoomUsersList because RoomUsersList is sent publicly to the admins
- * however it contains voterIds which must be private.
+ * however it contains votingKeys which must be private.
  */
-export interface RoomUsersListWithVoterIds {
+export interface RoomUsersListWithvotingKeys {
   waiting: RoomUserWithDetails[];
   admitted: RoomVoterWithDetails[];
 }
 
-function getRoomStateFromUser(user: RoomUser): RoomUserState {
+function getRoomStateFromUser(user: DbRoomUser): RoomUserState {
   switch (user.state) {
-    case WaitingState.Waiting:
+    case 'Waiting':
       return RoomUserState.waiting({
         id: user.id,
       });
-    case WaitingState.Admitted:
+    case 'Admitted':
       return RoomUserState.admitted({
         id: user.id,
 
         // When admitted, it's assumed that user is not null
-        voterId: user.voterId!,
+        votingKey: user.votingKey!,
       });
-    case WaitingState.Declined:
+    case 'Declined':
       return RoomUserState.declined({
         id: user.id,
       });
-    case WaitingState.Kicked:
+    case 'Kicked':
       return RoomUserState.kicked({
         id: user.id,
       });
@@ -104,39 +107,30 @@ export function userRoomStateToResolvedState(user: RoomUserState): RoomUserResol
 }
 
 export function makeVoterInteractionFunctions(roomId: string) {
-  let currentRoomUsersListPromise: Promise<RoomUsersListWithVoterIds> | null = null;
+  let currentRoomUsersListPromise: Promise<RoomUsersListWithvotingKeys> | null = null;
 
-  async function fetchCurrentList(): Promise<RoomUsersListWithVoterIds> {
-    const roomUsers = await prisma.roomUser.findMany({
-      where: { roomId },
-    });
+  async function fetchCurrentList(): Promise<RoomUsersListWithvotingKeys> {
+    const roomUsers = await dbGetAllRoomUsers(roomId);
+
     return {
       admitted: roomUsers
         .filter((u) => u.state === 'Admitted')
         .map((u) => ({
           id: u.id,
-          details: {
-            studentEmail: u.studentEmail,
-            location: u.location,
-          },
-          voterId: u.voterId!,
+          details: u.userDetails,
+          votingKey: u.votingKey!,
         })),
       waiting: roomUsers
         .filter((u) => u.state === 'Waiting')
         .map((u) => ({
           id: u.id,
-          details: {
-            studentEmail: u.studentEmail,
-            location: u.location,
-          },
+          details: u.userDetails,
         })),
     };
   }
 
-  async function getUser(userId: string): Promise<RoomUser> {
-    const user = await prisma.roomUser.findUnique({
-      where: { id: userId },
-    });
+  async function getUser(userId: string): Promise<DbRoomUser> {
+    const user = await dbGetRoomUserById(userId);
 
     if (!user) {
       throw new UserNotFoundError(userId);
@@ -146,7 +140,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
   }
 
   const fns = {
-    currentRoomUsersListWithVoterIds: () => {
+    currentRoomUsersListWithvotingKeys: () => {
       if (!currentRoomUsersListPromise) {
         currentRoomUsersListPromise = fetchCurrentList();
       }
@@ -154,7 +148,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     currentRoomUsersList: async (): Promise<RoomUsersList> => {
-      const list = await fns.currentRoomUsersListWithVoterIds();
+      const list = await fns.currentRoomUsersListWithvotingKeys();
       return {
         admitted: list.admitted.map((u) => ({
           id: u.id,
@@ -165,13 +159,9 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     joinWaitingList: async (params: JoinWaitingRoomParams) => {
-      const waitingUser = await prisma.roomUser.create({
-        data: {
-          studentEmail: params.studentEmail,
-          location: params.location,
-          roomId,
-          state: WaitingState.Waiting,
-        },
+      const waitingUser = await dbCreateUser(roomId, {
+        studentEmail: params.studentEmail,
+        location: params.location,
       });
 
       currentRoomUsersListPromise = null;
@@ -180,92 +170,50 @@ export function makeVoterInteractionFunctions(roomId: string) {
     },
 
     getUserAdmissionStatus: async (userId: string): Promise<RoomUserState> => {
-      const user = await prisma.roomUser.findUnique({
-        where: { id: userId },
-      });
+      return getRoomStateFromUser(await getUser(userId));
+    },
 
-      if (!user) {
-        throw new UserNotFoundError(userId);
+    assertUserIsInWaitingRoom: async (userId: string) => {
+      const user = await getUser(userId);
+      if (user.state !== 'Waiting') {
+        throw new UserNotInWaitingRoom(userId);
       }
+    },
 
-      return getRoomStateFromUser(user);
+    assertUserAdmitted: async (userId: string) => {
+      const user = await getUser(userId);
+      if (user.state !== 'Admitted') {
+        throw new UserNotAVoter(userId);
+      }
     },
 
     admitUser: async (userId: string) => {
-      return prisma.$transaction(async (prisma): Promise<{ voterId: string }> => {
-        const user = await getUser(userId);
+      await fns.assertUserIsInWaitingRoom(userId);
 
-        if (user.state !== WaitingState.Waiting) {
-          throw new UserNotInWaitingRoom(userId);
-        }
+      const key = nanoid();
+      await dbSetUserState(userId, 'Admitted', key);
 
-        const waitingRoomUser = await prisma.roomUser.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            state: WaitingState.Admitted,
-            voter: {
-              create: {},
-            },
-          },
-        });
-
-        return {
-          // We assume that the voter was created
-          voterId: waitingRoomUser.voterId!,
-        };
-      });
+      return {
+        votingKey: key!,
+      };
     },
 
     declineUser: async (userId: string) => {
-      return prisma.$transaction(async (prisma) => {
-        const user = await getUser(userId);
-
-        if (user.state !== WaitingState.Waiting) {
-          throw new UserNotInWaitingRoom(userId);
-        }
-
-        await prisma.roomUser.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            state: WaitingState.Declined,
-          },
-        });
-      });
+      await fns.assertUserIsInWaitingRoom(userId);
+      await dbSetUserState(userId, 'Declined', null);
     },
 
     kickVoter: async (userId: string) => {
-      return prisma.$transaction(async (prisma) => {
-        const user = await getUser(userId);
-
-        if (user.state !== WaitingState.Admitted) {
-          throw new UserNotAVoter(userId);
-        }
-
-        await prisma.roomUser.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            state: WaitingState.Kicked,
-          },
-        });
-      });
+      await fns.assertUserAdmitted(userId);
+      await dbSetUserState(userId, 'Kicked');
     },
 
-    getVoterByUserId: async (userId: string) => {
-      return prisma.voter.findFirst({
-        where: { user: { id: userId, roomId } },
-      });
+    getUserByVotingKey: async (votingKey: string) => {
+      return dbGetRoomUserByVotingKey(votingKey);
     },
 
-    getUserByVoterId: async (voterId: string) => {
-      return prisma.roomUser.findFirst({
-        where: { voterId, roomId },
-      });
+    getUserById: async (userId: string) => {
+      return dbGetRoomUserById(userId);
     },
   };
 

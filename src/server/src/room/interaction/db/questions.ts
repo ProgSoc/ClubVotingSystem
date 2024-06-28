@@ -1,27 +1,18 @@
-import type { CandidateVote, Question, QuestionCandidate, QuestionInteraction } from '@prisma/client';
-import { QuestionType } from '@prisma/client';
-
 import { NoQuestionOpenError, QuestionAlreadyClosedError } from '../../../errors';
 import type { QuestionResponse, ResultsView } from '../../../live/question';
 import type { VotingCandidate } from '../../../live/states';
-import { prisma } from '../../../prisma';
 import { UnreachableError } from '../../../unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
-
-const prismaQuestionInclude = {
-  interactions: true,
-  candidates: {
-    include: {
-      votes: true,
-    },
-  },
-} as const;
-type PrismaQuestionInclude = Question & {
-  candidates: (QuestionCandidate & {
-    votes: CandidateVote[];
-  })[];
-  interactions: QuestionInteraction[];
-};
+import {
+  CloseQuestionDetails,
+  DbQuestionData,
+  dbCloseQuestion,
+  dbCreateSingleVoteQuestion,
+  dbFetchAllQuestionsData,
+  dbFetchCurrentQuestionData,
+  dbInsertQuestionSingleVote,
+  dbQuestionAbstain,
+} from './queries';
 
 export interface RoomQuestion {
   id: string;
@@ -34,29 +25,30 @@ export interface RoomQuestion {
   interactedVoters: string[];
   results: ResultsView;
 
-  originalPrismaQuestionObject: PrismaQuestionInclude;
+  originalDbQuestionDataObject: DbQuestionData;
 }
 
-function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion {
+function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
   // Count the number of unique voters by inserting them into a set
   const uniqueVoters = new Set<string>();
   question.candidates.forEach((candidate) => {
-    candidate.votes.forEach((vote) => {
-      uniqueVoters.add(vote.voterId);
+    candidate.singleCandidateVotes.forEach((vote) => {
+      uniqueVoters.add(vote.voter.id);
     });
+    // Add other vote types here, when more are added
   });
 
   const votesWithoutAbstain = uniqueVoters.size;
-  const votesWithAbstain = question.interactions.length;
+  const votesWithAbstain = question.interactedUsers.length;
 
   // The abstain count includes both people explicitly selecting abstain and people who haven't interacted with the question
   const abstainCount = Math.max(0, question.votersPresentAtEnd - votesWithoutAbstain);
 
   const makeDetails = (): QuestionFormatDetails => {
     switch (question.format) {
-      case QuestionType.SingleVote:
+      case 'SingleVote':
         return {
-          type: QuestionType.SingleVote,
+          type: 'SingleVote',
         };
       default:
         throw new UnreachableError(question.format);
@@ -65,13 +57,13 @@ function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion
 
   const makeResults = (): ResultsView => {
     switch (question.format) {
-      case QuestionType.SingleVote:
+      case 'SingleVote':
         return {
-          type: QuestionType.SingleVote,
+          type: 'SingleVote',
           results: question.candidates.map((candidate) => ({
             id: candidate.id,
             name: candidate.name,
-            votes: candidate.votes.length,
+            votes: candidate.singleCandidateVotes.length,
           })),
           abstained: abstainCount,
         };
@@ -89,14 +81,14 @@ function mapPrismaQuestionInclude(question: PrismaQuestionInclude): RoomQuestion
     details: makeDetails(),
     results: makeResults(),
 
-    interactedVoters: question.interactions.map((interaction) => interaction.voterId),
+    interactedVoters: question.interactedUsers.map((interaction) => interaction.id),
     totalVoters: votesWithAbstain,
     candidates: question.candidates.map((candidate) => ({
       id: candidate.id,
       name: candidate.name,
     })),
 
-    originalPrismaQuestionObject: question,
+    originalDbQuestionDataObject: question,
   };
 }
 
@@ -104,19 +96,13 @@ export function makeQuestionModificationFunctions(roomId: string) {
   let currentQuestionPromise: Promise<RoomQuestion | null> | null = null;
 
   async function fetchCurrentQuestion() {
-    const question = await prisma.question.findFirst({
-      where: {
-        roomId,
-      },
-      orderBy: { createdAt: 'desc' },
-      include: prismaQuestionInclude,
-    });
+    const question = await dbFetchCurrentQuestionData(roomId);
 
     if (!question) {
       return null;
     }
 
-    return mapPrismaQuestionInclude(question);
+    return mapDbQuestionData(question);
   }
 
   const fns = {
@@ -127,134 +113,90 @@ export function makeQuestionModificationFunctions(roomId: string) {
       return currentQuestionPromise;
     },
     allQuestions: async () => {
-      const questions = await prisma.question.findMany({
-        where: {
-          roomId,
-        },
-        orderBy: { createdAt: 'desc' },
-        include: prismaQuestionInclude,
-      });
-      const mapped = questions.map((q) => mapPrismaQuestionInclude(q));
+      const questions = await dbFetchAllQuestionsData(roomId);
+      const mapped = questions.map((q) => mapDbQuestionData(q));
       return mapped;
     },
     createNewQuestion: async (params: CreateQuestionParams) => {
-      const questionPromise = prisma.question.create({
-        data: {
-          question: params.question,
-          format: params.details.type,
-          roomId,
-          candidates: {
-            createMany: {
-              data: params.candidates.map((candidate) => ({ name: candidate })),
-            },
-          },
-        },
-        include: prismaQuestionInclude,
-      });
-      currentQuestionPromise = questionPromise.then(mapPrismaQuestionInclude);
-      return mapPrismaQuestionInclude(await questionPromise);
+      let questionPromise: Promise<DbQuestionData>;
+      switch (params.details.type) {
+        case 'SingleVote': {
+          questionPromise = dbCreateSingleVoteQuestion({
+            candidates: params.candidates,
+            question: params.question,
+          });
+          break;
+        }
+        default:
+          // Uncomment when there's multiple question types
+          throw new UnreachableError(params.details.type);
+      }
+
+      currentQuestionPromise = questionPromise.then(mapDbQuestionData);
+      return mapDbQuestionData(await questionPromise);
     },
-    closeQuestion: async (questionId: string, votersPresent: number) => {
-      const questionPromise = prisma.question.update({
-        where: { id: questionId },
-        data: { closed: true, votersPresentAtEnd: votersPresent },
-        include: prismaQuestionInclude,
-      });
-      currentQuestionPromise = questionPromise.then(mapPrismaQuestionInclude);
-      return mapPrismaQuestionInclude(await questionPromise);
+    closeQuestion: async (questionId: string, details: CloseQuestionDetails) => {
+      const questionPromise = dbCloseQuestion(questionId, details);
+      currentQuestionPromise = questionPromise.then(mapDbQuestionData);
+      return mapDbQuestionData(await questionPromise);
     },
 
-    async voteForQuestion(questionId: string, voterId: string, response: QuestionResponse) {
-      return prisma.$transaction(async (prisma) => {
-        const question = await fns.currentQuestion();
+    async voteForQuestion(questionId: string, userId: string, response: QuestionResponse) {
+      const question = await fns.currentQuestion();
 
-        if (!question) {
-          throw new NoQuestionOpenError();
-        }
+      if (!question) {
+        throw new NoQuestionOpenError();
+      }
 
-        if (question.id !== questionId) {
-          throw new QuestionAlreadyClosedError();
-        }
+      if (question.id !== questionId) {
+        throw new QuestionAlreadyClosedError();
+      }
+      switch (response.type) {
+        case 'Abstain':
+          await dbQuestionAbstain(questionId, userId);
+          break;
+        case 'SingleVote':
+          await dbInsertQuestionSingleVote(questionId, userId, response.candidateId);
+          break;
+        default:
+          throw new UnreachableError(response);
+      }
 
-        // Create the interaction (if doesnt exist) to add to the vote count
-        await prisma.questionInteraction.upsert({
-          create: {
-            question: { connect: { id: questionId } },
-            voter: { connect: { id: voterId } },
-          },
-          update: {},
-          where: {
-            questionId_voterId: { questionId, voterId },
-          },
-        });
-
-        // Delete all previous votes from the voter for the question
-        await prisma.candidateVote.deleteMany({
-          where: {
-            voterId,
-            candidate: {
-              questionId,
-            },
-          },
-        });
-
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (response.type !== question.details.type && response.type !== 'Abstain') {
-          throw new Error('Invalid response type');
-        }
-
-        switch (response.type) {
-          case 'Abstain':
-            // Do nothing, the votes have already been cleared
-            break;
-          case 'SingleVote':
-            await prisma.candidateVote.create({
-              data: {
-                voterId,
-                candidateId: response.candidateId,
-              },
-            });
-            break;
-          default:
-            throw new UnreachableError(response);
-        }
-
-        currentQuestionPromise = null;
-      });
+      currentQuestionPromise = null;
     },
 
-    async getQuestionVote(questionId: string, voterId: string): Promise<QuestionResponse | null> {
+    async getQuestionVote(questionId: string, votingKey: string): Promise<QuestionResponse | null> {
       const question = await fns.currentQuestion();
 
       if (!question || question.id !== questionId) {
         return null;
       }
 
-      const votes: CandidateVote[] = [];
-      question.originalPrismaQuestionObject.candidates.forEach((c) => {
-        const vote = c.votes.find((v) => v.voterId === voterId);
-        if (vote) {
-          votes.push(vote);
-        }
-      });
-
-      if (votes.length === 0) {
-        if (question.originalPrismaQuestionObject.interactions.find((i) => i.voterId === voterId)) {
-          // If there are no votes but the user interacted, then the user abstained
-          return {
-            type: 'Abstain',
-          };
-        } else {
-          return null;
-        }
+      // User hasn't interacted with the question
+      if (!question.interactedVoters.includes(votingKey)) {
+        return null;
       }
 
       switch (question.details.type) {
-        case QuestionType.SingleVote:
-          return {
-            type: QuestionType.SingleVote,
-            candidateId: votes[0].candidateId,
-          };
+        case 'SingleVote': {
+          const allSingleCandidateVotes = question.originalDbQuestionDataObject.candidates.flatMap(
+            (candidate) => candidate.singleCandidateVotes
+          );
+
+          const votes = allSingleCandidateVotes.filter((vote) => vote.voter.id === votingKey);
+          const vote = votes.at(0);
+
+          if (vote) {
+            return {
+              type: 'SingleVote',
+              candidateId: vote.candidate.id,
+            };
+          } else {
+            return {
+              type: 'Abstain',
+            };
+          }
+        }
         default:
           throw new UnreachableError(question.details.type);
       }

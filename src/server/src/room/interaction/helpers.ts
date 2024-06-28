@@ -28,11 +28,11 @@ export function makeQuestionHelpers(roomId: string) {
     async notifyEveryoneOfBoardChange() {
       const boardState = await fns.getCurrentBoardState();
       const voterState = boardStateToVoterState(boardState);
-      const voters = await voterFns.currentRoomUsersListWithVoterIds();
+      const voters = await voterFns.currentRoomUsersListWithvotingKeys();
 
       roomBoardEventsNotifications.notify({ roomId }, boardState);
       voters.admitted.forEach((voter) => {
-        roomVoterNotifications.notify({ roomId, voterId: voter.voterId }, voterState);
+        roomVoterNotifications.notify({ roomId, votingKey: voter.votingKey }, voterState);
       });
     },
 

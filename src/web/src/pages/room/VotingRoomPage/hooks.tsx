@@ -27,7 +27,7 @@ interface LastVote {
   response: QuestionResponse;
 }
 
-export function useVoterState(props: { roomId: string; voterId: string }): VotingPageState {
+export function useVoterState(props: { roomId: string; votingKey: string }): VotingPageState {
   const [state, setState] = useState<VoterState | null>(null);
   const [lastVote, setLastVote] = useState<LastVote | null>(null);
   const voteLock = useRef<Promise<void>>(Promise.resolve());
@@ -41,7 +41,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
   };
 
   trpc.vote.listen.useSubscription(
-    { roomId: props.roomId, voterId: props.voterId },
+    { roomId: props.roomId, votingKey: props.votingKey },
     {
       onData: (data) => {
         setState(data);
@@ -75,7 +75,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
           await castVoteMutation.mutateAsync({
             questionId: state.questionId,
             roomId: props.roomId,
-            voterId: props.voterId,
+            votingKey: props.votingKey,
             response,
           });
         });
@@ -110,7 +110,7 @@ const InitialVoteFetchState = makeStates('ivfs', {
  * the `setLastVote` callback with the last vote.
  */
 function useFetchInitialVote(
-  props: { roomId: string; voterId: string },
+  props: { roomId: string; votingKey: string },
   voterState: VoterState | null,
   setLastVote: (vote: LastVote | null) => void
 ) {
@@ -119,7 +119,7 @@ function useFetchInitialVote(
   const initialVoteQuery = trpc.vote.getMyVote.useQuery(
     {
       roomId: props.roomId,
-      voterId: props.voterId,
+      votingKey: props.votingKey,
 
       // If we're not fetching, then the query is disabled anyway and this arg doesnt matter
       questionId: InitialVoteFetchState.is.fetching(fetchState) ? fetchState.questionId : '',

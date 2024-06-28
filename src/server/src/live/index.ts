@@ -8,7 +8,7 @@ export const roomWaitingListNotifications = makeNotificationService<RoomUsersLis
 );
 
 export const roomVoterNotifications = makeNotificationService<VoterState>().withKey(
-  (args: { roomId: string; voterId: string }) => `${args.roomId}-${args.voterId}`
+  (args: { roomId: string; votingKey: string }) => `${args.roomId}-${args.votingKey}`
 );
 
 export const roomBoardEventsNotifications = makeNotificationService<BoardState>().withKey(
