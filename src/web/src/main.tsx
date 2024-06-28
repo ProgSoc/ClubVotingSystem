@@ -31,5 +31,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <RouterProvider router={browserRouter} />
       </QueryClientProvider>
     </trpc.Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

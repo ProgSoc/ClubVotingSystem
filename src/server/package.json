@@ -1,8 +1,8 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "server.js",
   "license": "MIT",
+  "main": "server.js",
   "scripts": {
     "dev": "bun --watch ./src/server.ts",
     "build": "bun build --sourcemap=inline --target bun --outdir ./dist src/server.ts",

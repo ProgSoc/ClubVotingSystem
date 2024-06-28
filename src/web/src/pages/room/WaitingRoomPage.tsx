@@ -25,7 +25,7 @@ export function WaitingRoomPage(props: { room: RoomPublicInfo; roomId: string; u
             roomId: props.roomId,
             userId: props.userId,
             votingKey: response.data.votingKey,
-          })
+          }),
         );
       }
     }

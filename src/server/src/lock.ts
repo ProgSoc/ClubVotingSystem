@@ -1,7 +1,7 @@
-type PromiseQueue = {
+interface PromiseQueue {
   promise: Promise<any>;
   unresolvedCount: number;
-};
+}
 
 export class AyncKeyLock {
   private queues: Map<string, PromiseQueue>;
@@ -60,7 +60,7 @@ export class AsyncLock {
   }
 
   wrapFn<Args extends readonly any[], Ret = void>(
-    fn: (...args: Args) => Promise<Ret>
+    fn: (...args: Args) => Promise<Ret>,
   ): (...args: Args) => Promise<Ret> {
     return (...args: Args) => {
       return this.lock(() => {
