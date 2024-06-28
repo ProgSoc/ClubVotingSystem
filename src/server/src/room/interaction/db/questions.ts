@@ -3,9 +3,11 @@ import type { QuestionResponse, ResultsView } from '../../../live/question';
 import type { VotingCandidate } from '../../../live/states';
 import { UnreachableError } from '../../../unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
-import {
+import type {
   CloseQuestionDetails,
   DbQuestionData,
+} from './queries';
+import {
   dbCloseQuestion,
   dbCreateSingleVoteQuestion,
   dbFetchAllQuestionsData,
@@ -60,7 +62,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
       case 'SingleVote':
         return {
           type: 'SingleVote',
-          results: question.candidates.map((candidate) => ({
+          results: question.candidates.map(candidate => ({
             id: candidate.id,
             name: candidate.name,
             votes: candidate.singleCandidateVotes.length,
@@ -81,9 +83,9 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
     details: makeDetails(),
     results: makeResults(),
 
-    interactedVoters: question.interactedUsers.map((interaction) => interaction.id),
+    interactedVoters: question.interactedUsers.map(interaction => interaction.id),
     totalVoters: votesWithAbstain,
-    candidates: question.candidates.map((candidate) => ({
+    candidates: question.candidates.map(candidate => ({
       id: candidate.id,
       name: candidate.name,
     })),
@@ -114,7 +116,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
     },
     allQuestions: async () => {
       const questions = await dbFetchAllQuestionsData(roomId);
-      const mapped = questions.map((q) => mapDbQuestionData(q));
+      const mapped = questions.map(q => mapDbQuestionData(q));
       return mapped;
     },
     createNewQuestion: async (params: CreateQuestionParams) => {
@@ -180,10 +182,10 @@ export function makeQuestionModificationFunctions(roomId: string) {
       switch (question.details.type) {
         case 'SingleVote': {
           const allSingleCandidateVotes = question.originalDbQuestionDataObject.candidates.flatMap(
-            (candidate) => candidate.singleCandidateVotes
+            candidate => candidate.singleCandidateVotes,
           );
 
-          const votes = allSingleCandidateVotes.filter((vote) => vote.voter.id === votingKey);
+          const votes = allSingleCandidateVotes.filter(vote => vote.voter.id === votingKey);
           const vote = votes.at(0);
 
           if (vote) {
@@ -191,7 +193,8 @@ export function makeQuestionModificationFunctions(roomId: string) {
               type: 'SingleVote',
               candidateId: vote.candidate.id,
             };
-          } else {
+          }
+          else {
             return {
               type: 'Abstain',
             };

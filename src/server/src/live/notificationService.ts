@@ -1,9 +1,9 @@
 type MaybePromise<T> = T | Promise<T>;
 
-type Subscriber<T> = {
+interface Subscriber<T> {
   notify: (value: T) => void;
   stop: () => void;
-};
+}
 
 function makeSubscriber<T>(initialValue: MaybePromise<T>, notify: (val: T) => void): Subscriber<T> {
   let queue: T[] | null = [];
@@ -16,7 +16,7 @@ function makeSubscriber<T>(initialValue: MaybePromise<T>, notify: (val: T) => vo
       }
 
       notify(val);
-      queue?.forEach((val) => notify(val));
+      queue?.forEach(val => notify(val));
       queue = null;
     })
     .catch(() => {
@@ -33,7 +33,8 @@ function makeSubscriber<T>(initialValue: MaybePromise<T>, notify: (val: T) => vo
 
       if (queue) {
         queue.push(val);
-      } else {
+      }
+      else {
         notify(val);
       }
     },
@@ -43,11 +44,11 @@ function makeSubscriber<T>(initialValue: MaybePromise<T>, notify: (val: T) => vo
   };
 }
 
-type ListenerGroup<T> = {
+interface ListenerGroup<T> {
   notify: (value: T) => void;
   subscribe: (notify: (value: T) => void) => () => void;
-  isEmpty(): boolean;
-};
+  isEmpty: () => boolean;
+}
 
 function makeListenerGroup<T>(getInitialValue: () => MaybePromise<T>) {
   const subscribers = new Set<Subscriber<T>>();
@@ -66,7 +67,7 @@ function makeListenerGroup<T>(getInitialValue: () => MaybePromise<T>) {
 
     notify: (val: T) => {
       currentValue = val;
-      subscribers.forEach((subscriber) => subscriber.notify(val));
+      subscribers.forEach(subscriber => subscriber.notify(val));
     },
 
     isEmpty: () => subscribers.size === 0,

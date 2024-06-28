@@ -33,11 +33,11 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
   switch (results.type) {
     case 'SingleVote':
       const candidates = results.results.sort((a, b) => b.votes - a.votes);
-      const maxVote = Math.max(results.abstained, ...results.results.map((v) => v.votes));
+      const maxVote = Math.max(results.abstained, ...results.results.map(v => v.votes));
 
       return (
         <div className="flex flex-col gap-4">
-          {candidates.map((result) => (
+          {candidates.map(result => (
             <ResultBar key={result.id} name={result.name} votes={result.votes} max={maxVote} />
           ))}
           <ResultBar name="Abstained" votes={results.abstained} max={maxVote} grey={true} />

@@ -1,6 +1,6 @@
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
-import { QuestionFormat } from '../dbschema/interfaces';
+import type { QuestionFormat } from '../dbschema/interfaces';
 
 const singleVoteType = 'SingleVote' satisfies QuestionFormat;
 
