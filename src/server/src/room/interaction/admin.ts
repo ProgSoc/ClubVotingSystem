@@ -70,7 +70,7 @@ function makeRoomAdminFunctions(roomId: string) {
 export function withRoomAdminFunctions<T>(
   roomId: string,
   adminKey: string,
-  withLock: (fns: ReturnType<typeof makeRoomAdminFunctions>) => Promise<T>
+  withLock: (fns: ReturnType<typeof makeRoomAdminFunctions>) => Promise<T>,
 ): Promise<T> {
   return roomLock.lock(roomId, async () => {
     const fns = makeRoomAdminFunctions(roomId);
@@ -82,11 +82,11 @@ export function withRoomAdminFunctions<T>(
 export function subscribeToUserListNotifications(
   roomId: string,
   adminKey: string,
-  callback: (users: RoomUsersList) => void
+  callback: (users: RoomUsersList) => void,
 ) {
   return roomWaitingListNotifications.subscribe(
     { roomId },
-    () => withRoomAdminFunctions(roomId, adminKey, async (fns) => fns.currentRoomUsersList()),
-    callback
+    () => withRoomAdminFunctions(roomId, adminKey, async fns => fns.currentRoomUsersList()),
+    callback,
   );
 }

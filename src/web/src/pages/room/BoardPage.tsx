@@ -27,7 +27,7 @@ function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
     <div
       className={twMerge(
         'flex flex-col items-center md:bg-base-300 shadow-lg px-8 py-10 md:p-10 pt-1 md:pt-5 rounded-2xl',
-        props.className
+        props.className,
       )}
     >
       <div className="flex flex-col gap-5 py-10 items-center">
@@ -77,7 +77,7 @@ function StatusPanel(props: { room: RoomPublicInfo }) {
       onError: (err) => {
         console.error(err);
       },
-    }
+    },
   );
 
   if (!state) {
@@ -91,20 +91,23 @@ function StatusPanel(props: { room: RoomPublicInfo }) {
       </div>
     ),
 
-    showingQuestion: (state) => (
+    showingQuestion: state => (
       <div className="flex flex-col gap-4">
         <Question>{state.question}</Question>
 
         <div className="flex gap-8 flex-col items-start">
           <div className="flex flex-col gap-4">
             <div>
-              <div>Votes remaining: {state.totalPeople - state.peopleVoted}</div>
+              <div>
+                Votes remaining:
+                {state.totalPeople - state.peopleVoted}
+              </div>
               <progress className="progress progress-info w-48" max={state.totalPeople} value={state.peopleVoted} />
             </div>
           </div>
           <div>
             <div className="flex flex-col gap-2 items-start flex-wrap max-h-[360px]">
-              {state.candidates.map((candidate) => (
+              {state.candidates.map(candidate => (
                 <div className="alert min-w-[10rem] w-full" key={candidate.id}>
                   {candidate.name}
                 </div>
@@ -115,7 +118,7 @@ function StatusPanel(props: { room: RoomPublicInfo }) {
       </div>
     ),
 
-    showingResults: (state) => (
+    showingResults: state => (
       <div className="flex flex-col items-center gap-4">
         <Question>{state.question}</Question>
         <ResultsViewer results={state.results} />

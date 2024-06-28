@@ -11,7 +11,7 @@ export function withRoomFetched<Props extends { room: RoomPublicInfo }>(Componen
       { id: props.roomId },
       {
         enabled: !cachedRooms[props.roomId],
-      }
+      },
     );
 
     if (roomQuery.data) {
@@ -25,7 +25,8 @@ export function withRoomFetched<Props extends { room: RoomPublicInfo }>(Componen
           <Heading>Loading room...</Heading>
         </CenteredPageContainer>
       );
-    } else {
+    }
+    else {
       return <Component room={room} {...(props as any)} />;
     }
   };
