@@ -1,8 +1,6 @@
-import { dbClient } from '../../../dbschema/client';
-import e from '../../../dbschema/edgeql-js';
-import { Room } from '../../../dbschema/interfaces';
 import { InvalidAdminKeyError, RoomNotFoundError } from '../../../errors';
-import { DbRoom, dbGetRoomById } from './queries';
+import type { DbRoom } from './queries';
+import { dbGetRoomById } from './queries';
 
 export function makeCurrentRoomFunctions(roomId: string) {
   let currentRoomPromise: Promise<DbRoom> | null = null;

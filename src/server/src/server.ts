@@ -1,8 +1,8 @@
+import path from 'node:path';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
 import express from 'express';
-import path from 'path';
 import ws from 'ws';
 
 import { env } from './env';
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV !== 'production') {
     cors({
       origin: '*',
       credentials: true,
-    })
+    }),
   );
 }
 
@@ -40,7 +40,7 @@ app.use(
   '/trpc',
   trpcExpress.createExpressMiddleware({
     router: appRouter,
-  })
+  }),
 );
 
 if (env.publicDir) {

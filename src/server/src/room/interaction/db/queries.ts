@@ -1,11 +1,10 @@
-import { typeutil } from 'edgedb/dist/reflection';
 import { dbClient } from '../../../dbschema/client';
 import e from '../../../dbschema/edgeql-js';
-import * as schema from '../../../dbschema/interfaces';
-import { RoomUser } from '../../../dbschema/interfaces';
-import { SelectModifiers, objectTypeToSelectShape } from '../../../dbschema/edgeql-js/select';
-import { $expr_Literal } from '../../../dbschema/edgeql-js/literal';
-import { $QuestionFormat } from '../../../dbschema/edgeql-js/modules/default';
+import type * as schema from '../../../dbschema/interfaces';
+import type { RoomUser } from '../../../dbschema/interfaces';
+import type { SelectModifiers, objectTypeToSelectShape } from '../../../dbschema/edgeql-js/select';
+import type { $expr_Literal } from '../../../dbschema/edgeql-js/literal';
+import type { $QuestionFormat } from '../../../dbschema/edgeql-js/modules/default';
 
 type FromFn<T extends (...args: any[]) => any> = NonNullable<Awaited<ReturnType<T>>>;
 type ScalarFieldsOn<T> = {
@@ -33,11 +32,11 @@ export async function dbGetRoomById(roomId: string) {
   return room;
 }
 
-type CreateRoomArgs = {
+interface CreateRoomArgs {
   name: string;
   adminKey: string;
   shortId: string;
-};
+}
 
 export async function dbCreateRoom(args: CreateRoomArgs) {
   const roomInsert = e.insert(e.Room, {
@@ -99,7 +98,7 @@ export async function dbGetRoomUserByVotingKey(votingKey: string) {
 
 export async function dbGetAllRoomUsers(roomId: string) {
   const roomUser = await e
-    .select(e.RoomUser, (user) => ({
+    .select(e.RoomUser, user => ({
       ...roomUserFields,
       filter: e.op(user.room.id, '=', e.uuid(roomId)),
     }))
@@ -178,7 +177,7 @@ export async function dbFetchQuestionDataById(questionId: string) {
 
 export async function dbFetchCurrentQuestionData(roomId: string) {
   const questions = await e
-    .select(e.Question, (question) => ({
+    .select(e.Question, question => ({
       ...questionQueryFields,
       // filter: e.op(question['<questions[is Room]'].id, '=', e.uuid(roomId)),
       order_by: { expression: question.createdAt, direction: e.DESC },
@@ -192,7 +191,7 @@ export async function dbFetchCurrentQuestionData(roomId: string) {
 
 export async function dbFetchAllQuestionsData(roomId: string) {
   const questions = await e
-    .select(e.Question, (question) => ({
+    .select(e.Question, question => ({
       ...questionQueryFields,
       filter: e.op(question['<questions[is Room]'].id, '=', roomId),
     }))
@@ -202,11 +201,11 @@ export async function dbFetchAllQuestionsData(roomId: string) {
 }
 
 function dbQuestionInteractAndResetVotesPartialQuery(questionId: string, userId: string) {
-  const deletedSingleVote = e.delete(e.SingleCandidateVote, (singleCandidateVote) => ({
+  const deletedSingleVote = e.delete(e.SingleCandidateVote, singleCandidateVote => ({
     filter: e.op(
       e.op(singleCandidateVote.candidate['<candidates[is Question]'].id, '=', e.uuid(questionId)),
       'and',
-      e.op(singleCandidateVote.voter.id, '=', e.uuid(userId))
+      e.op(singleCandidateVote.voter.id, '=', e.uuid(userId)),
     ),
   }));
 
@@ -248,17 +247,17 @@ export async function dbInsertQuestionSingleVote(questionId: string, userId: str
   return e.with([isSingleVoteQuestion, resetAndInteract, inserted], question).run(dbClient);
 }
 
-type DbSingleVoteQuestionDetails = {
+interface DbSingleVoteQuestionDetails {
   question: string;
   candidates: string[];
-};
+}
 
 export async function dbCreateSingleVoteQuestion(details: DbSingleVoteQuestionDetails) {
   const questionInsert = e.insert(e.Question, {
     format: e.QuestionFormat.SingleVote,
     closed: false,
     question: details.question,
-    candidates: e.for(e.set(...details.candidates), (candidate) => e.insert(e.QuestionCandidate, { name: candidate })),
+    candidates: e.for(e.set(...details.candidates), candidate => e.insert(e.QuestionCandidate, { name: candidate })),
     createdAt: e.datetime_of_statement(),
     votersPresentAtEnd: 0,
   });
@@ -272,9 +271,9 @@ export async function dbCreateSingleVoteQuestion(details: DbSingleVoteQuestionDe
   return questionResult;
 }
 
-export type CloseQuestionDetails = {
+export interface CloseQuestionDetails {
   votersPresentAtEnd: number;
-};
+}
 
 export async function dbCloseQuestion(questionId: string, details: CloseQuestionDetails) {
   const questionClosed = e.assert_exists(
@@ -284,7 +283,7 @@ export async function dbCloseQuestion(questionId: string, details: CloseQuestion
         votersPresentAtEnd: details.votersPresentAtEnd,
       },
       filter_single: { id: questionId },
-    }))
+    })),
   );
 
   const question = await e

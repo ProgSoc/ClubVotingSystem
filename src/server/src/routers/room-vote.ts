@@ -12,7 +12,7 @@ export const roomVoteRouter = router({
       z.object({
         roomId: z.string(),
         votingKey: z.string(),
-      })
+      }),
     )
     .subscription(async ({ ctx, input }) => {
       return observable<VoterState>((emit) => {
@@ -29,10 +29,10 @@ export const roomVoteRouter = router({
         roomId: z.string(),
         votingKey: z.string(),
         questionId: z.string(),
-      })
+      }),
     )
     .query(async ({ input: { roomId, votingKey, questionId } }) => {
-      return operations.withRoomVoterFunctions(roomId, (fns) => fns.getQuestionVote(questionId, votingKey));
+      return operations.withRoomVoterFunctions(roomId, fns => fns.getQuestionVote(questionId, votingKey));
     }),
   castVote: publicProcedure
     .input(
@@ -41,11 +41,10 @@ export const roomVoteRouter = router({
         votingKey: z.string(),
         questionId: z.string(),
         response: questionResponse,
-      })
+      }),
     )
     .mutation(async ({ input }) => {
-      return operations.withRoomVoterFunctions(input.roomId, (fns) =>
-        fns.castVote(input.votingKey, input.questionId, input.response)
-      );
+      return operations.withRoomVoterFunctions(input.roomId, fns =>
+        fns.castVote(input.votingKey, input.questionId, input.response));
     }),
 });
