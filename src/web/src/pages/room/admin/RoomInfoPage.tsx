@@ -14,13 +14,13 @@ export function RoomInfoPage(props: { roomId: string; room: RoomPublicInfo; admi
     {
       onData: (data) => {
         BoardState.match(data, {
-          blank: (data) => setRoomVoters(data.totalPeople),
-          showingQuestion: (data) => setRoomVoters(data.totalPeople),
-          showingResults: (data) => setRoomVoters(data.totalPeople),
-          ended: (data) => setRoomVoters(0),
+          blank: data => setRoomVoters(data.totalPeople),
+          showingQuestion: data => setRoomVoters(data.totalPeople),
+          showingResults: data => setRoomVoters(data.totalPeople),
+          ended: data => setRoomVoters(0),
         });
       },
-    }
+    },
   );
 
   const boardLink = location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
@@ -28,7 +28,10 @@ export function RoomInfoPage(props: { roomId: string; room: RoomPublicInfo; admi
   return (
     <PageContainer className="gap-4">
       <AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
-      <p>People admitted into the room: {roomVoters}</p>
+      <p>
+        People admitted into the room:
+        {roomVoters}
+      </p>
 
       <div className="flex flex-col items-center gap-4">
         <div>

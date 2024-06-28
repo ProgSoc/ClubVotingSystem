@@ -1,4 +1,4 @@
-import { DbRoom } from './room/interaction/db/queries';
+import type { DbRoom } from './room/interaction/db/queries';
 
 export class RoomNotFoundError extends Error {
   constructor(readonly roomId: string) {

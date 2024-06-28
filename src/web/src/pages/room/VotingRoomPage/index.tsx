@@ -8,8 +8,7 @@ import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
 
 import type { QuestionVotingData } from './hooks';
-import { VotingPageState } from './hooks';
-import { useVoterState } from './hooks';
+import { VotingPageState, useVoterState } from './hooks';
 
 export function VotingRoomPage(props: { roomId: string; userId: string; room: RoomPublicInfo; votingKey: string }) {
   const data = useVoterState(props);
@@ -22,7 +21,7 @@ export function VotingRoomPage(props: { roomId: string; userId: string; room: Ro
         routeBuilders.waitInWaitingRoom({
           roomId: props.roomId,
           userId: props.userId,
-        })
+        }),
       );
     }
   }, [VotingPageState.is.kicked(data)]);
@@ -39,8 +38,8 @@ function QuestionVoter({ data }: { data: VotingPageState }) {
     loading: () => <Heading>Loading...</Heading>,
     waiting: () => <Heading>Waiting for question</Heading>,
     ended: () => <Heading>Ended</Heading>,
-    voting: (data) => <QuestionVoting data={data} />,
-    viewingResults: (data) => <ViewingResults data={data} />,
+    voting: data => <QuestionVoting data={data} />,
+    viewingResults: data => <ViewingResults data={data} />,
     kicked: () => <></>,
   });
 }
@@ -66,10 +65,10 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
     <div className="flex flex-col items-center gap-6 w-full">
       <Question>{question.question}</Question>
       <div className="flex gap-4 flex-wrap flex-col sm:flex-row items-stretch sm:items-center justify-center w-full">
-        {candidatesReordered.map((candidate) => (
+        {candidatesReordered.map(candidate => (
           <Button
             className={twMerge(
-              lastVote?.type === 'SingleVote' && lastVote.candidateId === candidate.id && 'btn-accent'
+              lastVote?.type === 'SingleVote' && lastVote.candidateId === candidate.id && 'btn-accent',
             )}
             key={candidate.id}
             onClick={() => {

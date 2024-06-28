@@ -2,12 +2,13 @@ import QRCode from 'qrcode';
 import { useEffect, useRef } from 'react';
 
 // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-const rgb2hex = (c: string) =>
-  '#' +
+function rgb2hex(c: string) {
+  return `#${
   c
     .match(/\d+/g)!
-    .map((x) => (+x).toString(16).padStart(2, '0'))
-    .join('');
+    .map(x => (+x).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
 
 export function QRCodeRender(props: { content: string; size?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

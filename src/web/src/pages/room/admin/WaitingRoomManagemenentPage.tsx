@@ -38,21 +38,21 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
 
   const setUserState = (userId: string, uiLoadingState: WaitingUserState) => {
     setUsers((users) => {
-      const user = users.find((u) => u.id === userId);
+      const user = users.find(u => u.id === userId);
       if (!user) {
         return users;
       }
-      return users.map((u) => (u.id === userId ? { ...u, uiLoadingState } : u));
+      return users.map(u => (u.id === userId ? { ...u, uiLoadingState } : u));
     });
   };
 
   const setVoterState = (userId: string, uiLoadingState: VoterState) => {
     setVoters((voters) => {
-      const user = voters.find((u) => u.id === userId);
+      const user = voters.find(u => u.id === userId);
       if (!user) {
         return voters;
       }
-      return voters.map((u) => (u.id === userId ? { ...u, uiLoadingState } : u));
+      return voters.map(u => (u.id === userId ? { ...u, uiLoadingState } : u));
     });
   };
 
@@ -78,9 +78,9 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
         const { waiting, admitted } = data;
 
         setUsers((users) => {
-          const getUserById = (userId: string) => users.find((u) => u.id === userId);
+          const getUserById = (userId: string) => users.find(u => u.id === userId);
 
-          return waiting.map((user) => ({
+          return waiting.map(user => ({
             ...user,
 
             // If the user already exist then keep the loading state, otherwise set it to waiting
@@ -89,9 +89,9 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
         });
 
         setVoters((voters) => {
-          const getUserById = (userId: string) => voters.find((u) => u.id === userId);
+          const getUserById = (userId: string) => voters.find(u => u.id === userId);
 
-          return admitted.map((voters) => ({
+          return admitted.map(voters => ({
             ...voters,
 
             // If the user already exist then keep the loading state, otherwise set it to voting
@@ -102,7 +102,7 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
       onError: (err) => {
         console.error(err);
       },
-    }
+    },
   );
 
   return { users, voters, admitUser, declineUser, kickVoter };
@@ -116,11 +116,15 @@ function Email(props: { email: string; className?: string }) {
 
   if (!url) {
     return <span className={className}>{props.email}</span>;
-  } else {
+  }
+  else {
     return (
       <span className={className}>
         {name}
-        <span className="opacity-20 overflow-hidden overflow-ellipsis whitespace-nowrap">@{url}</span>
+        <span className="opacity-20 overflow-hidden overflow-ellipsis whitespace-nowrap">
+          @
+          {url}
+        </span>
       </span>
     );
   }
@@ -137,7 +141,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: RoomPub
         <div className="flex flex-col gap-8">
           <Heading>Waiting Room</Heading>
           <div className="gap-2 flex flex-col">
-            {users.map((user) => (
+            {users.map(user => (
               <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
                 <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
                 <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>
@@ -171,7 +175,7 @@ export function WaitingRoomManagementPage(props: { roomId: string; room: RoomPub
         </div>
         <div className="flex flex-col gap-8">
           <Heading>Voters</Heading>
-          {voters.map((user) => (
+          {voters.map(user => (
             <div key={user.id} className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]">
               <Email email={user.details.studentEmail} className="ml-2 mr-auto flex-shrink" />
               <div className="shrink-0">{locationEnumLabel[user.details.location]}</div>

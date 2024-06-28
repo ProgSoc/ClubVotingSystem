@@ -9,7 +9,7 @@ import { trpc } from 'utils/trpc';
 export interface QuestionVotingData {
   question: ShowingQuestionState;
   lastVote?: QuestionResponse;
-  castVote(params: QuestionResponse): void;
+  castVote: (params: QuestionResponse) => void;
 }
 
 export type VotingPageState = GetStatesUnion<typeof VotingPageState.enum>;
@@ -49,7 +49,7 @@ export function useVoterState(props: { roomId: string; votingKey: string }): Vot
       onError: (err) => {
         console.error(err);
       },
-    }
+    },
   );
 
   const { isInitialVoteLoading } = useFetchInitialVote(props, state, setLastVote);
@@ -63,7 +63,7 @@ export function useVoterState(props: { roomId: string; votingKey: string }): Vot
     ended: () => VotingPageState.ended({}),
     kicked: () => VotingPageState.kicked({}),
 
-    showingResults: (state) => VotingPageState.viewingResults(state),
+    showingResults: state => VotingPageState.viewingResults(state),
 
     showingQuestion: (state) => {
       if (isInitialVoteLoading) {
@@ -112,7 +112,7 @@ const InitialVoteFetchState = makeStates('ivfs', {
 function useFetchInitialVote(
   props: { roomId: string; votingKey: string },
   voterState: VoterState | null,
-  setLastVote: (vote: LastVote | null) => void
+  setLastVote: (vote: LastVote | null) => void,
 ) {
   const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForVoterState({}));
 
@@ -126,14 +126,15 @@ function useFetchInitialVote(
     },
     {
       enabled: InitialVoteFetchState.is.fetching(fetchState),
-    }
+    },
   );
 
   useEffect(() => {
     if (InitialVoteFetchState.is.waitingForVoterState(fetchState) && voterState) {
       if (VoterState.is.showingQuestion(voterState)) {
         setFetchState(InitialVoteFetchState.fetching({ questionId: voterState.questionId }));
-      } else {
+      }
+      else {
         setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }
@@ -144,7 +145,8 @@ function useFetchInitialVote(
       if (VoterState.is.showingQuestion(voterState) && voterState.questionId === fetchState.questionId) {
         setFetchState(InitialVoteFetchState.fetched({}));
         setLastVote(initialVoteQuery.data && { questionId: voterState.questionId, response: initialVoteQuery.data });
-      } else {
+      }
+      else {
         setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }
