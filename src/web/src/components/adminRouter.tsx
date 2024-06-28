@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
 
-const AdminLink = (props: { path: string; name: string }) => {
+function AdminLink(props: { path: string; name: string }) {
   const selected = window.location.pathname === props.path;
 
   return (
@@ -10,9 +10,9 @@ const AdminLink = (props: { path: string; name: string }) => {
       <button className={twMerge('btn', selected && 'btn-secondary')}>{props.name}</button>
     </Link>
   );
-};
+}
 
-export const AdminRouter = (props: { className?: string; roomId: string; adminKey: string }) => {
+export function AdminRouter(props: { className?: string; roomId: string; adminKey: string }) {
   return (
     <div className={twMerge('flex gap-4 mb-8', props.className)}>
       <AdminLink
@@ -29,4 +29,4 @@ export const AdminRouter = (props: { className?: string; roomId: string; adminKe
       />
     </div>
   );
-};
+}

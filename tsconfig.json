@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
+    "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "noImplicitAny": true,
-    "outDir": "dist",
     "strict": true,
+    "noImplicitAny": true,
     "noEmit": true,
+    "outDir": "dist",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,
-    "target": "ESNext"
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js"],
-  "exclude": ["node_modules", "test/**/*.test.tsx", "test/**/*.test.ts", "./.eslintrc.js"]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "eslint.config.mjs"],
+  "exclude": ["node_modules", "test/**/*.test.tsx", "test/**/*.test.ts", ".eslint.config.js"]
 }
