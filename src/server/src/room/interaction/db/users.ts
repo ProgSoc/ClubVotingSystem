@@ -1,19 +1,20 @@
 import { nanoid } from 'nanoid';
-import { UserLocation, WaitingState } from '../../../dbschema/interfaces';
+import type { UserLocation, WaitingState } from '../../../dbschema/interfaces';
 import { UserNotAVoter, UserNotFoundError, UserNotInWaitingRoom } from '../../../errors';
 import type { GetStatesUnion } from '../../../state';
 import { makeStates, state } from '../../../state';
 import { UnreachableError } from '../../../unreachableError';
-import {
+import type {
   DbRoomUser,
-  dbSetUserState,
+  RoomUserDetails,
+} from './queries';
+import {
+  dbCreateUser,
+  dbGetAllRoomUsers,
   dbGetRoomUserById,
   dbGetRoomUserByVotingKey,
-  dbGetAllRoomUsers,
-  RoomUserDetails,
-  dbCreateUser,
+  dbSetUserState,
 } from './queries';
-import e from '../../../dbschema/edgeql-js';
 
 export interface JoinWaitingRoomParams {
   studentEmail: string;
@@ -99,10 +100,10 @@ function getRoomStateFromUser(user: DbRoomUser): RoomUserState {
 
 export function userRoomStateToResolvedState(user: RoomUserState): RoomUserResolvedState | null {
   return RoomUserState.match<RoomUserResolvedState | null>(user, {
-    waiting: (state) => null,
-    admitted: (state) => RoomUserResolvedState.admitted(state),
-    declined: (state) => RoomUserResolvedState.declined(state),
-    kicked: (state) => RoomUserResolvedState.kicked(state),
+    waiting: state => null,
+    admitted: state => RoomUserResolvedState.admitted(state),
+    declined: state => RoomUserResolvedState.declined(state),
+    kicked: state => RoomUserResolvedState.kicked(state),
   });
 }
 
@@ -114,15 +115,15 @@ export function makeVoterInteractionFunctions(roomId: string) {
 
     return {
       admitted: roomUsers
-        .filter((u) => u.state === 'Admitted')
-        .map((u) => ({
+        .filter(u => u.state === 'Admitted')
+        .map(u => ({
           id: u.id,
           details: u.userDetails,
           votingKey: u.votingKey!,
         })),
       waiting: roomUsers
-        .filter((u) => u.state === 'Waiting')
-        .map((u) => ({
+        .filter(u => u.state === 'Waiting')
+        .map(u => ({
           id: u.id,
           details: u.userDetails,
         })),
@@ -150,7 +151,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
     currentRoomUsersList: async (): Promise<RoomUsersList> => {
       const list = await fns.currentRoomUsersListWithvotingKeys();
       return {
-        admitted: list.admitted.map((u) => ({
+        admitted: list.admitted.map(u => ({
           id: u.id,
           details: u.details,
         })),

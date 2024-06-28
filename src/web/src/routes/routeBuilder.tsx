@@ -19,7 +19,7 @@ export function path<Params extends string>(strings: TemplateStringsArray, ...ex
     return str;
   };
 
-  const parameterized = build(Object.fromEntries(expr.map((e) => [e, ':' + e])) as ParamsObj<Params>);
+  const parameterized = build(Object.fromEntries(expr.map(e => [e, `:${e}`])) as ParamsObj<Params>);
 
   return {
     parameterized,
@@ -31,7 +31,7 @@ export function path<Params extends string>(strings: TemplateStringsArray, ...ex
 /** A function to automatically retrieve URL params from react router and pass them in as props */
 export function withParams<T extends readonly string[]>(
   paramsList: T,
-  Component: React.ComponentType<{ [K in T[number]]: string }>
+  Component: React.ComponentType<{ [K in T[number]]: string }>,
 ) {
   const NewComponent = () => {
     const params = useParams<{ [K in T[number]]: string }>();
@@ -60,7 +60,7 @@ function asDomRoute<Params extends string>(data: RouteData<Params>): RouteObject
 }
 
 export function buildRoutes<Routes extends Record<string, RouteData<string>>>(routes: Routes) {
-  return Object.values(routes).map((data) => asDomRoute(data));
+  return Object.values(routes).map(data => asDomRoute(data));
 }
 
 export function buildBuilders<Routes extends Record<string, RouteData<string>>>(routes: Routes) {
@@ -69,6 +69,6 @@ export function buildBuilders<Routes extends Record<string, RouteData<string>>>(
   };
 
   return Object.fromEntries(
-    Object.entries(routes).map(([key, data]) => [key, data.path.build])
+    Object.entries(routes).map(([key, data]) => [key, data.path.build]),
   ) as IntoBuilderFnsObj<Routes>;
 }

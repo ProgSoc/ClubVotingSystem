@@ -107,7 +107,8 @@ export function makeQuestionHelpers(roomId: string) {
       if (question.closed) {
         const state = await fns.getShowingResultsState(question);
         return BoardState.showingResults(state);
-      } else {
+      }
+      else {
         const state = await fns.getShowingQuestionState(question);
         return BoardState.showingQuestion(state);
       }
@@ -124,9 +125,9 @@ export function makeQuestionHelpers(roomId: string) {
 
 export function boardStateToVoterState(state: BoardState) {
   return BoardState.match<VoterState>(state, {
-    blank: (s) => VoterState.blank(s),
-    showingQuestion: (s) => VoterState.showingQuestion(s),
-    showingResults: (s) => VoterState.showingResults(s),
+    blank: s => VoterState.blank(s),
+    showingQuestion: s => VoterState.showingQuestion(s),
+    showingResults: s => VoterState.showingResults(s),
     ended: () => VoterState.ended({}),
   });
 }

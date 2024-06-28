@@ -15,12 +15,12 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 
 interface QuestionSettingData {
   previousResults?: ShowingResultsState;
-  setQuestion(params: CreateQuestionParams): void;
+  setQuestion: (params: CreateQuestionParams) => void;
 }
 
 interface QuestionAskingData {
   question: ShowingQuestionState;
-  endQuestion(): void;
+  endQuestion: () => void;
 }
 
 type QuestionSettingPageState = GetStatesUnion<typeof QuestionSettingPageState.enum>;
@@ -46,7 +46,7 @@ function useQuestionSetter(props: { roomId: string; adminKey: string }): Questio
       onError: (err) => {
         console.error(err);
       },
-    }
+    },
   );
 
   if (!state) {
@@ -112,8 +112,8 @@ function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
   return QuestionSettingPageState.match(data, {
     loading: () => <Heading>Loading...</Heading>,
     ended: () => <Heading>Ended</Heading>,
-    setQuestion: (data) => <SetQuestion data={data} />,
-    askingQuestion: (data) => <AskingQuestion data={data} />,
+    setQuestion: data => <SetQuestion data={data} />,
+    askingQuestion: data => <AskingQuestion data={data} />,
   });
 }
 
@@ -122,12 +122,12 @@ const schema = z.object({
   candidates: z.array(z.object({ name: z.string().min(1) })).min(2),
 });
 
-type CandidateInnerData = {
+interface CandidateInnerData {
   name: string;
   innerId: number;
   inputRef: React.RefObject<HTMLInputElement>;
   forceSelect: boolean;
-};
+}
 interface FormValues extends TypeOf<typeof schema> {
   candidates: CandidateInnerData[];
 }
@@ -142,7 +142,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
     setSubmitting(true);
     await data.setQuestion({
       question: values.question,
-      candidates: values.candidates.map((c) => c.name),
+      candidates: values.candidates.map(c => c.name),
       details: {
         type: 'SingleVote',
       },
@@ -205,7 +205,8 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
                             const nextInput = form.values.candidates[index + 1]?.inputRef.current;
                             if (nextInput) {
                               nextInput.focus();
-                            } else {
+                            }
+                            else {
                               addCandidate(true);
                             }
                           }
@@ -217,7 +218,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
                         onClick={() => {
                           form.setFieldValue(
                             'candidates',
-                            form.values.candidates.filter((c) => c.innerId !== candidate.innerId)
+                            form.values.candidates.filter(c => c.innerId !== candidate.innerId),
                           );
                         }}
                       >
@@ -264,7 +265,10 @@ function AskingQuestion({ data }: { data: QuestionAskingData }) {
       <div className="flex gap-8 flex-col sm:flex-row">
         <div className="flex flex-col gap-4">
           <div>
-            <div>Votes remaining: {data.question.totalPeople - data.question.peopleVoted}</div>
+            <div>
+              Votes remaining:
+              {data.question.totalPeople - data.question.peopleVoted}
+            </div>
             <progress
               className="progress progress-info w-48"
               max={data.question.totalPeople}
@@ -277,7 +281,7 @@ function AskingQuestion({ data }: { data: QuestionAskingData }) {
         </div>
         <div>
           <div className="flex flex-col gap-2">
-            {data.question.candidates.map((candidate) => (
+            {data.question.candidates.map(candidate => (
               <div className="alert min-w-[10rem] w-full" key={candidate.id}>
                 {candidate.name}
               </div>
