@@ -11,6 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: edgedb install
         run: bash <(curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com) -y
 
