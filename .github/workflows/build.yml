@@ -11,6 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: edgedb install
+        run: bash <(curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com) -y
+
+      - name: init edgedb
+        run: cd src/server && edgedb project init --non-interactive
+
+      - name: generate edgedb schema types
+        run: bun server gen-edgedb
+
       - name: docker login
         env:
           DOCKER_USER: ${{secrets.DOCKER_USER}}
