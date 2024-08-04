@@ -11,7 +11,7 @@ RUN bun install
 
 COPY . .
 
-RUN bun server run build && bun web run build
+RUN bun server run gen-edgedb && bun server run build && bun web run build
 
 FROM oven/bun:1.1.17-alpine
 
