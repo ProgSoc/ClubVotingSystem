@@ -9,7 +9,7 @@ import { trpc } from 'utils/trpc';
 export interface QuestionVotingData {
   question: ShowingQuestionState;
   lastVote?: QuestionResponse;
-  castVote(params: QuestionResponse): void;
+  castVote: (params: QuestionResponse) => void;
 }
 
 export type VotingPageState = GetStatesUnion<typeof VotingPageState.enum>;
@@ -27,7 +27,7 @@ interface LastVote {
   response: QuestionResponse;
 }
 
-export function useVoterState(props: { roomId: string; voterId: string }): VotingPageState {
+export function useVoterState(props: { roomId: string; votingKey: string }): VotingPageState {
   const [state, setState] = useState<VoterState | null>(null);
   const [lastVote, setLastVote] = useState<LastVote | null>(null);
   const voteLock = useRef<Promise<void>>(Promise.resolve());
@@ -41,7 +41,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
   };
 
   trpc.vote.listen.useSubscription(
-    { roomId: props.roomId, voterId: props.voterId },
+    { roomId: props.roomId, votingKey: props.votingKey },
     {
       onData: (data) => {
         setState(data);
@@ -49,7 +49,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
       onError: (err) => {
         console.error(err);
       },
-    }
+    },
   );
 
   const { isInitialVoteLoading } = useFetchInitialVote(props, state, setLastVote);
@@ -63,7 +63,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
     ended: () => VotingPageState.ended({}),
     kicked: () => VotingPageState.kicked({}),
 
-    showingResults: (state) => VotingPageState.viewingResults(state),
+    showingResults: state => VotingPageState.viewingResults(state),
 
     showingQuestion: (state) => {
       if (isInitialVoteLoading) {
@@ -75,7 +75,7 @@ export function useVoterState(props: { roomId: string; voterId: string }): Votin
           await castVoteMutation.mutateAsync({
             questionId: state.questionId,
             roomId: props.roomId,
-            voterId: props.voterId,
+            votingKey: props.votingKey,
             response,
           });
         });
@@ -110,30 +110,31 @@ const InitialVoteFetchState = makeStates('ivfs', {
  * the `setLastVote` callback with the last vote.
  */
 function useFetchInitialVote(
-  props: { roomId: string; voterId: string },
+  props: { roomId: string; votingKey: string },
   voterState: VoterState | null,
-  setLastVote: (vote: LastVote | null) => void
+  setLastVote: (vote: LastVote | null) => void,
 ) {
   const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForVoterState({}));
 
   const initialVoteQuery = trpc.vote.getMyVote.useQuery(
     {
       roomId: props.roomId,
-      voterId: props.voterId,
+      votingKey: props.votingKey,
 
       // If we're not fetching, then the query is disabled anyway and this arg doesnt matter
       questionId: InitialVoteFetchState.is.fetching(fetchState) ? fetchState.questionId : '',
     },
     {
       enabled: InitialVoteFetchState.is.fetching(fetchState),
-    }
+    },
   );
 
   useEffect(() => {
     if (InitialVoteFetchState.is.waitingForVoterState(fetchState) && voterState) {
       if (VoterState.is.showingQuestion(voterState)) {
         setFetchState(InitialVoteFetchState.fetching({ questionId: voterState.questionId }));
-      } else {
+      }
+      else {
         setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }
@@ -144,7 +145,8 @@ function useFetchInitialVote(
       if (VoterState.is.showingQuestion(voterState) && voterState.questionId === fetchState.questionId) {
         setFetchState(InitialVoteFetchState.fetched({}));
         setLastVote(initialVoteQuery.data && { questionId: voterState.questionId, response: initialVoteQuery.data });
-      } else {
+      }
+      else {
         setFetchState(InitialVoteFetchState.ignoring({}));
       }
     }

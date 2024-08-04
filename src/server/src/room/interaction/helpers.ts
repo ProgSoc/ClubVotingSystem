@@ -28,11 +28,11 @@ export function makeQuestionHelpers(roomId: string) {
     async notifyEveryoneOfBoardChange() {
       const boardState = await fns.getCurrentBoardState();
       const voterState = boardStateToVoterState(boardState);
-      const voters = await voterFns.currentRoomUsersListWithVoterIds();
+      const voters = await voterFns.currentRoomUsersListWithvotingKeys();
 
       roomBoardEventsNotifications.notify({ roomId }, boardState);
       voters.admitted.forEach((voter) => {
-        roomVoterNotifications.notify({ roomId, voterId: voter.voterId }, voterState);
+        roomVoterNotifications.notify({ roomId, votingKey: voter.votingKey }, voterState);
       });
     },
 
@@ -107,7 +107,8 @@ export function makeQuestionHelpers(roomId: string) {
       if (question.closed) {
         const state = await fns.getShowingResultsState(question);
         return BoardState.showingResults(state);
-      } else {
+      }
+      else {
         const state = await fns.getShowingQuestionState(question);
         return BoardState.showingQuestion(state);
       }
@@ -124,9 +125,9 @@ export function makeQuestionHelpers(roomId: string) {
 
 export function boardStateToVoterState(state: BoardState) {
   return BoardState.match<VoterState>(state, {
-    blank: (s) => VoterState.blank(s),
-    showingQuestion: (s) => VoterState.showingQuestion(s),
-    showingResults: (s) => VoterState.showingResults(s),
+    blank: s => VoterState.blank(s),
+    showingQuestion: s => VoterState.showingQuestion(s),
+    showingResults: s => VoterState.showingResults(s),
     ended: () => VoterState.ended({}),
   });
 }

@@ -1,4 +1,4 @@
-import { UserLocation } from '@prisma/client';
+import type { UserLocation } from '@server/dbschema/interfaces';
 import { Button, CenteredPageContainer, Heading } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 
 const schema = z.object({
   email: z.string().email(),
-  location: z.nativeEnum(UserLocation),
+  location: z.enum<UserLocation, readonly [UserLocation, ...UserLocation[]]>(['InPerson', 'Online', 'Proxy']),
 });
 
 type FormValues = TypeOf<typeof schema>;
@@ -36,8 +36,6 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
     navigate(routeBuilders.waitInWaitingRoom({ roomId: props.roomId, userId: result.userId }));
   };
 
-  console.log(UserLocation);
-
   return (
     <CenteredPageContainer className="gap-4">
       <Heading>Join voting room</Heading>
@@ -51,7 +49,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
           validationSchema={toFormikValidationSchema(schema)}
           validateOnMount={true}
         >
-          {(form) => (
+          {form => (
             <Form>
               <div className="gap-4 w-full flex flex-col justify-center items-center">
                 <div className="flex flex-col gap-4">
@@ -68,18 +66,28 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                       <Field
                         type="radio"
                         name="location"
-                        value={UserLocation.InPerson}
+                        value={'InPerson' satisfies UserLocation}
                         className="radio radio-primary"
                       />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.InPerson]}</span>
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.InPerson}</span>
                     </label>
                     <label className="flex items-center gap-2">
-                      <Field type="radio" name="location" value={UserLocation.Online} className="radio radio-primary" />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.Online]}</span>
+                      <Field
+                        type="radio"
+                        name="location"
+                        value={'Online' satisfies UserLocation}
+                        className="radio radio-primary"
+                      />
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.Online}</span>
                     </label>
                     <label className="flex items-center gap-2">
-                      <Field type="radio" name="location" value={UserLocation.Proxy} className="radio radio-primary" />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel[UserLocation.Proxy]}</span>
+                      <Field
+                        type="radio"
+                        name="location"
+                        value={'Proxy' satisfies UserLocation}
+                        className="radio radio-primary"
+                      />
+                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.Proxy}</span>
                     </label>
                   </div>
                   <Button

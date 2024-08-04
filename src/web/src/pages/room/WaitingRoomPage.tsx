@@ -24,8 +24,8 @@ export function WaitingRoomPage(props: { room: RoomPublicInfo; roomId: string; u
           routeBuilders.votingRoom({
             roomId: props.roomId,
             userId: props.userId,
-            voterId: response.data.voterId,
-          })
+            votingKey: response.data.votingKey,
+          }),
         );
       }
     }

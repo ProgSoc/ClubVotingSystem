@@ -1,4 +1,3 @@
-import { UserLocation } from '@prisma/client';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 
@@ -6,13 +5,14 @@ import type { BoardState } from '../live/states';
 import { operations } from '../room';
 import { withRoomVoterFunctions } from '../room/interaction/user';
 import { publicProcedure, router } from '../trpc';
+import type { UserLocation } from '../dbschema/interfaces';
 
 export const roomRouter = router({
   createNewRoom: publicProcedure
     .input(
       z.object({
         name: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       return operations.createNewRoom(input.name);
@@ -22,7 +22,7 @@ export const roomRouter = router({
     .input(
       z.object({
         shortId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return operations.getRoomByShortId(input.shortId);
@@ -32,10 +32,10 @@ export const roomRouter = router({
     .input(
       z.object({
         id: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
-      return operations.withRoomVoterFunctions(input.id, (fns) => fns.getRoomPublicInfo());
+      return operations.withRoomVoterFunctions(input.id, fns => fns.getRoomPublicInfo());
     }),
 
   joinWaitingList: publicProcedure
@@ -43,28 +43,27 @@ export const roomRouter = router({
       z.object({
         roomId: z.string(),
         email: z.string().email(),
-        location: z.nativeEnum(UserLocation),
-      })
+        location: z.enum<UserLocation, readonly [UserLocation, ...UserLocation[]]>(['InPerson', 'Online', 'Proxy']),
+      }),
     )
     .mutation(async ({ input }) => {
-      return operations.withRoomVoterFunctions(input.roomId, (fns) =>
+      return operations.withRoomVoterFunctions(input.roomId, fns =>
         fns.joinWaitingList({
           location: input.location,
           studentEmail: input.email,
-        })
-      );
+        }));
     }),
 
   getResults: publicProcedure
     .input(
       z.object({
         roomId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return withRoomVoterFunctions(input.roomId, async (fns) => {
         const questions = await fns.getAllQuestionResults();
-        return questions.filter((q) => q.closed);
+        return questions.filter(q => q.closed);
       });
     }),
 
@@ -72,7 +71,7 @@ export const roomRouter = router({
     .input(
       z.object({
         roomId: z.string(),
-      })
+      }),
     )
     .subscription(async ({ input }) => {
       return observable<BoardState>((emit) => {

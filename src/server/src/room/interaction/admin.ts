@@ -24,14 +24,16 @@ function makeRoomAdminFunctions(roomId: string) {
       const question = await helpers.getCurrentlyOpenQuestion();
 
       const users = await voterFns.currentRoomUsersList();
-      await questionFns.closeQuestion(question.id, users.admitted.length);
+      await questionFns.closeQuestion(question.id, {
+        votersPresentAtEnd: users.admitted.length,
+      });
 
       await helpers.notifyEveryoneOfBoardChange();
     },
 
     async admitUser(userId: string) {
-      const { voterId } = await voterFns.admitUser(userId);
-      userWaitingListNotifications.notify({ userId }, RoomUserState.admitted({ id: userId, voterId }));
+      const { votingKey } = await voterFns.admitUser(userId);
+      userWaitingListNotifications.notify({ userId }, RoomUserState.admitted({ id: userId, votingKey }));
 
       await helpers.notifyAdminsOfUsersChanged();
       await helpers.notifyEveryoneOfBoardChange();
@@ -46,12 +48,12 @@ function makeRoomAdminFunctions(roomId: string) {
     },
 
     async kickVoter(userId: string) {
-      const voter = await voterFns.getVoterByUserId(userId);
+      const user = await voterFns.getUserById(userId);
 
       // Should always have a voter, but checking just in case
-      if (voter) {
+      if (user?.votingKey) {
         await voterFns.kickVoter(userId);
-        await roomVoterNotifications.notify({ roomId, voterId: voter.id }, VoterState.kicked({}));
+        await roomVoterNotifications.notify({ roomId, votingKey: user.votingKey }, VoterState.kicked({}));
         await helpers.notifyAdminsOfUsersChanged();
         await helpers.notifyEveryoneOfBoardChange();
       }
@@ -68,7 +70,7 @@ function makeRoomAdminFunctions(roomId: string) {
 export function withRoomAdminFunctions<T>(
   roomId: string,
   adminKey: string,
-  withLock: (fns: ReturnType<typeof makeRoomAdminFunctions>) => Promise<T>
+  withLock: (fns: ReturnType<typeof makeRoomAdminFunctions>) => Promise<T>,
 ): Promise<T> {
   return roomLock.lock(roomId, async () => {
     const fns = makeRoomAdminFunctions(roomId);
@@ -80,11 +82,11 @@ export function withRoomAdminFunctions<T>(
 export function subscribeToUserListNotifications(
   roomId: string,
   adminKey: string,
-  callback: (users: RoomUsersList) => void
+  callback: (users: RoomUsersList) => void,
 ) {
   return roomWaitingListNotifications.subscribe(
     { roomId },
-    () => withRoomAdminFunctions(roomId, adminKey, async (fns) => fns.currentRoomUsersList()),
-    callback
+    () => withRoomAdminFunctions(roomId, adminKey, async fns => fns.currentRoomUsersList()),
+    callback,
   );
 }

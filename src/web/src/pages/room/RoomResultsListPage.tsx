@@ -10,16 +10,18 @@ export function RoomResultsListPage(props: { roomId: string; room: RoomPublicInf
     <PageContainer className="gap-4">
       <Heading>{props.room.name}</Heading>
       <div className="flex flex-col gap-8">
-        {!roomResults.data ? (
-          <Question>Loading...</Question>
-        ) : (
-          roomResults.data.map((result) => (
-            <div key={result.questionId}>
-              <Question className="mb-4">{result.question}</Question>
-              <ResultsViewer results={result.results} />
-            </div>
-          ))
-        )}
+        {!roomResults.data
+          ? (
+              <Question>Loading...</Question>
+            )
+          : (
+              roomResults.data.map(result => (
+                <div key={result.questionId}>
+                  <Question className="mb-4">{result.question}</Question>
+                  <ResultsViewer results={result.results} />
+                </div>
+              ))
+            )}
       </div>
     </PageContainer>
   );

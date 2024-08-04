@@ -51,16 +51,16 @@ const routes = {
     component: withRoomFetched(WaitingRoomPage),
   }),
   votingRoom: route({
-    path: path`/room/${'roomId'}/vote/${'userId'}/${'voterId'}`,
+    path: path`/room/${'roomId'}/vote/${'userId'}/${'votingKey'}`,
     component: withRoomFetched(VotingRoomPage),
   }),
   shortView: route({
     path: path`/b/${'shortId'}`,
-    component: ShortRedirectPage((roomId) => `/room/${roomId}/board`),
+    component: ShortRedirectPage(roomId => `/room/${roomId}/board`),
   }),
   shortJoin: route({
     path: path`/j/${'shortId'}`,
-    component: ShortRedirectPage((roomId) => `/join/${roomId}`),
+    component: ShortRedirectPage(roomId => `/join/${roomId}`),
   }),
 };
 
@@ -73,7 +73,7 @@ export const browserRouter = createBrowserRouter([
   {
     path: '/',
     element: <AnimationRouter />,
-    children: browserRoutes.map((route) => ({
+    children: browserRoutes.map(route => ({
       index: route.path === '/',
       path: route.path === '/' ? undefined : route.path,
       element: route.element,
@@ -89,14 +89,14 @@ function AnimationRouter() {
     <TransitionGroup className="w-screen h-screen relative overflow-x-hidden">
       <CSSTransition key={location.pathname} timeout={300} unmountOnExit={true}>
         {(state) => {
-          const style =
-            state === 'entering'
+          const style
+            = state === 'entering'
               ? styles.entering
               : state === 'exiting'
-              ? styles.exiting
-              : state === 'exited'
-              ? styles.exited
-              : undefined;
+                ? styles.exiting
+                : state === 'exited'
+                  ? styles.exited
+                  : undefined;
           return <div className={twMerge('absolute min-h-full', style)}>{currentOutlet}</div>;
         }}
       </CSSTransition>

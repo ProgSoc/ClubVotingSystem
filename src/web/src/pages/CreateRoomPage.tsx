@@ -29,7 +29,7 @@ export function CreateRoomPage() {
           className="input input-bordered w-full sm:w-96"
           type="text"
           value={pageName}
-          onChange={(e) => setPageName(e.target.value)}
+          onChange={e => setPageName(e.target.value)}
         />
         <Button
           className="btn btn-primary m-3"

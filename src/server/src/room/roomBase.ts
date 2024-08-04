@@ -1,8 +1,8 @@
 import { customAlphabet } from 'nanoid';
 
 import { RoomNotFoundError } from '../errors';
-import { prisma } from '../prisma';
 import type { RoomAdminInfo, RoomPublicInfo } from './types';
+import { dbCreateRoom, dbRoomFindByShortId } from './interaction/db/queries';
 
 const makeAdminKeyId = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 48);
 
@@ -12,12 +12,10 @@ const makePublicShortId = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz',
 export async function createNewRoom(name: string): Promise<RoomAdminInfo> {
   // Loop until we find a unique public key. If we fail after 100 attempts, then there are serious issues.
   for (let i = 0; i < 100; i++) {
-    const room = await prisma.room.create({
-      data: {
-        name,
-        adminKey: makeAdminKeyId(),
-        shortId: makePublicShortId(),
-      },
+    const room = await dbCreateRoom({
+      name,
+      adminKey: makeAdminKeyId(),
+      shortId: makePublicShortId(),
     });
 
     return {
@@ -34,11 +32,7 @@ export async function createNewRoom(name: string): Promise<RoomAdminInfo> {
 }
 
 export async function getRoomByShortId(shortId: string): Promise<RoomPublicInfo | null> {
-  const room = await prisma.room.findUnique({
-    where: {
-      shortId,
-    },
-  });
+  const room = await dbRoomFindByShortId(shortId);
 
   if (!room) {
     throw new RoomNotFoundError(shortId);

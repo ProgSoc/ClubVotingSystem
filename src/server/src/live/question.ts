@@ -1,9 +1,11 @@
-import { QuestionType } from '@prisma/client';
 import type { TypeOf } from 'zod';
 import { z } from 'zod';
+import type { QuestionFormat } from '../dbschema/interfaces';
+
+const singleVoteType = 'SingleVote' satisfies QuestionFormat;
 
 export interface SingleVoteQuestionFormat {
-  type: typeof QuestionType['SingleVote'];
+  type: typeof singleVoteType;
 }
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat;
@@ -13,7 +15,7 @@ const abstainQuestionResponse = z.object({
 });
 
 const singleVoteQuestionResponse = z.object({
-  type: z.literal(QuestionType.SingleVote),
+  type: z.literal(singleVoteType),
   candidateId: z.string(),
 });
 
@@ -27,7 +29,7 @@ export interface CandidateWithVotes {
 }
 
 export interface SingleVoteResultsView {
-  type: 'SingleVote';
+  type: typeof singleVoteType;
   results: CandidateWithVotes[];
 }
 

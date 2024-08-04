@@ -1,15 +1,13 @@
-import type { Room } from '@prisma/client';
-
 import { InvalidAdminKeyError, RoomNotFoundError } from '../../../errors';
-import { prisma } from '../../../prisma';
+import type { DbRoom } from './queries';
+import { dbGetRoomById } from './queries';
 
 export function makeCurrentRoomFunctions(roomId: string) {
-  let currentRoomPromise: Promise<Room> | null = null;
+  let currentRoomPromise: Promise<DbRoom> | null = null;
 
   async function fetchCurrentRoom() {
-    const room = await prisma.room.findUnique({
-      where: { id: roomId },
-    });
+    const room = await dbGetRoomById(roomId);
+
     if (!room) {
       throw new RoomNotFoundError(roomId);
     }

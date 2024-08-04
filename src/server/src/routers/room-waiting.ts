@@ -9,7 +9,7 @@ export const roomWaitingListRouter = router({
       z.object({
         roomId: z.string(),
         userId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return operations.waitForAdmission(input.roomId, input.userId);
