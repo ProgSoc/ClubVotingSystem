@@ -255,24 +255,18 @@ export async function dbInsertQuestionPreferentialVote(questionId: string, userI
   const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(questionId, e.QuestionFormat.PreferentialVote);
   const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(questionId, userId);
 
-  const candidateIdsSet = e.literal(e.array(e.uuid), candidateIds);
-
-  const inserted = e.for(candidateIdsSet, (candidateId) => {
-    const cadidateIdAsUuid = e.cast(e.uuid, candidateId);
-
-    return e.insert(e.PreferentialCandidateVote, {
-      rank: e.find(candidateIdsSet, cadidateIdAsUuid),
-      candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: cadidateIdAsUuid } })),
-      voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
-    });
-  });
+  const inserted = candidateIds.map((candidateId, index) => e.insert(e.PreferentialCandidateVote, {
+    rank: index + 1,
+    candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: candidateId } })),
+    voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
+  }));
 
   const question = e.select(e.Question, () => ({
     ...questionQueryFields,
     filter_single: { id: questionId },
   }));
 
-  return e.with([isPreferentialVoteQuestion, resetAndInteract, inserted], question).run(dbClient);
+  return e.with([isPreferentialVoteQuestion, resetAndInteract, ...inserted], question).run(dbClient);
 }
 
 interface DbSingleVoteQuestionDetails {
