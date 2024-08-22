@@ -1,8 +1,10 @@
+import type { QuestionFormat } from '@server/dbschema/interfaces';
 import type { ShowingQuestionState, ShowingResultsState } from '@server/live/states';
 import { BoardState } from '@server/live/states';
 import type { CreateQuestionParams, RoomPublicInfo } from '@server/room/types';
 import type { GetStatesUnion } from '@server/state';
 import { makeStates, state } from '@server/state';
+import { UnreachableError } from '@server/unreachableError';
 import { AdminRouter } from 'components/adminRouter';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, Heading, PageContainer, Question } from 'components/styles';
@@ -119,6 +121,8 @@ function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
 
 const schema = z.object({
   question: z.string().min(2),
+  questionType: z.union([z.literal('SingleVote' satisfies QuestionFormat), z.literal('PreferentialVote' satisfies QuestionFormat)]),
+  maxElected: z.number().positive().default(1),
   candidates: z.array(z.object({ name: z.string().min(1) })).min(2),
 });
 
@@ -140,13 +144,30 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
-    await data.setQuestion({
-      question: values.question,
-      candidates: values.candidates.map(c => c.name),
-      details: {
-        type: 'SingleVote',
-      },
-    });
+
+    switch (values.questionType) {
+      case 'SingleVote':
+        await data.setQuestion({
+          question: values.question,
+          candidates: values.candidates.map(c => c.name),
+          details: {
+            type: 'SingleVote',
+          },
+        });
+        break;
+      case 'PreferentialVote':
+        await data.setQuestion({
+          question: values.question,
+          candidates: values.candidates.map(c => c.name),
+          details: {
+            type: 'PreferentialVote',
+            maxElected: values.maxElected,
+          },
+        });
+        break;
+      default:
+        throw new UnreachableError(values.questionType);
+    }
   };
 
   return (
@@ -154,6 +175,8 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
       <Formik<FormValues>
         initialValues={{
           question: '',
+          maxElected: 1,
+          questionType: 'SingleVote',
           candidates: [
             { innerId: getId(), name: '', inputRef: createRef(), forceSelect: true },
             { innerId: getId(), name: '', inputRef: createRef(), forceSelect: false },
@@ -172,13 +195,48 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
           return (
             <Form className="flex flex-col m-8 md:bg-base-300 shadow-lg md:p-10 md:pt-5 rounded-2xl">
               <fieldset disabled={submitting} className="gap-4 w-full flex flex-col justify-center items-center">
-                <Field
-                  className="input input-bordered input-primary w-full text-center self-start my-8"
-                  placeholder="Question"
-                  name="question"
-                  value={form.values.question}
-                  onChange={form.handleChange}
-                />
+                <label className="form-control  w-full   mt-8 mb-2">
+                  <div className="label">
+                    <span className="label-text">Question</span>
+                  </div>
+                  <Field
+                    className="input input-bordered input-primary text-center"
+                    placeholder="What pizza should we get?"
+                    name="question"
+                    value={form.values.question}
+                    onChange={form.handleChange}
+                  />
+                </label>
+                <div className="flex gap-2 w-full">
+                  <label className="form-control mb-8 grow">
+                    <div className="label">
+                      <span className="label-text">Question Type</span>
+                    </div>
+                    <Field
+                      as="select"
+                      className="select select-bordered select-primary text-center "
+                      name="questionType"
+                      value={form.values.questionType}
+                      onChange={form.handleChange}
+                    >
+                      <option value="SingleVote">Single vote</option>
+                      <option value="PreferentialVote">Preferential vote</option>
+                    </Field>
+                  </label>
+                  <label className="form-control mb-8">
+                    <div className="label">
+                      <span className="label-text">Max Results</span>
+                    </div>
+                    <Field
+                      className="input input-bordered input-primary w-24 text-center disabled:opacity-50"
+                      placeholder="Max elected"
+                      name="maxElected"
+                      value={form.values.maxElected}
+                      onChange={form.handleChange}
+                      disabled={form.values.questionType === 'SingleVote'}
+                    />
+                  </label>
+                </div>
 
                 <div className="gap-2 flex flex-col">
                   {form.values.candidates.map((candidate, index) => (
