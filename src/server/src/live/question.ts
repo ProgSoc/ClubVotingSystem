@@ -43,6 +43,7 @@ export interface CandidateWithRank {
   id: string;
   name: string;
   rank: number;
+  votes: number;
 }
 
 export interface SingleVoteResultsView {

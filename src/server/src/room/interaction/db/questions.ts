@@ -109,10 +109,11 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 
         const resultIds = rankedChoiceVoting(candidateIds, votingPreferences, question.maxElected); // get the result in order of preference
 
-        const results = resultIds.map((id, index) => ({
-          id,
-          name: question.candidates.find(candidate => candidate.id === id)!.name,
+        const results = resultIds.map((c, index) => ({
+          id: c.id,
+          name: question.candidates.find(candidate => candidate.id === c.id)!.name,
           rank: index + 1,
+          votes: candidateWithVotes.filter(vote => vote.candidateId === c.id).length,
         }));
 
         return {

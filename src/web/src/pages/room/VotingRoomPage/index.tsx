@@ -1,10 +1,11 @@
-import type { ShowingResultsState } from '@server/live/states';
+import type { ShowingResultsState, VotingCandidate } from '@server/live/states';
 import type { RoomPublicInfo } from '@server/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { routeBuilders } from 'routes';
+import { Reorder } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 
 import type { QuestionVotingData } from './hooks';
@@ -61,26 +62,47 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
 
   const candidatesReordered = question.candidates.map((_, i) => question.candidates[reorder[i]]);
 
+  const setCandidatesReordered = (unknownCandidate: unknown[]) => {
+    const candidate = unknownCandidate as VotingCandidate[];
+    castVote({
+      type: 'PreferentialVote',
+      candidateIds: candidate.map(candidate => candidate.id),
+    });
+  };
+
   return (
     <div className="flex flex-col items-center gap-6 w-full">
       <Question>{question.question}</Question>
       <div className="flex gap-4 flex-wrap flex-col sm:flex-row items-stretch sm:items-center justify-center w-full">
-        {candidatesReordered.map(candidate => (
-          <Button
-            className={twMerge(
-              lastVote?.type === 'SingleVote' && lastVote.candidateId === candidate.id && 'btn-accent',
+        {question.details.type === 'SingleVote'
+          ? candidatesReordered.map(candidate => (
+            <Button
+              className={twMerge(
+                lastVote?.type === 'SingleVote' && lastVote.candidateId === candidate.id && 'btn-accent',
+              )}
+              key={candidate.id}
+              onClick={() => {
+                castVote({
+                  type: 'SingleVote',
+                  candidateId: candidate.id,
+                });
+              }}
+            >
+              {candidate.name}
+            </Button>
+          ))
+          : (
+              <Reorder.Group onReorder={setCandidatesReordered} values={candidatesReordered}>
+                {candidatesReordered.map(candidate => (
+                  <Reorder.Item value={candidate} key={candidate.id}>
+                    <span className="btn-accent">
+                      {candidate.name}
+                    </span>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
             )}
-            key={candidate.id}
-            onClick={() => {
-              castVote({
-                type: 'SingleVote',
-                candidateId: candidate.id,
-              });
-            }}
-          >
-            {candidate.name}
-          </Button>
-        ))}
+
         <Button
           className={twMerge(data.lastVote?.type === 'Abstain' ? 'btn-accent' : 'btn-outline')}
           onClick={() => {

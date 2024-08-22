@@ -261,7 +261,7 @@ export async function dbInsertQuestionPreferentialVote(questionId: string, userI
     const cadidateIdAsUuid = e.cast(e.uuid, candidateId);
 
     return e.insert(e.PreferentialCandidateVote, {
-      rank: e.find(candidateIdsSet, candidateId).assert_single(),
+      rank: e.assert_single(e.find(candidateIdsSet, candidateId)), // TODO: Broke
       candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: cadidateIdAsUuid } })),
       voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
     });

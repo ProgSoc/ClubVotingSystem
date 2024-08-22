@@ -51,6 +51,11 @@ function reassignVotes(votes: readonly string[][], candidatesToRemove: readonly 
   return votes.map(vote => vote.filter(candidate => !candidatesToRemove.includes(candidate))).filter(vote => vote.length > 0);
 }
 
+interface CandidateWithVotes {
+  id: string;
+  votes: number;
+}
+
 /**
  * Perform ranked-choice voting.
  * @param candidates Array of strings representing candidate identifiers
@@ -58,7 +63,7 @@ function reassignVotes(votes: readonly string[][], candidatesToRemove: readonly 
  * @param maxElected Maximum number of candidates to elect
  * @returns Array of strings representing the elected candidates
  */
-export function rankedChoiceVoting(candidates: readonly string[], votes: readonly string[][], maxElected: number): readonly string[] {
+export function rankedChoiceVoting(candidates: readonly string[], votes: readonly string[][], maxElected: number): readonly CandidateWithVotes[] {
   const electedCandidates: string[] = [];
 
   while (electedCandidates.length < maxElected) {
@@ -69,7 +74,7 @@ export function rankedChoiceVoting(candidates: readonly string[], votes: readonl
     if (candidates.length <= maxElected) {
       // Add remaining candidates to elected list
       electedCandidates.push(...candidates);
-      return electedCandidates;
+      return electedCandidates.map(candidate => ({ id: candidate, votes: voteCounts[candidate] }));
     }
 
     // Find the candidates with the fewest votes
@@ -86,9 +91,9 @@ export function rankedChoiceVoting(candidates: readonly string[], votes: readonl
     else {
       // If we can't eliminate without dropping below maxElected, we stop
       electedCandidates.push(...candidates);
-      return electedCandidates;
+      return electedCandidates.map(candidate => ({ id: candidate, votes: voteCounts[candidate] }));
     }
   }
 
-  return electedCandidates;
+  return electedCandidates.map(candidate => ({ id: candidate, votes: 0 }));
 }

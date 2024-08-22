@@ -122,7 +122,7 @@ function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
 const schema = z.object({
   question: z.string().min(2),
   questionType: z.union([z.literal('SingleVote' satisfies QuestionFormat), z.literal('PreferentialVote' satisfies QuestionFormat)]),
-  maxElected: z.number().positive().default(1),
+  maxElected: z.coerce.number().positive(),
   candidates: z.array(z.object({ name: z.string().min(1) })).min(2),
 });
 
