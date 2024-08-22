@@ -88,25 +88,26 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
           rank: vote.rank,
         })));
 
-        const voterAndCandidateRank = candidateWithVotes.reduce((acc, vote) => {
-          if (!acc[vote.voterId]) {
-            acc[vote.voterId] = [];
+        const voterAndCandidateRank: Record<string, { candidateId: string; rank: number }[]> = {};
+
+        for (const vote of candidateWithVotes) {
+          if (!voterAndCandidateRank[vote.voterId]) {
+            voterAndCandidateRank[vote.voterId] = [];
           }
-          acc[vote.voterId].push({
+          voterAndCandidateRank[vote.voterId].push({
             candidateId: vote.candidateId,
             rank: vote.rank,
           });
-          return acc;
-        }, {} as Record<string, { candidateId: string; rank: number }[]>);
+        }
 
         const votingPreferences = Object.entries(voterAndCandidateRank).map(([_voterId, votes]) => {
-          const sortedVotes = votes.sort((a, b) => a.rank - b.rank);
+          const sortedVotes = votes.sort((a, b) => a.rank - b.rank); // sort by preference
           return sortedVotes.map(vote => vote.candidateId);
         });
 
         const candidateIds = question.candidates.map(candidate => candidate.id);
 
-        const resultIds = rankedChoiceVoting(candidateIds, votingPreferences, question.maxElected);
+        const resultIds = rankedChoiceVoting(candidateIds, votingPreferences, question.maxElected); // get the result in order of preference
 
         const results = resultIds.map((id, index) => ({
           id,
