@@ -18,6 +18,7 @@ export interface SingleVoteQuestionFormat {
 
 export interface PreferentialVoteQuestionFormat {
   type: Extract<QuestionFormat, 'PreferentialVote'>;
+  maxElected: number;
 }
 
 export type QuestionFormatDetails = SingleVoteQuestionFormat | PreferentialVoteQuestionFormat;

@@ -152,7 +152,7 @@ const questionQueryFields = {
   createdAt: true,
 
   interactedUsers: true,
-
+  maxElected: true,
   candidates: {
     id: true,
     name: true,

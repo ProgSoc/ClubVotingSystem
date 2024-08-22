@@ -40,6 +40,12 @@ module default {
     }
 
     required votersPresentAtEnd: int32;
+    
+    # Max number of elected candidates (default 0)
+    required maxElected: int32 {
+      default := 0;
+    }
+
     multi interactedUsers: RoomUser;
     multi candidates: QuestionCandidate;
   }

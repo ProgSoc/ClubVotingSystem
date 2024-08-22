@@ -45,19 +45,19 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
       );
     }
     case 'PreferentialVote': {
-      const candidates = results.results.sort((a, b) => b.votes - a.votes);
-      const maxVote = Math.max(results.abstained, ...results.results.map(v => v.votes));
+      const candidates = results.results.sort((a, b) => b.rank - a.rank);
+      const maxVote = Math.max(results.abstained, ...results.results.map(v => v.rank));
 
       return (
         <div className="flex flex-col gap-4">
           {candidates.map(result => (
-            <ResultBar key={result.id} name={result.name} votes={result.votes} max={maxVote} />
+            <ResultBar key={result.id} name={result.name} votes={result.rank} max={maxVote} />
           ))}
           <ResultBar name="Abstained" votes={results.abstained} max={maxVote} grey={true} />
         </div>
       );
     }
-    default:
-      throw new UnreachableError(results.type);
+    // default:
+    //   throw new UnreachableError(results.type);
   }
 }

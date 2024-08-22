@@ -3,6 +3,7 @@ import type { QuestionResponse, ResultsView } from '../../../live/question';
 import type { VotingCandidate } from '../../../live/states';
 import { UnreachableError } from '../../../unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
+import { processPreferentialVoting } from '../preferentialVote';
 import type {
   CloseQuestionDetails,
   DbQuestionData,
@@ -61,6 +62,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
       case 'PreferentialVote':
         return {
           type: 'PreferentialVote',
+          maxElected: question.maxElected,
         };
       default:
         throw new UnreachableError(question.format);
@@ -79,16 +81,53 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
           })),
           abstained: abstainCount,
         };
-      case 'PreferentialVote':
+      case 'PreferentialVote': {
+        const candidates = question.candidates.map(candidate => ({
+          id: candidate.id,
+          name: candidate.name,
+        }));
+
+        const candidateWithVotes = question.candidates.flatMap(candidate => candidate.preferentialCandidateVotes.map(vote => ({
+          voterId: vote.voter.id,
+          candidateId: candidate.id,
+          rank: vote.rank,
+        })));
+
+        const voterAndCandidateRank = candidateWithVotes.reduce((acc, vote) => {
+          if (!acc[vote.voterId]) {
+            acc[vote.voterId] = [];
+          }
+          acc[vote.voterId].push({
+            candidateId: vote.candidateId,
+            rank: vote.rank,
+          });
+          return acc;
+        }, {} as Record<string, { candidateId: string; rank: number }[]>);
+
+        const voterAndPreference = Object.entries(voterAndCandidateRank).map(([voterId, votes]) => {
+          const sortedVotes = votes.sort((a, b) => a.rank - b.rank);
+          return {
+            voterId,
+            candidateIds: sortedVotes.map(vote => vote.candidateId),
+          };
+        });
+
+        const results = processPreferentialVoting({
+          candidateIds: candidates.map(candidate => candidate.id),
+          maxElected: question.maxElected,
+          preferenceLists: voterAndPreference.map(vote => vote.candidateIds),
+        });
+
         return {
           type: 'PreferentialVote',
-          results: question.candidates.map(candidate => ({
-            id: candidate.id,
-            name: candidate.name,
-            votes: candidate.preferentialCandidateVotes.length,
+          results: results.map((result, index) => ({
+            id: result.id,
+            name: question.candidates.find(candidate => candidate.id === result.id)!.name,
+            rank: index + 1,
           })),
           abstained: abstainCount,
         };
+      }
       default:
         throw new UnreachableError(question.format);
     }
@@ -155,9 +194,9 @@ export function makeQuestionModificationFunctions(roomId: string) {
             question: params.question,
           });
           break;
-        default:
+        // default:
           // Uncomment when there's multiple question types
-          throw new UnreachableError(params.details.type);
+          // throw new UnreachableError(params.details.type);
       }
 
       currentQuestionPromise = questionPromise.then(mapDbQuestionData);
@@ -247,8 +286,8 @@ export function makeQuestionModificationFunctions(roomId: string) {
             candidateIds: votes.map(vote => vote.voter.id),
           };
         }
-        default:
-          throw new UnreachableError(question.details.type);
+        // default:
+        //   throw new UnreachableError(question.details.type);
       }
     },
   };

@@ -39,6 +39,12 @@ export interface CandidateWithVotes {
   votes: number;
 }
 
+export interface CandidateWithRank {
+  id: string;
+  name: string;
+  rank: number;
+}
+
 export interface SingleVoteResultsView {
   type: typeof singleVoteType;
   results: CandidateWithVotes[];
@@ -46,7 +52,7 @@ export interface SingleVoteResultsView {
 
 export interface PreferentialVoteResultsView {
   type: typeof preferentialVoteType;
-  results: CandidateWithVotes[];
+  results: CandidateWithRank[];
 }
 
 // TODO: Add more types
