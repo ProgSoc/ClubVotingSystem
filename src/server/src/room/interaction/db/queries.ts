@@ -255,13 +255,13 @@ export async function dbInsertQuestionPreferentialVote(questionId: string, userI
   const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(questionId, e.QuestionFormat.PreferentialVote);
   const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(questionId, userId);
 
-  const candidateIdsSet = e.set(...candidateIds);
+  const candidateIdsSet = e.literal(e.array(e.uuid), candidateIds);
 
-  const inserted = e.for(e.set(...candidateIds), (candidateId) => {
+  const inserted = e.for(candidateIdsSet, (candidateId) => {
     const cadidateIdAsUuid = e.cast(e.uuid, candidateId);
 
     return e.insert(e.PreferentialCandidateVote, {
-      rank: e.assert_single(e.find(candidateIdsSet, candidateId)), // TODO: Broke
+      rank: e.find(candidateIdsSet, cadidateIdAsUuid),
       candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: cadidateIdAsUuid } })),
       voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
     });
