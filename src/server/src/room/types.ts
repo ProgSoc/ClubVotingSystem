@@ -16,7 +16,11 @@ export interface SingleVoteQuestionFormat {
   type: Extract<QuestionFormat, 'SingleVote'>;
 }
 
-export type QuestionFormatDetails = SingleVoteQuestionFormat;
+export interface PreferentialVoteQuestionFormat {
+  type: Extract<QuestionFormat, 'PreferentialVote'>;
+}
+
+export type QuestionFormatDetails = SingleVoteQuestionFormat | PreferentialVoteQuestionFormat;
 
 export interface CreateQuestionParams {
   question: string;

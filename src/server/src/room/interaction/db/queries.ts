@@ -160,6 +160,10 @@ const questionQueryFields = {
       candidate: true,
       voter: true,
     },
+    preferentialCandidateVotes: {
+      rank: true,
+      voter: true,
+    },
   },
 } satisfies DbQuestionElementQueryShape;
 
@@ -247,7 +251,36 @@ export async function dbInsertQuestionSingleVote(questionId: string, userId: str
   return e.with([isSingleVoteQuestion, resetAndInteract, inserted], question).run(dbClient);
 }
 
+export async function dbInsertQuestionPreferentialVote(questionId: string, userId: string, candidateIds: string[]) {
+  const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(questionId, e.QuestionFormat.PreferentialVote);
+  const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(questionId, userId);
+
+  const candidateIdsSet = e.set(...candidateIds);
+
+  const inserted = e.for(e.set(...candidateIds), (candidateId) => {
+    const cadidateIdAsUuid = e.cast(e.uuid, candidateId);
+
+    return e.insert(e.PreferentialCandidateVote, {
+      rank: e.find(candidateIdsSet, candidateId).assert_single(),
+      candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: cadidateIdAsUuid } })),
+      voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
+    });
+  });
+
+  const question = e.select(e.Question, () => ({
+    ...questionQueryFields,
+    filter_single: { id: questionId },
+  }));
+
+  return e.with([isPreferentialVoteQuestion, resetAndInteract, inserted], question).run(dbClient);
+}
+
 interface DbSingleVoteQuestionDetails {
+  question: string;
+  candidates: string[];
+}
+
+interface DbPreferentialVoteQuestionDetails {
   question: string;
   candidates: string[];
 }
@@ -255,6 +288,25 @@ interface DbSingleVoteQuestionDetails {
 export async function dbCreateSingleVoteQuestion(details: DbSingleVoteQuestionDetails) {
   const questionInsert = e.insert(e.Question, {
     format: e.QuestionFormat.SingleVote,
+    closed: false,
+    question: details.question,
+    candidates: e.for(e.set(...details.candidates), candidate => e.insert(e.QuestionCandidate, { name: candidate })),
+    createdAt: e.datetime_of_statement(),
+    votersPresentAtEnd: 0,
+  });
+
+  const questionResult = await e
+    .select(questionInsert, () => ({
+      ...questionQueryFields,
+    }))
+    .run(dbClient);
+
+  return questionResult;
+}
+
+export async function dbCreatePreferentialVoteQuestion(details: DbPreferentialVoteQuestionDetails) {
+  const questionInsert = e.insert(e.Question, {
+    format: e.QuestionFormat.PreferentialVote,
     closed: false,
     question: details.question,
     candidates: e.for(e.set(...details.candidates), candidate => e.insert(e.QuestionCandidate, { name: candidate })),

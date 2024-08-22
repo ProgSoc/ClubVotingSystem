@@ -9,9 +9,11 @@ import type {
 } from './queries';
 import {
   dbCloseQuestion,
+  dbCreatePreferentialVoteQuestion,
   dbCreateSingleVoteQuestion,
   dbFetchAllQuestionsData,
   dbFetchCurrentQuestionData,
+  dbInsertQuestionPreferentialVote,
   dbInsertQuestionSingleVote,
   dbQuestionAbstain,
 } from './queries';
@@ -37,7 +39,11 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
     candidate.singleCandidateVotes.forEach((vote) => {
       uniqueVoters.add(vote.voter.id);
     });
-    // Add other vote types here, when more are added
+    candidate.preferentialCandidateVotes.forEach((vote) => {
+      candidate.preferentialCandidateVotes.forEach((vote) => {
+        uniqueVoters.add(vote.voter.id);
+      });
+    });
   });
 
   const votesWithoutAbstain = uniqueVoters.size;
@@ -51,6 +57,10 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
       case 'SingleVote':
         return {
           type: 'SingleVote',
+        };
+      case 'PreferentialVote':
+        return {
+          type: 'PreferentialVote',
         };
       default:
         throw new UnreachableError(question.format);
@@ -66,6 +76,16 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
             id: candidate.id,
             name: candidate.name,
             votes: candidate.singleCandidateVotes.length,
+          })),
+          abstained: abstainCount,
+        };
+      case 'PreferentialVote':
+        return {
+          type: 'PreferentialVote',
+          results: question.candidates.map(candidate => ({
+            id: candidate.id,
+            name: candidate.name,
+            votes: candidate.preferentialCandidateVotes.length,
           })),
           abstained: abstainCount,
         };
@@ -129,6 +149,12 @@ export function makeQuestionModificationFunctions(roomId: string) {
           });
           break;
         }
+        case 'PreferentialVote':
+          questionPromise = dbCreatePreferentialVoteQuestion({
+            candidates: params.candidates,
+            question: params.question,
+          });
+          break;
         default:
           // Uncomment when there's multiple question types
           throw new UnreachableError(params.details.type);
@@ -159,6 +185,9 @@ export function makeQuestionModificationFunctions(roomId: string) {
           break;
         case 'SingleVote':
           await dbInsertQuestionSingleVote(questionId, userId, response.candidateId);
+          break;
+        case 'PreferentialVote':
+          await dbInsertQuestionPreferentialVote(questionId, userId, response.candidateIds);
           break;
         default:
           throw new UnreachableError(response);
@@ -199,6 +228,24 @@ export function makeQuestionModificationFunctions(roomId: string) {
               type: 'Abstain',
             };
           }
+        }
+        case 'PreferentialVote': {
+          const allPreferentialCandidateVotes = question.originalDbQuestionDataObject.candidates.flatMap(
+            candidate => candidate.preferentialCandidateVotes,
+          );
+
+          const votes = allPreferentialCandidateVotes.filter(vote => vote.voter.id === votingKey);
+
+          if (votes.length === 0) {
+            return {
+              type: 'Abstain',
+            };
+          }
+
+          return {
+            type: 'PreferentialVote',
+            candidateIds: votes.map(vote => vote.voter.id),
+          };
         }
         default:
           throw new UnreachableError(question.details.type);
