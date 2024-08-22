@@ -3,7 +3,7 @@ import type { QuestionResponse, ResultsView } from '../../../live/question';
 import type { VotingCandidate } from '../../../live/states';
 import { UnreachableError } from '../../../unreachableError';
 import type { CreateQuestionParams, QuestionFormatDetails } from '../../types';
-import { processPreferentialVoting } from '../preferentialVote';
+import { rankedChoiceVoting } from '../preferentialVote';
 import type {
   CloseQuestionDetails,
   DbQuestionData,
@@ -82,11 +82,6 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
           abstained: abstainCount,
         };
       case 'PreferentialVote': {
-        const candidates = question.candidates.map(candidate => ({
-          id: candidate.id,
-          name: candidate.name,
-        }));
-
         const candidateWithVotes = question.candidates.flatMap(candidate => candidate.preferentialCandidateVotes.map(vote => ({
           voterId: vote.voter.id,
           candidateId: candidate.id,
@@ -104,27 +99,24 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
           return acc;
         }, {} as Record<string, { candidateId: string; rank: number }[]>);
 
-        const voterAndPreference = Object.entries(voterAndCandidateRank).map(([voterId, votes]) => {
+        const votingPreferences = Object.entries(voterAndCandidateRank).map(([_voterId, votes]) => {
           const sortedVotes = votes.sort((a, b) => a.rank - b.rank);
-          return {
-            voterId,
-            candidateIds: sortedVotes.map(vote => vote.candidateId),
-          };
+          return sortedVotes.map(vote => vote.candidateId);
         });
 
-        const results = processPreferentialVoting({
-          candidateIds: candidates.map(candidate => candidate.id),
-          maxElected: question.maxElected,
-          preferenceLists: voterAndPreference.map(vote => vote.candidateIds),
-        });
+        const candidateIds = question.candidates.map(candidate => candidate.id);
+
+        const resultIds = rankedChoiceVoting(candidateIds, votingPreferences, question.maxElected);
+
+        const results = resultIds.map((id, index) => ({
+          id,
+          name: question.candidates.find(candidate => candidate.id === id)!.name,
+          rank: index + 1,
+        }));
 
         return {
           type: 'PreferentialVote',
-          results: results.map((result, index) => ({
-            id: result.id,
-            name: question.candidates.find(candidate => candidate.id === result.id)!.name,
-            rank: index + 1,
-          })),
+          results,
           abstained: abstainCount,
         };
       }
