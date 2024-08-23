@@ -50,7 +50,7 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
       return (
         <div className="flex flex-col gap-4">
           {candidates.map(result => (
-            <ResultBar key={result.id} name={result.name} votes={result.rank} max={maxVote} />
+            <ResultBar key={result.id} name={result.name} votes={result.votes} max={maxVote} />
           ))}
           <ResultBar name="Abstained" votes={results.abstained} max={maxVote} grey={true} />
         </div>
