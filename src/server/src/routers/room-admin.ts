@@ -72,7 +72,7 @@ export const roomQuestionsAdminRouter = router({
           // TODO: Add more types. Having a duplicate here so that zod doesnt complain.
           z.object({
             type: z.literal('PreferentialVote' satisfies QuestionFormat),
-            maxElected: z.coerce.number().positive().default(1),
+            maxElected: z.coerce.number().positive().default(1).catch(1),
           }),
         ]),
         candidates: z.array(z.string().min(1)).min(1),
