@@ -197,7 +197,7 @@ export async function dbFetchAllQuestionsData(roomId: string) {
   const questions = await e
     .select(e.Question, question => ({
       ...questionQueryFields,
-      filter: e.op(question['<questions[is Room]'].id, '=', roomId),
+      filter: e.op(question['<questions[is Room]'].id, '=', e.uuid(roomId)),
     }))
     .run(dbClient);
 
@@ -255,11 +255,21 @@ export async function dbInsertQuestionPreferentialVote(questionId: string, userI
   const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(questionId, e.QuestionFormat.PreferentialVote);
   const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(questionId, userId);
 
+  console.log('candidateIds', candidateIds);
+
   const inserted = candidateIds.map((candidateId, index) => e.insert(e.PreferentialCandidateVote, {
     rank: index + 1,
     candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: candidateId } })),
     voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
-  }));
+  }).unlessConflict(preferentialCandidateVote => ({
+    on: e.tuple([preferentialCandidateVote.candidate, preferentialCandidateVote.voter, preferentialCandidateVote.rank]),
+    else: e.update(preferentialCandidateVote, () => ({
+      set: {
+        rank: index + 1,
+      },
+    })),
+  }),
+  ));
 
   const question = e.select(e.Question, () => ({
     ...questionQueryFields,

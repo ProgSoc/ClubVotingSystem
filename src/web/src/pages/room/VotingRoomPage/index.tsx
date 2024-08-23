@@ -2,12 +2,13 @@ import type { ShowingResultsState, VotingCandidate } from '@server/live/states';
 import type { RoomPublicInfo } from '@server/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { routeBuilders } from 'routes';
 import { Reorder } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 
+import { useDebounceCallback } from 'usehooks-ts';
 import type { QuestionVotingData } from './hooks';
 import { VotingPageState, useVoterState } from './hooks';
 
@@ -60,14 +61,26 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
     return indexes;
   }, [data.question.questionId]);
 
-  const candidatesReordered = question.candidates.map((_, i) => question.candidates[reorder[i]]);
+  const candidatesReordered = useMemo(() => question.candidates.map((_, i) => question.candidates[reorder[i]]), [reorder]);
 
-  const setCandidatesReordered = (unknownCandidate: unknown[]) => {
-    const candidate = unknownCandidate as VotingCandidate[];
+  const [candidateOrder, setCandidateOrder] = useState<VotingCandidate[]>(candidatesReordered);
+
+  useEffect(() => {
+    setCandidateOrder(candidatesReordered);
+  }, [candidatesReordered]);
+
+  const debounced = useDebounceCallback((votingCandidates: VotingCandidate[]) => {
     castVote({
       type: 'PreferentialVote',
-      candidateIds: candidate.map(candidate => candidate.id),
+      candidateIds: votingCandidates.map(candidate => candidate.id),
     });
+  }, 500);
+
+  const onReorder = (unknownVotingCandidates: unknown[]) => {
+    const votingCandidates = unknownVotingCandidates as VotingCandidate[];
+    debounced(votingCandidates);
+
+    setCandidateOrder(votingCandidates);
   };
 
   return (
@@ -92,11 +105,11 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
             </Button>
           ))
           : (
-              <Reorder.Group onReorder={setCandidatesReordered} values={candidatesReordered}>
-                {candidatesReordered.map(candidate => (
+              <Reorder.Group onReorder={onReorder} values={candidateOrder} className="flex gap-5 flex-col">
+                {candidateOrder.map((candidate, index) => (
                   <Reorder.Item value={candidate} key={candidate.id}>
-                    <span className="btn-accent">
-                      {candidate.name}
+                    <span className="btn btn-accent">
+                      {`${index + 1}. ${candidate.name}`}
                     </span>
                   </Reorder.Item>
                 ))}

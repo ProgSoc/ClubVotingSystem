@@ -77,6 +77,8 @@ export function useVoterState(props: { roomId: string; votingKey: string }): Vot
             roomId: props.roomId,
             votingKey: props.votingKey,
             response,
+          }, {
+
           });
         });
         setLastVote({
