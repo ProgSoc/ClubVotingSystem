@@ -44,8 +44,8 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
       );
     }
     case 'PreferentialVote': {
-      const candidates = results.results.sort((a, b) => b.rank - a.rank);
-      const maxVote = Math.max(results.abstained, ...results.results.map(v => v.rank));
+      const candidates = results.results.sort((a, b) => b.votes - a.votes);
+      const maxVote = Math.max(results.abstained, ...results.results.map(v => v.votes));
 
       return (
         <div className="flex flex-col gap-4">
