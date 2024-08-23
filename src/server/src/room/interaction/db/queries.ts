@@ -214,6 +214,13 @@ function dbQuestionInteractAndResetVotesPartialQuery(questionId: string, userId:
   }));
 
   // Clear other vote types here, when more are added
+  const deletedPreferentialVote = e.delete(e.PreferentialCandidateVote, preferentialCandidateVote => ({
+    filter: e.op(
+      e.op(preferentialCandidateVote.candidate['<candidates[is Question]'].id, '=', e.uuid(questionId)),
+      'and',
+      e.op(preferentialCandidateVote.voter.id, '=', e.uuid(userId)),
+    ),
+  }));
 
   const insertedInteraction = e.update(e.Question, () => ({
     set: {
@@ -223,7 +230,7 @@ function dbQuestionInteractAndResetVotesPartialQuery(questionId: string, userId:
     },
   }));
 
-  return e.with([deletedSingleVote], insertedInteraction);
+  return e.with([deletedSingleVote, deletedPreferentialVote], insertedInteraction);
 }
 
 function dbAssertQuestionKindPartialQuery(questionId: string, format: $expr_Literal<$QuestionFormat>) {
@@ -286,6 +293,7 @@ interface DbSingleVoteQuestionDetails {
 
 interface DbPreferentialVoteQuestionDetails {
   question: string;
+  maxElected: number;
   candidates: string[];
 }
 
@@ -316,6 +324,7 @@ export async function dbCreatePreferentialVoteQuestion(details: DbPreferentialVo
     candidates: e.for(e.set(...details.candidates), candidate => e.insert(e.QuestionCandidate, { name: candidate })),
     createdAt: e.datetime_of_statement(),
     votersPresentAtEnd: 0,
+    maxElected: details.maxElected,
   });
 
   const questionResult = await e

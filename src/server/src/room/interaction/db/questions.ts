@@ -186,6 +186,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
           questionPromise = dbCreatePreferentialVoteQuestion({
             candidates: params.candidates,
             question: params.question,
+            maxElected: params.details.maxElected,
           });
           break;
         // default:
