@@ -2,7 +2,7 @@ import type { ShowingResultsState, VotingCandidate } from '@server/live/states';
 import type { RoomPublicInfo } from '@server/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { routeBuilders } from 'routes';
 import { Reorder } from 'framer-motion';
