@@ -119,7 +119,7 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
   }, [lastVote]);
 
   return (
-    <form className="flex flex-col items-center gap-6 w-full" onSubmit={onSubmit}>
+    <form className="flex flex-col items-center gap-6 w-full">
       <Question>{question.question}</Question>
       <div className="flex gap-4 flex-wrap flex-col items-stretch justify-center w-full">
         {question.details.type === 'SingleVote'
