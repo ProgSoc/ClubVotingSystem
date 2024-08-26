@@ -262,8 +262,6 @@ export async function dbInsertQuestionPreferentialVote(questionId: string, userI
   const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(questionId, e.QuestionFormat.PreferentialVote);
   const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(questionId, userId);
 
-  console.log('candidateIds', candidateIds);
-
   const inserted = candidateIds.map((candidateId, index) => e.insert(e.PreferentialCandidateVote, {
     rank: index + 1,
     candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: candidateId } })),
