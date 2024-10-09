@@ -1,18 +1,16 @@
-import type { ShowingResultsState, VotingCandidate } from '@server/live/states';
+import type { ShowingResultsState } from '@server/live/states';
 import type { RoomPublicInfo } from '@server/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { routeBuilders } from 'routes';
 import { Reorder } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 
-import { useDebounceCallback } from 'usehooks-ts';
 import { questionResponse } from '@server/live/question';
-import type { FieldPath, FieldValues, UseControllerProps } from 'react-hook-form';
-import { Control, Controller, useController } from 'react-hook-form';
-import useZodForm, { ZodSubmitHandler } from '../../../hooks/useZodForm';
+import { Controller } from 'react-hook-form';
+import useZodForm from '../../../hooks/useZodForm';
 import type { QuestionVotingData } from './hooks';
 import { VotingPageState, useVoterState } from './hooks';
 
@@ -53,7 +51,7 @@ function QuestionVoter({ data }: { data: VotingPageState }) {
 function QuestionVoting({ data }: { data: QuestionVotingData }) {
   const { question, lastVote, castVote } = data;
 
-  const { control, handleSubmit, reset, formState: { errors }, setValue } = useZodForm({
+  const { control, handleSubmit, reset, setValue } = useZodForm({
     schema: questionResponse,
     defaultValues: lastVote,
   });
