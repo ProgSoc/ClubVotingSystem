@@ -193,7 +193,7 @@ export async function dbFetchAllQuestionsData(roomId: string) {
   const questions = await e
     .select(e.Question, question => ({
       ...questionQueryFields,
-      filter: e.op(question['<questions[is Room]'].id, '=', roomId),
+      filter: e.op(question['<questions[is Room]'].id, '=', e.uuid(roomId)),
     }))
     .run(dbClient);
 
