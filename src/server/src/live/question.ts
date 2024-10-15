@@ -14,7 +14,9 @@ export interface PreferentialVoteQuestionFormat {
   type: typeof preferentialVoteType;
 }
 
-export type QuestionFormatDetails = SingleVoteQuestionFormat | PreferentialVoteQuestionFormat;
+export type QuestionFormatDetails =
+  | SingleVoteQuestionFormat
+  | PreferentialVoteQuestionFormat;
 
 const abstainQuestionResponse = z.object({
   type: z.literal('Abstain'),
@@ -27,10 +29,18 @@ const singleVoteQuestionResponse = z.object({
 
 const preferentialVoteQuestionResponse = z.object({
   type: z.literal(preferentialVoteType),
-  candidateIds: z.array(z.string()), // Candidate ids in order of preference
+  votes: z.array(z.object({
+    candidateId: z.string(),
+    rank: z.number(),
+  })),
 });
 
-export const questionResponse = z.union([abstainQuestionResponse, singleVoteQuestionResponse, preferentialVoteQuestionResponse]);
+export const questionResponse = z.union([
+  abstainQuestionResponse,
+  singleVoteQuestionResponse,
+  preferentialVoteQuestionResponse,
+]);
+
 export type QuestionResponse = TypeOf<typeof questionResponse>;
 
 export interface CandidateWithVotes {
@@ -57,4 +67,6 @@ export interface PreferentialVoteResultsView {
 }
 
 // TODO: Add more types
-export type ResultsView = { abstained: number } & (SingleVoteResultsView | PreferentialVoteResultsView);
+export type ResultsView =
+  & { abstained: number }
+  & (SingleVoteResultsView | PreferentialVoteResultsView);

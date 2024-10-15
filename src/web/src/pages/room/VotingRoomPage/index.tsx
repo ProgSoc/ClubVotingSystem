@@ -2,11 +2,12 @@ import type { ShowingResultsState } from '@server/live/states';
 import type { RoomPublicInfo } from '@server/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { routeBuilders } from 'routes';
 import { Reorder } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
+import { z } from 'zod';
 
 import { questionResponse } from '@server/live/question';
 import { Controller } from 'react-hook-form';
@@ -48,144 +49,172 @@ function QuestionVoter({ data }: { data: VotingPageState }) {
   });
 }
 
-function QuestionVoting({ data }: { data: QuestionVotingData }) {
+function randomizeArray<T>(array: T[]): T[] {
+  const indexes = Array.from({ length: array.length }, (_, i) => i);
+
+  // Randomly reorder indexes array
+  for (let i = indexes.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+  }
+
+  return indexes.map(i => array[i]);
+}
+
+function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
   const { question, lastVote, castVote } = data;
 
-  const { control, handleSubmit, reset, setValue } = useZodForm({
-    schema: questionResponse,
-    defaultValues: lastVote,
+  const { control, handleSubmit, reset } = useZodForm({
+    schema: z.object({
+      candidateId: z.string(),
+    }),
+    defaultValues: lastVote?.type === 'SingleVote' ? lastVote : undefined,
   });
+
+  const candidatesReordered = useMemo(() => randomizeArray(question.candidates), [question.questionId]);
 
   const onSubmit = handleSubmit(async (data) => {
-    switch (data.type) {
-      case 'Abstain':
-        castVote({ type: 'Abstain' });
-        break;
-      case 'SingleVote':
-        castVote({
-          type: 'SingleVote',
-          candidateId: data.candidateId,
-        });
-        break;
-      case 'PreferentialVote':
-        castVote({
-          candidateIds: data.candidateIds,
-          type: 'PreferentialVote',
-        });
-        break;
-    }
+    castVote({
+      type: 'SingleVote',
+      candidateId: data.candidateId,
+    });
   });
 
-  // const reorder = useMemo(() => {
-  //   const indexes = Array.from({ length: data.question.candidates.length }, (_, i) => i);
-
-  //   // Randomly reorder indexes array
-  //   for (let i = indexes.length - 1; i > 0; i--) {
-  //     const j = Math.floor(Math.random() * (i + 1));
-  //     [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
-  //   }
-
-  //   return indexes;
-  // }, [data.question.questionId]);
-
-  // const candidatesReordered = useMemo(() => question.candidates.map((_, i) => question.candidates[reorder[i]]), [reorder]);
-
-  // const [candidateOrder, setCandidateOrder] = useState<VotingCandidate[]>(candidatesReordered);
-
-  // useEffect(() => {
-  //   setCandidateOrder(candidatesReordered);
-  // }, [candidatesReordered]);
-
-  // const debounced = useDebounceCallback((votingCandidates: VotingCandidate[]) => {
-  //   castVote({
-  //     type: 'PreferentialVote',
-  //     candidateIds: votingCandidates.map(candidate => candidate.id),
-  //   });
-  // }, 500);
-
-  // const onReorder = (unknownVotingCandidates: unknown[]) => {
-  //   const votingCandidates = unknownVotingCandidates as VotingCandidate[];
-  //   debounced(votingCandidates);
-
-  //   setCandidateOrder(votingCandidates);
-  // };
-
   useEffect(() => {
-    if (lastVote) {
+    if (lastVote && lastVote.type === 'SingleVote') {
       reset(lastVote);
     }
   }, [lastVote]);
+
+  return (
+    <Controller
+      name="candidateId"
+      control={control}
+      render={({ field: { value, onChange } }) => (
+        <>
+          {candidatesReordered.map(candidate => (
+            <Button
+              className={twMerge(
+                value === candidate.id ? 'btn-accent' : undefined,
+              )}
+              onClick={() => {
+                onChange(candidate.id);
+                onSubmit();
+              }}
+              key={candidate.id}
+            >
+              {candidate.name}
+            </Button>
+          ))}
+        </>
+      )}
+    />
+  );
+}
+
+function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
+  const { question, lastVote, castVote } = data;
+
+  const { control, handleSubmit, reset } = useZodForm({
+    schema: z.object({
+      votes: z.array(z.object({
+        candidateId: z.string(),
+        rank: z.number(),
+      })),
+    }),
+    defaultValues: lastVote?.type === 'PreferentialVote'
+      ? lastVote
+      : {
+          votes: question.candidates.map((candidate, index) => ({
+            candidateId: candidate.id,
+            rank: index + 1,
+          })),
+        },
+  });
+
+  const candidatesReordered = useMemo(() => randomizeArray(question.candidates), [question.questionId]);
+
+  const onSubmit = handleSubmit(async (data) => {
+    castVote({
+      type: 'PreferentialVote',
+      votes: data.votes,
+    });
+  });
+
+  useEffect(() => {
+    if (lastVote && lastVote.type === 'PreferentialVote') {
+      reset(lastVote);
+    }
+  }, [lastVote]);
+
+  // Create a line for each candidate with a select input
+
+  return (
+    <Controller
+      control={control}
+      name="votes"
+      render={({ field: { onChange, value } }) => (
+        <>
+          {candidatesReordered.map(candidate => (
+            <div className="flex" key={candidate.id}>
+              <label htmlFor={candidate.id}>{candidate.name}</label>
+              <select
+                id={candidate.id}
+                name={candidate.id}
+                onChange={(e) => {
+                  const rank = e.target.value;
+                  console.log({ rank });
+                  console.log({ value });
+                  const newVotes = value.map((vote) => {
+                    if (vote.candidateId === candidate.id) {
+                      return { candidateId: candidate.id, rank: Number.parseInt(rank) };
+                    }
+                    else {
+                      return vote;
+                    }
+                  });
+                  onChange(newVotes);
+                  onSubmit();
+                }}
+              >
+                {candidatesReordered.map((_, index) => (
+                  <option value={index + 1} key={`${candidate.id}-${index + 1}`}>{index + 1}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </>
+      )}
+    >
+
+    </Controller>
+  );
+}
+
+function QuestionVoting({ data }: { data: QuestionVotingData }) {
+  const { question, lastVote, castVote } = data;
 
   return (
     <form className="flex flex-col items-center gap-6 w-full">
       <Question>{question.question}</Question>
       <div className="flex gap-4 flex-wrap flex-col items-stretch justify-center w-full">
         {question.details.type === 'SingleVote'
-          ? question.candidates.map(candidate => (
-            <Controller
-              name="candidateId"
-              control={control}
-              key={candidate.id}
-              render={({ field: { value, onChange } }) => (
-                <Button
-                  className={twMerge(
-                    value === candidate.id ? 'btn-accent' : undefined,
-                  )}
-                  onClick={() => {
-                    setValue('type', 'SingleVote');
-                    onChange(candidate.id);
-                    onSubmit();
-                  }}
-                >
-                  {candidate.name}
-                </Button>
-              )}
-            />
-          ))
+          ? (
+              <SingleQuestionVoting data={data} />
+            )
           : (
-              <Controller
-                name="candidateIds"
-                control={control}
-                defaultValue={question.candidates.map(({ id }) => id)}
-                render={({ field: { value, onChange } }) => (
-                  <Reorder.Group
-                    values={value}
-                    onReorder={(v) => {
-                      setValue('type', 'PreferentialVote');
-                      onChange(v);
-                      onSubmit();
-                    }}
-                    className="flex flex-col gap-2"
-                  >
-                    {value.map((id, index) => (
-                      <Reorder.Item key={id} value={id}>
-                        <span className={twMerge('btn', lastVote?.type === 'PreferentialVote' ? 'btn-accent' : 'btn-outline')}>
-                          {`${index + 1}. ${question.candidates.find(candidate => candidate.id === id)?.name}`}
-                        </span>
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
-                )}
-              />
-
+              <PreferentialQuestionVoting data={data} />
             )}
-        <Controller
-          name="type"
-          control={control}
-          render={({ field: { value, onChange } }) => (
-            <div className="flex justify-center">
-              <Button
-                className={twMerge(value === 'Abstain' ? 'btn-accent' : 'btn-outline')}
-                onClick={() => {
-                  onChange('Abstain');
-                  onSubmit();
-                }}
-              >
-                Abstain
-              </Button>
-            </div>
-          )}
-        />
+        <div className="flex justify-center">
+          <Button
+            className={twMerge(lastVote?.type === 'Abstain' ? 'btn-accent' : 'btn-outline')}
+            onClick={() => {
+              castVote({ type: 'Abstain' });
+            }}
+          >
+            Abstain
+          </Button>
+        </div>
 
       </div>
     </form>
