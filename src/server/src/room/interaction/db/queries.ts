@@ -258,19 +258,22 @@ export async function dbInsertQuestionSingleVote(questionId: string, userId: str
   return e.with([isSingleVoteQuestion, resetAndInteract, inserted], question).run(dbClient);
 }
 
-export async function dbInsertQuestionPreferentialVote(questionId: string, userId: string, candidateIds: string[]) {
+export async function dbInsertQuestionPreferentialVote(questionId: string, userId: string, votes: {
+  candidateId: string;
+  rank: number;
+}[]) {
   const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(questionId, e.QuestionFormat.PreferentialVote);
   const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(questionId, userId);
 
-  const inserted = candidateIds.map((candidateId, index) => e.insert(e.PreferentialCandidateVote, {
-    rank: index + 1,
+  const inserted = votes.map(({ candidateId, rank }) => e.insert(e.PreferentialCandidateVote, {
+    rank,
     candidate: e.select(e.QuestionCandidate, () => ({ filter_single: { id: candidateId } })),
     voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
   }).unlessConflict(preferentialCandidateVote => ({
     on: e.tuple([preferentialCandidateVote.candidate, preferentialCandidateVote.voter, preferentialCandidateVote.rank]),
     else: e.update(preferentialCandidateVote, () => ({
       set: {
-        rank: index + 1,
+        rank,
       },
     })),
   }),

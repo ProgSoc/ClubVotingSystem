@@ -221,7 +221,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
           await dbInsertQuestionSingleVote(questionId, userId, response.candidateId);
           break;
         case 'PreferentialVote':
-          await dbInsertQuestionPreferentialVote(questionId, userId, response.candidateIds);
+          await dbInsertQuestionPreferentialVote(questionId, userId, response.votes);
           break;
         default:
           throw new UnreachableError(response);
@@ -278,7 +278,10 @@ export function makeQuestionModificationFunctions(roomId: string) {
 
           return {
             type: 'PreferentialVote',
-            candidateIds: votes.map(vote => vote.voter.id),
+            votes: votes.map(vote => ({
+              candidateId: vote.voter.id,
+              rank: vote.rank,
+            })),
           };
         }
         // default:
