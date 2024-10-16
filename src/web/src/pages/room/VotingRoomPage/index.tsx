@@ -10,6 +10,7 @@ import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
 
 import { questionResponse } from '@server/live/question';
+import type { FieldError } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import useZodForm from '../../../hooks/useZodForm';
 import type { QuestionVotingData } from './hooks';
@@ -115,12 +116,26 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
   const { question, lastVote, castVote } = data;
 
-  const { control, handleSubmit, reset } = useZodForm({
+  const { control, handleSubmit, reset, formState: { errors } } = useZodForm({
     schema: z.object({
       votes: z.array(z.object({
         candidateId: z.string(),
         rank: z.number(),
-      })),
+      })).superRefine((votes, ctx) => {
+        // For every vote check if there is a vote with the same rank and throw an error for each index
+        for (let i = 0; i < votes.length; i++) {
+          if (votes.filter(vote => vote.rank === votes[i].rank).length > 1) {
+            ctx.addIssue({
+              message: 'All ranks must be unique',
+              path: [i.toString(), 'rank'],
+              code: 'custom',
+            });
+          }
+        }
+
+        return undefined;
+      },
+      ),
     }),
     defaultValues: lastVote?.type === 'PreferentialVote'
       ? lastVote
@@ -134,10 +149,11 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
   const candidatesReordered = useMemo(() => randomizeArray(question.candidates), [question.questionId]);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async ({ votes }) => {
+    console.log({ votes });
     castVote({
       type: 'PreferentialVote',
-      votes: data.votes,
+      votes,
     });
   });
 
@@ -150,44 +166,61 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
   // Create a line for each candidate with a select input
 
   return (
-    <Controller
-      control={control}
-      name="votes"
-      render={({ field: { onChange, value } }) => (
-        <>
-          {candidatesReordered.map(candidate => (
-            <div className="flex" key={candidate.id}>
-              <label htmlFor={candidate.id}>{candidate.name}</label>
-              <select
-                id={candidate.id}
-                name={candidate.id}
-                onChange={(e) => {
-                  const rank = e.target.value;
-                  console.log({ rank });
-                  console.log({ value });
-                  const newVotes = value.map((vote) => {
-                    if (vote.candidateId === candidate.id) {
-                      return { candidateId: candidate.id, rank: Number.parseInt(rank) };
-                    }
-                    else {
-                      return vote;
-                    }
-                  });
-                  onChange(newVotes);
-                  onSubmit();
-                }}
-              >
-                {candidatesReordered.map((_, index) => (
-                  <option value={index + 1} key={`${candidate.id}-${index + 1}`}>{index + 1}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </>
-      )}
-    >
+    <div className="flex flex-col gap-4">
+      <Controller
+        control={control}
+        name="votes"
+        render={({ field: { onChange, value }, fieldState: { error } }) => {
+          const errorArray = error as unknown as { rank: FieldError }[];
 
-    </Controller>
+          return (
+            <div className="flex flex-col gap-4">
+              {candidatesReordered.map((candidate, index) => (
+                <div className="flex" key={candidate.id}>
+
+                  <label className="form-control w-full max-w-xs" htmlFor={candidate.id}>
+                    <div className="label">
+                      <span className="label-text">{candidate.name}</span>
+                    </div>
+                    <select
+                      className={twMerge('select select-bordered', errorArray?.[index]?.rank ? 'select-error' : undefined)}
+                      value={value.find(vote => vote.candidateId === candidate.id)?.rank}
+                      id={candidate.id}
+                      name={candidate.id}
+                      onChange={(e) => {
+                        const rank = e.target.value;
+                        const newVotes = value.map((vote) => {
+                          if (vote.candidateId === candidate.id) {
+                            return { candidateId: candidate.id, rank: Number.parseInt(rank) };
+                          }
+                          else {
+                            return vote;
+                          }
+                        });
+                        onChange(newVotes);
+                      }}
+                    >
+                      {candidatesReordered.map((_, index) => (
+                        <option value={index + 1} key={`${candidate.id}-${index + 1}`}>{index + 1}</option>
+                      ))}
+                    </select>
+                    {errorArray?.[index]?.rank?.message
+                      ? (
+                          <div className="label">
+                            <span className="label-text">{errorArray?.[index]?.rank?.message}</span>
+                          </div>
+                        )
+                      : null}
+                  </label>
+
+                </div>
+              ))}
+            </div>
+          );
+        }}
+      />
+      <Button onClick={onSubmit}>Submit</Button>
+    </div>
   );
 }
 
