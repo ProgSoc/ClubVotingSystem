@@ -66,6 +66,9 @@ interface CandidateWithVotes {
 export function rankedChoiceVoting(candidates: readonly string[], votes: readonly string[][], maxElected: number): readonly CandidateWithVotes[] {
   const electedCandidates: string[] = [];
 
+  // remove votes from people that are not candidates
+  votes = votes.map(vote => vote.filter(candidate => candidates.includes(candidate)));
+
   while (electedCandidates.length < maxElected) {
     // Tally the current votes
     const voteCounts = tallyVotes(candidates, votes);
