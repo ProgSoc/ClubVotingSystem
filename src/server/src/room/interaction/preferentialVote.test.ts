@@ -32,6 +32,16 @@ describe('Ranked Choice Voting', () => {
     expect(result).toEqual([{ id: 'C', votes: 3 }]);
   });
 
+  it('elects the candidate with the most votes after eliminating the candidate with the fewest votes, even if the eliminated candidate was the first choice of some voters', () => {
+    const candidates = ['A', 'B', 'C'];
+    const votes = [['A', 'B'], ['B', 'C'], ['C', 'A'], ['C', 'A'], ['A', 'B']];
+    const maxElected = 1;
+
+    const result = rankedChoiceVoting(candidates, votes, maxElected);
+
+    expect(result).toEqual([{ id: 'C', votes: 3 }]);
+  });
+
   it('removes people who are not candidates from the votes', () => {
     const candidates = ['A', 'B'];
     const votes = [['C', 'B'], ['A', 'C'], ['C', 'A']];
