@@ -4,7 +4,10 @@
  * @param votes Array of arrays of candidate identifiers, representing votes, in order of preference
  * @returns Array of candidates and their votes
  */
-function tallyVotes(candidates: readonly string[], votes: readonly string[][]): Record<string, number> {
+function tallyVotes(
+  candidates: readonly string[],
+  votes: readonly string[][],
+): Record<string, number> {
   const voteCounts: Record<string, number> = {};
   candidates.forEach((candidate) => {
     voteCounts[candidate] = 0;
@@ -26,7 +29,9 @@ function tallyVotes(candidates: readonly string[], votes: readonly string[][]): 
  * @param voteCounts Current vote counts for each candidate
  * @returns Array of candidate identifiers with the fewest votes
  */
-function findLowestVoteCandidates(voteCounts: Record<string, number>): readonly string[] {
+function findLowestVoteCandidates(
+  voteCounts: Record<string, number>,
+): readonly string[] {
   let minVotes = Infinity;
   let lowestCandidates: string[] = [];
   for (const candidate in voteCounts) {
@@ -47,8 +52,13 @@ function findLowestVoteCandidates(voteCounts: Record<string, number>): readonly 
  * @param candidatesToRemove Array of candidate identifiers to remove
  * @returns New preference lists with eliminated candidates removed
  */
-function reassignVotes(votes: readonly string[][], candidatesToRemove: readonly string[]): readonly string[][] {
-  return votes.map(vote => vote.filter(candidate => !candidatesToRemove.includes(candidate))).filter(vote => vote.length > 0);
+function reassignVotes(
+  votes: readonly string[][],
+  candidatesToRemove: readonly string[],
+): readonly string[][] {
+  return votes.map(vote =>
+    vote.filter(candidate => !candidatesToRemove.includes(candidate)),
+  ).filter(vote => vote.length > 0);
 }
 
 interface CandidateWithVotes {
@@ -63,11 +73,17 @@ interface CandidateWithVotes {
  * @param maxElected Maximum number of candidates to elect
  * @returns Array of strings representing the elected candidates
  */
-export function rankedChoiceVoting(candidates: readonly string[], votes: readonly string[][], maxElected: number): readonly CandidateWithVotes[] {
+export function rankedChoiceVoting(
+  candidates: readonly string[],
+  votes: readonly string[][],
+  maxElected: number,
+): readonly CandidateWithVotes[] {
   const electedCandidates: string[] = [];
 
   // remove votes from people that are not candidates
-  votes = votes.map(vote => vote.filter(candidate => candidates.includes(candidate)));
+  votes = votes.map(vote =>
+    vote.filter(candidate => candidates.includes(candidate)),
+  );
 
   while (electedCandidates.length < maxElected) {
     // Tally the current votes
@@ -77,7 +93,10 @@ export function rankedChoiceVoting(candidates: readonly string[], votes: readonl
     if (candidates.length <= maxElected) {
       // Add remaining candidates to elected list
       electedCandidates.push(...candidates);
-      return electedCandidates.map(candidate => ({ id: candidate, votes: voteCounts[candidate] }));
+      return electedCandidates.map(candidate => ({
+        id: candidate,
+        votes: voteCounts[candidate],
+      }));
     }
 
     // Find the candidates with the fewest votes
@@ -86,15 +105,20 @@ export function rankedChoiceVoting(candidates: readonly string[], votes: readonl
     // Determine if eliminating these candidates would drop below maxElected
     if (candidates.length - lowestCandidates.length >= maxElected) {
       // Eliminate the candidates with the fewest votes
-      candidates = candidates.filter(candidate => !lowestCandidates.includes(candidate));
+      candidates = candidates.filter(candidate =>
+        !lowestCandidates.includes(candidate),
+      );
 
       // Reassign votes from the eliminated candidates to remaining candidates
       votes = reassignVotes(votes, lowestCandidates);
     }
     else {
-      // If we can't eliminate without dropping below maxElected, we stop
+      // Add the remaining candidates to the elected list
       electedCandidates.push(...candidates);
-      return electedCandidates.map(candidate => ({ id: candidate, votes: voteCounts[candidate] }));
+      return electedCandidates.map(candidate => ({
+        id: candidate,
+        votes: voteCounts[candidate],
+      }));
     }
   }
 
