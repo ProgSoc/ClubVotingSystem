@@ -173,36 +173,37 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
           return (
             <div className="flex flex-col gap-4">
-              {candidatesReordered.map((candidate, index) => (
-                <div key={candidate.id} className="join">
-
+              {value.sort(
+                (a, b) => a.rank > b.rank ? 1 : -1,
+              ).map((candidate, index) => (
+                <div key={candidate.candidateId} className="join flex w-full">
+                  <span className="btn join-item ">{`${index + 1}. `}</span>
                   <select
-                    className={twMerge('select select-bordered join-item', errorArray?.[index]?.rank ? 'select-error' : undefined)}
-                    value={value.find(vote => vote.candidateId === candidate.id)?.rank}
-                    id={candidate.id}
-                    name={candidate.id}
+                    className={twMerge('select select-bordered join-item grow', errorArray?.[index]?.rank ? 'select-error' : undefined)}
+                    value={candidate.candidateId}
+                    id={candidate.candidateId}
+                    name={candidate.candidateId}
                     onChange={(e) => {
-                      const rank = e.target.value;
+                      // Find the candidate with the id and update the rank
                       const newVotes = value.map((vote) => {
-                        if (vote.candidateId === candidate.id) {
-                          return { candidateId: candidate.id, rank: Number.parseInt(rank) };
+                        if (index === vote.rank - 1) {
+                          return {
+                            rank: index + 1,
+                            candidateId: e.target.value,
+                          };
                         }
-                        else {
-                          return vote;
-                        }
+                        return vote;
                       });
                       onChange(newVotes);
                     }}
                   >
-                    {candidatesReordered.map((_, index) => (
-                      <option value={index + 1} key={`${candidate.id}-${index + 1}`}>{index + 1}</option>
+                    {candidatesReordered.map(candidateOption => (
+                      <option value={candidateOption.id} key={candidateOption.id}>
+                        {/* Candidate name */}
+                        {question.candidates.find(c => c.id === candidateOption.id)?.name}
+                      </option>
                     ))}
                   </select>
-                  {/* <Button className="grow join-item">
-                    {candidate.name}
-                  </Button> */}
-
-                  <span className="btn join-item">Search</span>
 
                 </div>
               ))}
