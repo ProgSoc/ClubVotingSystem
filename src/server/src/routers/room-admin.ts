@@ -68,10 +68,9 @@ export const roomQuestionsAdminRouter = router({
           z.object({
             type: z.literal('SingleVote' satisfies QuestionFormat),
           }),
-
-          // TODO: Add more types. Having a duplicate here so that zod doesnt complain.
           z.object({
-            type: z.literal('SingleVote' satisfies QuestionFormat),
+            type: z.literal('PreferentialVote' satisfies QuestionFormat),
+            maxElected: z.coerce.number().positive().default(1).catch(1),
           }),
         ]),
         candidates: z.array(z.string().min(1)).min(1),

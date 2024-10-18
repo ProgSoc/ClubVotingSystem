@@ -1,5 +1,4 @@
 import type { ResultsView } from '@server/live/question';
-import { UnreachableError } from '@server/unreachableError';
 import { twMerge } from 'tailwind-merge';
 
 function asWidthPercentage(val: number, max: number) {
@@ -31,7 +30,7 @@ function ResultBar(props: { name: string; votes: number; max: number; grey?: boo
 
 export function ResultsViewer({ results }: { results: ResultsView }) {
   switch (results.type) {
-    case 'SingleVote':
+    case 'SingleVote': {
       const candidates = results.results.sort((a, b) => b.votes - a.votes);
       const maxVote = Math.max(results.abstained, ...results.results.map(v => v.votes));
 
@@ -43,8 +42,21 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
           <ResultBar name="Abstained" votes={results.abstained} max={maxVote} grey={true} />
         </div>
       );
+    }
+    case 'PreferentialVote': {
+      const candidates = results.results.sort((a, b) => b.votes - a.votes);
+      const maxVote = Math.max(results.abstained, ...results.results.map(v => v.votes));
 
-    default:
-      throw new UnreachableError(results.type);
+      return (
+        <div className="flex flex-col gap-4">
+          {candidates.map(result => (
+            <ResultBar key={result.id} name={result.name} votes={result.votes} max={maxVote} />
+          ))}
+          <ResultBar name="Abstained" votes={results.abstained} max={maxVote} grey={true} />
+        </div>
+      );
+    }
+    // default:
+    //   throw new UnreachableError(results.type);
   }
 }

@@ -33,3 +33,6 @@ jobs:
 
       - name: check types
         run: bun tsc
+
+      - name: run tests
+        run: bun test
