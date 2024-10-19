@@ -228,7 +228,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 }
 
 function QuestionVoting({ data }: { data: QuestionVotingData }) {
-  const { question, lastVote, castVote } = data;
+  const { question } = data;
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
