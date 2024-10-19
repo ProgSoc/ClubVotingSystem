@@ -189,9 +189,8 @@ export function makeQuestionModificationFunctions(roomId: string) {
             maxElected: params.details.maxElected,
           });
           break;
-        // default:
-          // Uncomment when there's multiple question types
-          // throw new UnreachableError(params.details.type);
+        default:
+          throw new UnreachableError(params.details);
       }
 
       currentQuestionPromise = questionPromise.then(mapDbQuestionData);
@@ -284,8 +283,8 @@ export function makeQuestionModificationFunctions(roomId: string) {
             })),
           };
         }
-        // default:
-        //   throw new UnreachableError(question.details.type);
+        default:
+          throw new UnreachableError(question.details);
       }
     },
   };
