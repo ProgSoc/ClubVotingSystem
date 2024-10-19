@@ -8,7 +8,6 @@ import { routeBuilders } from 'routes';
 import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
 
-import type { FieldError } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import useZodForm from '../../../hooks/useZodForm';
 import type { QuestionVotingData } from './hooks';
@@ -89,28 +88,40 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
   }, [lastVote]);
 
   return (
-    <Controller
-      name="candidateId"
-      control={control}
-      render={({ field: { value, onChange } }) => (
-        <>
-          {candidatesReordered.map(candidate => (
-            <Button
-              className={twMerge(
-                value === candidate.id ? 'btn-accent' : undefined,
-              )}
-              onClick={() => {
-                onChange(candidate.id);
-                onSubmit();
-              }}
-              key={candidate.id}
-            >
-              {candidate.name}
-            </Button>
-          ))}
-        </>
-      )}
-    />
+    <div className="flex gap-4 flex-wrap flex-col items-stretch justify-center w-full max-w-xl">
+      <Controller
+        name="candidateId"
+        control={control}
+        render={({ field: { value, onChange } }) => (
+          <>
+            {candidatesReordered.map(candidate => (
+              <Button
+                className={twMerge(
+                  value === candidate.id ? 'btn-accent' : undefined,
+                )}
+                onClick={() => {
+                  onChange(candidate.id);
+                  onSubmit();
+                }}
+                key={candidate.id}
+              >
+                {candidate.name}
+              </Button>
+            ))}
+          </>
+        )}
+      />
+      <div className="flex gap-2 justify-center">
+        <Button
+          className={twMerge(lastVote?.type === 'Abstain' ? 'btn-accent' : 'btn-outline')}
+          onClick={() => {
+            castVote({ type: 'Abstain' });
+          }}
+        >
+          Abstain
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -119,22 +130,24 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
   const candidatesReordered = useMemo(() => randomizeArray(question.candidates), [question.questionId]);
 
-  const { register, handleSubmit, reset } = useZodForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useZodForm({
     schema: z.object({
       votes: z.array(z.object({
         candidateId: z.string(),
         rank: z.number(),
       })).superRefine((votes, ctx) => {
-        // For every vote check if there is a vote with the same rank and throw an error for each index
-        for (let i = 0; i < votes.length; i++) {
-          if (votes.filter(vote => vote.rank === votes[i].rank).length > 1) {
+        // create errors on the index of duplicate candidateId
+        votes.forEach((vote, index) => {
+          // Check if candidateId is duplicated
+          const duplicates = votes.filter((v, i) => v.candidateId === vote.candidateId && i !== index);
+          if (duplicates.length > 0) {
             ctx.addIssue({
-              message: 'All ranks must be unique',
-              path: [i.toString(), 'rank'],
               code: 'custom',
+              message: 'Duplicate candidate',
+              path: [index, 'candidateId'],
             });
           }
-        }
+        });
 
         return undefined;
       },
@@ -151,6 +164,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
   });
 
   const onSubmit = handleSubmit(async ({ votes }) => {
+    console.log({ votes });
     castVote({
       type: 'PreferentialVote',
       votes,
@@ -166,24 +180,49 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
   const candidateRankList = useMemo(() => Array.from({ length: question.candidates.length }, (_, i) => i + 1), [question.candidates.length]);
 
   return (
-    <div className="flex flex-col gap-4">
-      {candidateRankList.map((rank, index) => (
-        <div key={rank} className="join flex w-full">
-          <span className="btn join-item ">{`${rank}. `}</span>
+    <div className="flex gap-4 flex-wrap flex-col items-stretch justify-center w-full max-w-xl">
+      {candidateRankList.map((rank, index) => {
+        const error = errors.votes?.[index]?.candidateId;
 
-          <select
-            className={twMerge('select select-bordered join-item grow', true ? 'select-error' : undefined)}
-            {...register(`votes.${index}.candidateId`)}
-          >
-            {candidatesReordered.map(candidateOption => (
-              <option value={candidateOption.id} key={candidateOption.id}>
-                {question.candidates.find(c => c.id === candidateOption.id)?.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      ))}
-      <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' ? 'btn-accent' : 'btn-outline')}>Submit</Button>
+        return (
+          <div key={rank} className="flex w-full justify-start">
+            <span className="btn text-xl">{`${rank}. `}</span>
+            <label className="form-control w-full">
+              <select
+                className={twMerge('select grow', error ? 'select-error' : undefined)}
+                {...register(`votes.${index}.candidateId`)}
+              >
+                {candidatesReordered.map(candidateOption => (
+                  <option value={candidateOption.id} key={candidateOption.id}>
+                    {question.candidates.find(c => c.id === candidateOption.id)?.name}
+                  </option>
+                ))}
+              </select>
+              {error?.message
+                ? (
+                    <div className="label">
+                      <span className="label-text-alt">{error.message}</span>
+                    </div>
+                  )
+                : null}
+            </label>
+
+          </div>
+        );
+      },
+      )}
+      <div className="flex gap-2 justify-center">
+        <Button
+          className={twMerge(lastVote?.type === 'Abstain' ? 'btn-accent' : 'btn-outline')}
+          onClick={() => {
+            castVote({ type: 'Abstain' });
+          }}
+        >
+          Abstain
+        </Button>
+        <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' ? 'btn-accent' : 'btn-outline')}>Submit</Button>
+      </div>
+
     </div>
   );
 }
@@ -194,27 +233,17 @@ function QuestionVoting({ data }: { data: QuestionVotingData }) {
   return (
     <div className="flex flex-col items-center gap-6 w-full">
       <Question>{question.question}</Question>
-      <div className="flex gap-4 flex-wrap flex-col items-stretch justify-center w-full">
-        {question.details.type === 'SingleVote'
-          ? (
-              <SingleQuestionVoting data={data} />
-            )
-          : (
-              <PreferentialQuestionVoting data={data} />
-            )}
-        <div className="flex justify-center">
-          <Button
-            className={twMerge(lastVote?.type === 'Abstain' ? 'btn-accent' : 'btn-outline')}
-            onClick={() => {
-              castVote({ type: 'Abstain' });
-            }}
-          >
-            Abstain
-          </Button>
-        </div>
 
-      </div>
+      {question.details.type === 'SingleVote'
+        ? (
+            <SingleQuestionVoting data={data} />
+          )
+        : (
+            <PreferentialQuestionVoting data={data} />
+          )}
+
     </div>
+
   );
 }
 
