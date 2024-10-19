@@ -130,7 +130,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
   const candidatesReordered = useMemo(() => randomizeArray(question.candidates), [question.questionId]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useZodForm({
+  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useZodForm({
     schema: z.object({
       votes: z.array(z.object({
         candidateId: z.string(),
@@ -220,7 +220,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
         >
           Abstain
         </Button>
-        <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' ? 'btn-accent' : 'btn-outline')}>Submit</Button>
+        <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' && !isDirty ? 'btn-accent' : 'btn-outline')}>Submit</Button>
       </div>
 
     </div>
