@@ -189,7 +189,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
             <span className="btn text-xl">{`${rank}. `}</span>
             <label className="form-control w-full">
               <select
-                className={twMerge('select grow', error ? 'select-error' : undefined)}
+                className={twMerge('select grow select-bordered', error ? 'select-error' : undefined)}
                 {...register(`votes.${index}.candidateId`)}
               >
                 {candidatesReordered.map(candidateOption => (
