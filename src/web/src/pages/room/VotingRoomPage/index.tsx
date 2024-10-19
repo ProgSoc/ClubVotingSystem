@@ -119,7 +119,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
   const candidatesReordered = useMemo(() => randomizeArray(question.candidates), [question.questionId]);
 
-  const { control, handleSubmit, reset } = useZodForm({
+  const { register, handleSubmit, reset } = useZodForm({
     schema: z.object({
       votes: z.array(z.object({
         candidateId: z.string(),
@@ -163,54 +163,26 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
     }
   }, [lastVote]);
 
+  const candidateRankList = useMemo(() => Array.from({ length: question.candidates.length }, (_, i) => i + 1), [question.candidates.length]);
+
   return (
-    <div className="flex flex-col gap-4 justify-center items-center">
-      <Controller
-        control={control}
-        name="votes"
-        render={({ field: { onChange, value }, fieldState: { error } }) => {
-          const errorArray = error as unknown as { rank: FieldError }[];
+    <div className="flex flex-col gap-4">
+      {candidateRankList.map((rank, index) => (
+        <div key={rank} className="join flex w-full">
+          <span className="btn join-item ">{`${rank}. `}</span>
 
-          return (
-            <div className="flex flex-col gap-4">
-              {value.sort(
-                (a, b) => a.rank > b.rank ? 1 : -1,
-              ).map((candidate, index) => (
-                <div key={candidate.candidateId} className="join flex w-full">
-                  <span className="btn join-item ">{`${index + 1}. `}</span>
-                  <select
-                    className={twMerge('select select-bordered join-item grow', errorArray?.[index]?.rank ? 'select-error' : undefined)}
-                    value={candidate.candidateId}
-                    id={candidate.candidateId}
-                    name={candidate.candidateId}
-                    onChange={(e) => {
-                      // Find the candidate with the id and update the rank
-                      const newVotes = value.map((vote) => {
-                        if (index === vote.rank - 1) {
-                          return {
-                            rank: index + 1,
-                            candidateId: e.target.value,
-                          };
-                        }
-                        return vote;
-                      });
-                      onChange(newVotes);
-                    }}
-                  >
-                    {candidatesReordered.map(candidateOption => (
-                      <option value={candidateOption.id} key={candidateOption.id}>
-                        {/* Candidate name */}
-                        {question.candidates.find(c => c.id === candidateOption.id)?.name}
-                      </option>
-                    ))}
-                  </select>
-
-                </div>
-              ))}
-            </div>
-          );
-        }}
-      />
+          <select
+            className={twMerge('select select-bordered join-item grow', true ? 'select-error' : undefined)}
+            {...register(`votes.${index}.candidateId`)}
+          >
+            {candidatesReordered.map(candidateOption => (
+              <option value={candidateOption.id} key={candidateOption.id}>
+                {question.candidates.find(c => c.id === candidateOption.id)?.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
       <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' ? 'btn-accent' : 'btn-outline')}>Submit</Button>
     </div>
   );
