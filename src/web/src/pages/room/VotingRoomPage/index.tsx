@@ -220,7 +220,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
         >
           Abstain
         </Button>
-        <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' && !isDirty ? 'btn-accent' : 'btn-outline')}>Submit</Button>
+        <Button onClick={onSubmit} className={twMerge(lastVote?.type === 'PreferentialVote' && !isDirty ? 'btn-accent' : 'btn-outline')}>Cast Vote</Button>
       </div>
 
     </div>
