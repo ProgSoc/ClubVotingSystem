@@ -66,7 +66,6 @@ export interface PreferentialVoteResultsView {
   results: CandidateWithRank[];
 }
 
-// TODO: Add more types
 export type ResultsView =
   & { abstained: number }
   & (SingleVoteResultsView | PreferentialVoteResultsView);

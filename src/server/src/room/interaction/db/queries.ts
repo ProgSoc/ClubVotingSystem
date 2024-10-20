@@ -213,7 +213,6 @@ function dbQuestionInteractAndResetVotesPartialQuery(questionId: string, userId:
     ),
   }));
 
-  // Clear other vote types here, when more are added
   const deletedPreferentialVote = e.delete(e.PreferentialCandidateVote, preferentialCandidateVote => ({
     filter: e.op(
       e.op(preferentialCandidateVote.candidate['<candidates[is Question]'].id, '=', e.uuid(questionId)),
