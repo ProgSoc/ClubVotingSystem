@@ -185,9 +185,9 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
         const error = errors.votes?.[index]?.candidateId;
 
         return (
-          <div key={rank} className="flex w-full justify-start">
-            <span className="btn text-xl">{`${rank}. `}</span>
-            <label className="form-control w-full">
+          <div key={rank} className="flex w-full justify-start join">
+            <span className="btn text-xl join-item">{`${rank}. `}</span>
+            <label className="form-control w-full join-item">
               <select
                 className={twMerge('select grow select-bordered', error ? 'select-error' : undefined)}
                 {...register(`votes.${index}.candidateId`)}
