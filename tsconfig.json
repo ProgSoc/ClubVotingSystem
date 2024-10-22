@@ -12,7 +12,8 @@
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "skipLibCheck": true
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "eslint.config.mjs"],
   "exclude": ["node_modules", "test/**/*.test.tsx", "test/**/*.test.ts", ".eslint.config.js"]

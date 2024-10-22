@@ -18,7 +18,7 @@ module default {
 
   scalar type UserLocation extending enum<InPerson, Online, Proxy>;
   scalar type WaitingState extending enum<Waiting, Admitted, Declined, Kicked>;
-  scalar type QuestionFormat extending enum<SingleVote>;
+  scalar type QuestionFormat extending enum<SingleVote, PreferentialVote>;
 
   type RoomUser {
     required state: WaitingState;
@@ -40,6 +40,12 @@ module default {
     }
 
     required votersPresentAtEnd: int32;
+    
+    # Max number of elected candidates (default 0)
+    required maxElected: int32 {
+      default := 0;
+    }
+
     multi interactedUsers: RoomUser;
     multi candidates: QuestionCandidate;
   }
@@ -50,9 +56,17 @@ module default {
     constraint exclusive on ( (.candidate, .voter) );
   }
 
+  type PreferentialCandidateVote {
+    required candidate: QuestionCandidate;
+    required voter: RoomUser;
+    required rank: int32;
+    constraint exclusive on ( (.candidate, .voter, .rank) );
+  }
+
   type QuestionCandidate {
     required name: str;
 
     link singleCandidateVotes := .<candidate[is SingleCandidateVote];
+    link preferentialCandidateVotes := .<candidate[is PreferentialCandidateVote];
   }
 }
