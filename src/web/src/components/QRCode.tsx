@@ -16,13 +16,12 @@ function rgb2hex(c: string) {
 function getHexColour(colour_str: string): string | null {
   const col = parse(colour_str);
   switch (col.space) {
-    case "rgb":
-      return rgb2hex(colour_str)
-    case "oklch":
-      return rgb2hex(oklch2rgb(col.values).map((v) => Math.round(v * 255)).toString())
+    case 'rgb':
+      return rgb2hex(colour_str);
+    case 'oklch':
+      return rgb2hex(oklch2rgb(col.values).map(v => Math.round(v * 255)).toString());
     default:
-      return null
-
+      return null;
   }
 }
 
@@ -42,8 +41,8 @@ export function QRCodeRender(props: { content: string; size?: number }) {
       width: props.size ?? 300,
       errorCorrectionLevel: 'low',
       color: {
-        light: getHexColour(style.backgroundColor) || "#ffffff",
-        dark: getHexColour(style.color) || "#0000ff",
+        light: getHexColour(style.backgroundColor) || '#ffffff',
+        dark: getHexColour(style.color) || '#0000ff',
       },
     });
   }, [canvasRef.current, styleDivRef.current, props.size, props.content]);
@@ -55,4 +54,3 @@ export function QRCodeRender(props: { content: string; size?: number }) {
     </div>
   );
 }
-
