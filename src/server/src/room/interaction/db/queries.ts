@@ -183,7 +183,7 @@ export async function dbFetchCurrentQuestionData(roomId: string) {
   const questions = await e
     .select(e.Question, question => ({
       ...questionQueryFields,
-      // filter: e.op(question['<questions[is Room]'].id, '=', e.uuid(roomId)),
+      filter: e.op(question['<questions[is Room]'].id, '=', e.uuid(roomId)),
       order_by: { expression: question.createdAt, direction: e.DESC },
       limit: 1,
     }))
@@ -287,14 +287,29 @@ export async function dbInsertQuestionPreferentialVote(questionId: string, userI
 }
 
 interface DbSingleVoteQuestionDetails {
+  roomId: string;
   question: string;
   candidates: string[];
 }
 
 interface DbPreferentialVoteQuestionDetails {
+  roomId: string;
   question: string;
   maxElected: number;
   candidates: string[];
+}
+
+async function addQuestionToRoom(question: DbQuestionData, roomId: string) {
+  await e
+    .update(e.Room, () => ({
+      filter_single: { id: roomId },
+      set: {
+        questions: {
+          '+=': e.select(e.Question, () => ({ filter_single: { id: question.id } })),
+        },
+      },
+    }))
+    .run(dbClient);
 }
 
 export async function dbCreateSingleVoteQuestion(details: DbSingleVoteQuestionDetails) {
@@ -312,6 +327,8 @@ export async function dbCreateSingleVoteQuestion(details: DbSingleVoteQuestionDe
       ...questionQueryFields,
     }))
     .run(dbClient);
+
+  await addQuestionToRoom(questionResult, details.roomId);
 
   return questionResult;
 }
@@ -332,6 +349,8 @@ export async function dbCreatePreferentialVoteQuestion(details: DbPreferentialVo
       ...questionQueryFields,
     }))
     .run(dbClient);
+
+  await addQuestionToRoom(questionResult, details.roomId);
 
   return questionResult;
 }

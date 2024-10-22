@@ -41,9 +41,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
       uniqueVoters.add(vote.voter.id);
     });
     candidate.preferentialCandidateVotes.forEach((vote) => {
-      candidate.preferentialCandidateVotes.forEach((vote) => {
-        uniqueVoters.add(vote.voter.id);
-      });
+      uniqueVoters.add(vote.voter.id);
     });
   });
 
@@ -177,6 +175,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
       switch (params.details.type) {
         case 'SingleVote': {
           questionPromise = dbCreateSingleVoteQuestion({
+            roomId,
             candidates: params.candidates,
             question: params.question,
           });
@@ -184,6 +183,7 @@ export function makeQuestionModificationFunctions(roomId: string) {
         }
         case 'PreferentialVote':
           questionPromise = dbCreatePreferentialVoteQuestion({
+            roomId,
             candidates: params.candidates,
             question: params.question,
             maxElected: params.details.maxElected,
