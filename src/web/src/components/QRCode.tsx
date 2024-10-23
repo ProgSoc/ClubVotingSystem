@@ -1,5 +1,7 @@
+import parse from 'color-parse';
 import QRCode from 'qrcode';
 import { useEffect, useRef } from 'react';
+import { oklch2rgb } from 'utils/oklch2rgb';
 
 // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 function rgb2hex(c: string) {
@@ -8,6 +10,19 @@ function rgb2hex(c: string) {
     .match(/\d+/g)!
     .map(x => (+x).toString(16).padStart(2, '0'))
     .join('')}`;
+}
+
+// function to handle cases when the computed style returns inconsistent colour spaces
+function getHexColour(colour_str: string): string | null {
+  const col = parse(colour_str);
+  switch (col.space) {
+    case 'rgb':
+      return rgb2hex(colour_str);
+    case 'oklch':
+      return rgb2hex(oklch2rgb(col.values).map(v => Math.round(v * 255)).toString());
+    default:
+      return null;
+  }
 }
 
 export function QRCodeRender(props: { content: string; size?: number }) {
@@ -26,8 +41,8 @@ export function QRCodeRender(props: { content: string; size?: number }) {
       width: props.size ?? 300,
       errorCorrectionLevel: 'low',
       color: {
-        light: rgb2hex(style.backgroundColor),
-        dark: rgb2hex(style.color),
+        light: getHexColour(style.backgroundColor) || '#ffffff',
+        dark: getHexColour(style.color) || '#0000ff',
       },
     });
   }, [canvasRef.current, styleDivRef.current, props.size, props.content]);
