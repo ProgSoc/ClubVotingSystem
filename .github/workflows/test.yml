@@ -23,7 +23,7 @@ jobs:
         run: bun install
 
       - name: init edgedb
-        run: cd src/server && edgedb project init --non-interactive
+        run: cd apps/server && edgedb project init --non-interactive
 
       - name: generate edgedb schema types
         run: bun server gen-edgedb

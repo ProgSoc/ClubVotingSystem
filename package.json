@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "src/*"
+    "apps/*"
   ],
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "web": "cd src/web && bun",
-    "server": "cd src/server && bun",
-    "tsc": "bun web tsc && bun server tsc",
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
     "lint:fix": "eslint . --fix",
     "lint": "eslint . --max-warnings=0"
   },

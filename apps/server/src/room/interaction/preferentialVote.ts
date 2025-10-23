@@ -69,25 +69,25 @@ interface CandidateWithVotes {
 /**
  * Perform ranked-choice voting.
  * @param candidates Array of strings representing candidate identifiers
- * @param votes Array of arrays of strings representing votes, in order of preference
+ * @param voteSets Array of arrays of strings representing votes, in order of preference
  * @param maxElected Maximum number of candidates to elect
  * @returns Array of strings representing the elected candidates
  */
 export function rankedChoiceVoting(
   candidates: readonly string[],
-  votes: readonly string[][],
+  voteSets: readonly string[][],
   maxElected: number,
 ): readonly CandidateWithVotes[] {
   const electedCandidates: string[] = [];
 
   // remove votes from people that are not candidates
-  votes = votes.map(vote =>
-    vote.filter(candidate => candidates.includes(candidate)),
+  voteSets = voteSets.map(preferences =>
+    preferences.filter(preference => candidates.includes(preference)),
   );
 
   while (electedCandidates.length < maxElected) {
     // Tally the current votes
-    const voteCounts = tallyVotes(candidates, votes);
+    const voteCounts = tallyVotes(candidates, voteSets);
 
     // Check if we have enough candidates to meet maxElected
     if (candidates.length <= maxElected) {
@@ -110,7 +110,7 @@ export function rankedChoiceVoting(
       );
 
       // Reassign votes from the eliminated candidates to remaining candidates
-      votes = reassignVotes(votes, lowestCandidates);
+      voteSets = reassignVotes(voteSets, lowestCandidates);
     }
     else {
       // Add the remaining candidates to the elected list

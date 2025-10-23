@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY package.json bun.lockb ./
 
-COPY src/server/package.json ./src/server/
-COPY src/web/package.json ./src/web/
+COPY apps/server/package.json ./apps/server/
+COPY apps/client/package.json ./apps/client/
 
 RUN bun install
 
@@ -19,12 +19,12 @@ WORKDIR /app
 
 RUN bun install --global edgedb
 
-COPY --from=builder /app/src/server/dist ./src
-COPY --from=builder /app/src/server/src/dbschema ./src/dbschema
-COPY --from=builder /app/src/server/edgedb.toml ./edgedb.toml
-COPY --from=builder /app/src/web/dist ./www
+COPY --from=builder /app/apps/server/dist ./src
+COPY --from=builder /app/apps/server/src/dbschema ./src/dbschema
+COPY --from=builder /app/apps/server/edgedb.toml ./edgedb.toml
+COPY --from=builder /app/apps/client/dist ./www
 
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/www
 
-CMD bun run edgedb migrate && bun src/server.js
+CMD bun run edgedb migrate && bun apps/server/server.js

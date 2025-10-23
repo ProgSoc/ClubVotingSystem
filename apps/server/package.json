@@ -5,9 +5,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "bun --watch ./src/server.ts",
-    "build": "bun build --sourcemap=inline --target bun --outdir ./dist src/server.ts",
-    "edgedb-migrate": "edgedb migration create && edgedb migrate && bun gen-edgedb",
-    "gen-edgedb": "bunx @edgedb/generate interfaces && bunx @edgedb/generate edgeql-js"
+    "build": "bun build --sourcemap=inline --target bun --outdir ./dist ./src/server.ts",
+    "migrate": "edgedb migration create && edgedb migrate && bun gen-edgedb",
+    "generate": "bunx @edgedb/generate interfaces && bunx @edgedb/generate edgeql-js"
   },
   "dependencies": {
     "@trpc/server": "^10.7.0",
