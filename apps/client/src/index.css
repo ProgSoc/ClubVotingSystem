@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noUnknownAtRules: Tailwind does exist though isn't being detected */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

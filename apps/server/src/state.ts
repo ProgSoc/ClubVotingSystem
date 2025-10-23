@@ -1,7 +1,8 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: File of type utilities needs any to work */
 const variantField = "$variant" as const;
 
 /** Attach a type (variant) field onto an object */
-export type Variant<S extends string, Data extends object = {}> = {
+export type Variant<S extends string, Data = unknown> = {
 	[variantField]: S;
 } & Data;
 
@@ -115,7 +116,7 @@ export type GetStatesUnion<
 > = RecordToStatesUnion<StateEnumInnerPrefix<SE>, StateEnumInnerObj<SE>>;
 
 /** Empty function to track the state for typescript via the generic */
-export function state<T = {}>(): Empty<T> {
+export function state<T = unknown>(): Empty<T> {
 	return {};
 }
 
@@ -142,7 +143,8 @@ export function makeStates<
 		enum: result,
 		is: isFns,
 		match: (value, matcher) => {
-			const handler = matcher[enumReverse[value[variantField]]!] as any;
+			// biome-ignore lint/style/noNonNullAssertion: composition prevents this being unsafe
+			const handler = matcher[enumReverse[value[variantField]]!];
 			if (handler) {
 				return handler(value);
 			} else {

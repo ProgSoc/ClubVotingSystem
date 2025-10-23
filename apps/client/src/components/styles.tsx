@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 
-type BaseProps<T = {}> = React.PropsWithChildren<T> & {
+type BaseProps<T = unknown> = React.PropsWithChildren<T> & {
 	className?: string;
 };
 
@@ -46,12 +46,13 @@ export function Question({ children, className }: BaseProps) {
 	);
 }
 
-function SmallLoadingSpinner({ children, className }: BaseProps) {
+function SmallLoadingSpinner({ className }: BaseProps) {
 	return (
 		<svg
 			className={twMerge("animate-spin h-5 w-5", className)}
 			viewBox="0 0 24 24"
 		>
+			<title>Loading Spinner</title>
 			<circle
 				className="opacity-25"
 				cx="12"

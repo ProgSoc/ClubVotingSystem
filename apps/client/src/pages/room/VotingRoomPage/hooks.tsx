@@ -17,12 +17,12 @@ export interface QuestionVotingData {
 
 export type VotingPageState = GetStatesUnion<typeof VotingPageState.enum>;
 export const VotingPageState = makeStates("vps", {
-	loading: state<{}>(),
-	waiting: state<{}>(),
-	ended: state<{}>(),
+	loading: state(),
+	waiting: state(),
+	ended: state(),
 	viewingResults: state<ShowingResultsState>(),
 	voting: state<QuestionVotingData>(),
-	kicked: state<{}>(),
+	kicked: state(),
 });
 
 interface LastVote {
@@ -109,10 +109,10 @@ export function useVoterState(props: {
 
 type InitialVoteFetchState = GetStatesUnion<typeof InitialVoteFetchState.enum>;
 const InitialVoteFetchState = makeStates("ivfs", {
-	waitingForVoterState: state<{}>(),
-	ignoring: state<{}>(),
+	waitingForVoterState: state(),
+	ignoring: state(),
 	fetching: state<{ questionId: string }>(),
-	fetched: state<{}>(),
+	fetched: state(),
 });
 
 /**

@@ -9,6 +9,7 @@ import type {
 import type * as schema from "../../../dbschema/interfaces";
 import type { RoomUser } from "../../../dbschema/interfaces";
 
+// biome-ignore lint/suspicious/noExplicitAny: The any isn't avoidable here
 type FromFn<T extends (...args: any[]) => any> = NonNullable<
 	Awaited<ReturnType<T>>
 >;

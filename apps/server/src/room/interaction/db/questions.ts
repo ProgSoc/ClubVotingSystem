@@ -125,8 +125,9 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 
 				const results = resultIds.map((c, index) => ({
 					id: c.id,
+					// biome-ignore lint/style/noNonNullAssertion: Known keys
 					name: question.candidates.find((candidate) => candidate.id === c.id)
-						?.name,
+						?.name!,
 					rank: index + 1,
 					votes: candidateWithVotes.filter((vote) => vote.candidateId === c.id)
 						.length,

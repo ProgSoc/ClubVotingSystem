@@ -1,5 +1,5 @@
 interface PromiseQueue {
-	promise: Promise<any>;
+	promise: Promise<unknown>;
 	unresolvedCount: number;
 }
 
@@ -18,6 +18,7 @@ export class AyncKeyLock {
 			});
 		}
 
+		// biome-ignore lint/style/noNonNullAssertion: We know it exists from the check above
 		const queue = this.queues.get(key)!;
 
 		queue.unresolvedCount++;
@@ -59,6 +60,7 @@ export class AsyncLock {
 		return newPromise;
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: The any isn't avoidable here
 	wrapFn<Args extends readonly any[], Ret = void>(
 		fn: (...args: Args) => Promise<Ret>,
 	): (...args: Args) => Promise<Ret> {

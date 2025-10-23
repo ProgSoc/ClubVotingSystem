@@ -16,7 +16,9 @@ function tallyVotes(
 	// Tally first-choice votes
 	votes.forEach((vote) => {
 		const firstChoice = vote[0];
+		// biome-ignore lint/style/noNonNullAssertion: Known keys
 		if (voteCounts[firstChoice!] !== undefined) {
+			// biome-ignore lint/style/noNonNullAssertion: Known keys
 			voteCounts[firstChoice!]! += 1;
 		}
 	});
@@ -35,7 +37,9 @@ function findLowestVoteCandidates(
 	let minVotes = Infinity;
 	let lowestCandidates: string[] = [];
 	for (const candidate in voteCounts) {
+		// biome-ignore lint/style/noNonNullAssertion: Known keys
 		if (voteCounts[candidate]! < minVotes) {
+			// biome-ignore lint/style/noNonNullAssertion: Known keys
 			minVotes = voteCounts[candidate]!;
 			lowestCandidates = [candidate];
 		} else if (voteCounts[candidate] === minVotes) {
@@ -96,6 +100,7 @@ export function rankedChoiceVoting(
 			electedCandidates.push(...candidates);
 			return electedCandidates.map((candidate) => ({
 				id: candidate,
+				// biome-ignore lint/style/noNonNullAssertion: Known keys
 				votes: voteCounts[candidate]!,
 			}));
 		}
@@ -117,6 +122,7 @@ export function rankedChoiceVoting(
 			electedCandidates.push(...candidates);
 			return electedCandidates.map((candidate) => ({
 				id: candidate,
+				// biome-ignore lint/style/noNonNullAssertion: Known keys
 				votes: voteCounts[candidate]!,
 			}));
 		}

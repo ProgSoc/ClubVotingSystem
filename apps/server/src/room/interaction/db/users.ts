@@ -83,8 +83,7 @@ function getRoomStateFromUser(user: DbRoomUser): RoomUserState {
 		case "Admitted":
 			return RoomUserState.admitted({
 				id: user.id,
-
-				// When admitted, it's assumed that user is not null
+				// biome-ignore lint/style/noNonNullAssertion: When admitted, it's assumed that user is not null
 				votingKey: user.votingKey!,
 			});
 		case "Declined":
@@ -125,6 +124,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
 				.map((u) => ({
 					id: u.id,
 					details: u.userDetails,
+					// biome-ignore lint/style/noNonNullAssertion: we know the user has a voting key
 					votingKey: u.votingKey!,
 				})),
 			waiting: roomUsers
@@ -201,7 +201,7 @@ export function makeVoterInteractionFunctions(roomId: string) {
 			await dbSetUserState(userId, "Admitted", key);
 
 			return {
-				votingKey: key!,
+				votingKey: key,
 			};
 		},
 

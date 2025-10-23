@@ -7,7 +7,10 @@ function AdminLink(props: { path: string; name: string }) {
 
 	return (
 		<Link to={props.path}>
-			<button className={twMerge("btn", selected && "btn-secondary")}>
+			<button
+				className={twMerge("btn", selected && "btn-secondary")}
+				type="button"
+			>
 				{props.name}
 			</button>
 		</Link>

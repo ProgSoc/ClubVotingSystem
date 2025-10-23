@@ -12,7 +12,7 @@ export const roomVoteRouter = router({
 				votingKey: z.string(),
 			}),
 		)
-		.subscription(async ({ ctx, input }) =>
+		.subscription(async ({ input }) =>
 			operations.subscribeToVoterNotifications(input.roomId, input.votingKey),
 		),
 	getMyVote: publicProcedure

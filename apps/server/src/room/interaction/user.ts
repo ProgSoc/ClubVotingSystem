@@ -102,13 +102,24 @@ export function waitForAdmission(roomId: string, userId: string) {
 		});
 	};
 
-	return new Promise<RoomUserResolvedState>(async (resolve, _reject) => {
-		for await (const { data } of pubSub.subscribe("userWaitingList", userId)) {
-			const resolvedState = userRoomStateToResolvedState(data);
-			if (resolvedState) {
-				resolve(resolvedState);
+	return new Promise<RoomUserResolvedState>((resolve, reject) => {
+		(async () => {
+			try {
+				for await (const { data } of pubSub.subscribe(
+					"userWaitingList",
+					userId,
+				)) {
+					const resolvedState = userRoomStateToResolvedState(data);
+					if (resolvedState) {
+						resolve(resolvedState);
+						return;
+					}
+				}
+			} catch (err) {
+				// If an unexpected error happens inside the async iterator, reject the promise.
+				reject(err);
 			}
-		}
+		})();
 
 		// In case some unexpected race condition happened, try sending the state again 5 seconds later.
 		// This never happened in testing, but adding this here just in case.

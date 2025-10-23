@@ -17,6 +17,7 @@ const makePublicShortId = customAlphabet(
 
 export async function createNewRoom(name: string): Promise<RoomAdminInfo> {
 	// Loop until we find a unique public key. If we fail after 100 attempts, then there are serious issues.
+	// biome-ignore lint/correctness/noUnreachable: I'm not sure why the database insert makes it skip a loop iteration
 	for (let i = 0; i < 100; i++) {
 		const room = await dbCreateRoom({
 			name,

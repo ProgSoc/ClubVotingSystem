@@ -28,6 +28,7 @@ export function withRoomFetched<Props extends { room: RoomPublicInfo }>(
 				</CenteredPageContainer>
 			);
 		} else {
+			// biome-ignore lint/suspicious/noExplicitAny: This will be part of the router refactor
 			return <Component room={room} {...(props as any)} />;
 		}
 	};

@@ -37,7 +37,7 @@ export const BoardState = makeStates("bs", {
 	blank: state<BlankRoomState>(),
 	showingQuestion: state<ShowingQuestionState>(),
 	showingResults: state<ShowingResultsState>(),
-	ended: state<{}>(),
+	ended: state(),
 });
 
 export type VoterState = GetStatesUnion<typeof VoterState.enum>;
@@ -45,6 +45,6 @@ export const VoterState = makeStates("vs", {
 	blank: state<BlankRoomState>(),
 	showingQuestion: state<ShowingQuestionState>(),
 	showingResults: state<ShowingResultsState>(),
-	ended: state<{}>(),
-	kicked: state<{}>(),
+	ended: state(),
+	kicked: state(),
 });

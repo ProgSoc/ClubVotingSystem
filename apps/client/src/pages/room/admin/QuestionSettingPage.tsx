@@ -3,7 +3,7 @@ import { ResultsViewer } from "components/ResultsViewer";
 import { Button, Heading, PageContainer, Question } from "components/styles";
 import { Field, Form, Formik } from "formik";
 import type React from "react";
-import { createRef, useState } from "react";
+import { createRef, useId, useState } from "react";
 import type { QuestionFormat } from "server/src/dbschema/interfaces";
 import type {
 	ShowingQuestionState,
@@ -36,8 +36,8 @@ type QuestionSettingPageState = GetStatesUnion<
 	typeof QuestionSettingPageState.enum
 >;
 const QuestionSettingPageState = makeStates("qsps", {
-	loading: state<{}>(),
-	ended: state<{}>(),
+	loading: state(),
+	ended: state(),
 	setQuestion: state<QuestionSettingData>(),
 	askingQuestion: state<QuestionAskingData>(),
 });
@@ -163,6 +163,10 @@ const getId = () => id++;
 function SetQuestion({ data }: { data: QuestionSettingData }) {
 	const [submitting, setSubmitting] = useState(false);
 
+	const questionTypeSelectId = useId();
+	const questionTitleInputId = useId();
+	const maxResultsInputId = useId();
+
 	const onSubmit = async (values: FormValues) => {
 		setSubmitting(true);
 
@@ -234,7 +238,10 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 								disabled={submitting}
 								className="gap-4 w-full flex flex-col justify-center items-center"
 							>
-								<label className="form-control  w-full   mt-8 mb-2">
+								<label
+									className="form-control  w-full   mt-8 mb-2"
+									htmlFor={questionTitleInputId}
+								>
 									<div className="label">
 										<span className="label-text">Question</span>
 									</div>
@@ -244,10 +251,14 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 										name="question"
 										value={form.values.question}
 										onChange={form.handleChange}
+										id={questionTitleInputId}
 									/>
 								</label>
 								<div className="flex gap-2 w-full">
-									<label className="form-control mb-8 grow">
+									<label
+										className="form-control mb-8 grow"
+										htmlFor={questionTypeSelectId}
+									>
 										<div className="label">
 											<span className="label-text">Question Type</span>
 										</div>
@@ -257,6 +268,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 											name="questionType"
 											value={form.values.questionType}
 											onChange={form.handleChange}
+											id={questionTypeSelectId}
 										>
 											<option value="SingleVote">Single vote</option>
 											<option value="PreferentialVote">
@@ -264,7 +276,10 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 											</option>
 										</Field>
 									</label>
-									<label className="form-control mb-8">
+									<label
+										className="form-control mb-8"
+										htmlFor={maxResultsInputId}
+									>
 										<div className="label">
 											<span className="label-text">Max Results</span>
 										</div>
@@ -275,6 +290,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 											value={form.values.maxElected}
 											onChange={form.handleChange}
 											disabled={form.values.questionType === "SingleVote"}
+											id={maxResultsInputId}
 										/>
 									</label>
 								</div>
@@ -289,7 +305,7 @@ function SetQuestion({ data }: { data: QuestionSettingData }) {
 												value={candidate.name}
 												onChange={form.handleChange}
 												ref={(el) => {
-													// Unfortunately any is necessary here, because current is set to readonly in react
+													// biome-ignore lint/suspicious/noExplicitAny: Unfortunately any is necessary here, because current is set to readonly in react
 													(candidate.inputRef as any).current = el;
 
 													if (candidate.forceSelect) {

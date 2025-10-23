@@ -1,5 +1,6 @@
 import { Button, CenteredPageContainer, Heading } from "components/styles";
 import { Field, Form, Formik } from "formik";
+import { useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { routeBuilders } from "routes";
 import type { UserLocation } from "server/src/dbschema/interfaces";
@@ -22,6 +23,8 @@ type FormValues = TypeOf<typeof schema>;
 
 export function JoinWaitingRoomPage(props: { roomId: string }) {
 	const navigate = useNavigate();
+
+	const formId = useId();
 
 	const mutation = trpc.room.joinWaitingList.useMutation();
 
@@ -52,7 +55,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
 				<Formik<FormValues>
 					initialValues={{
 						email: "",
-						location: undefined as any,
+						location: undefined as unknown as UserLocation,
 					}}
 					onSubmit={onSubmit}
 					validationSchema={toFormikValidationSchema(schema)}
@@ -71,34 +74,46 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
 										onChange={form.handleChange}
 									/>
 									<div className="flex items-start justify-center gap-4">
-										<label className="flex items-center gap-2">
+										<label
+											className="flex items-center gap-2"
+											htmlFor={`${formId}-InPerson`}
+										>
 											<Field
 												type="radio"
 												name="location"
 												value={"InPerson" satisfies UserLocation}
 												className="radio radio-primary"
+												id={`${formId}-InPerson`}
 											/>
 											<span className="label-text text-xs md:text-sm">
 												{locationEnumLabel.InPerson}
 											</span>
 										</label>
-										<label className="flex items-center gap-2">
+										<label
+											className="flex items-center gap-2"
+											htmlFor={`${formId}-Online`}
+										>
 											<Field
 												type="radio"
 												name="location"
 												value={"Online" satisfies UserLocation}
 												className="radio radio-primary"
+												id={`${formId}-Online`}
 											/>
 											<span className="label-text text-xs md:text-sm">
 												{locationEnumLabel.Online}
 											</span>
 										</label>
-										<label className="flex items-center gap-2">
+										<label
+											className="flex items-center gap-2"
+											htmlFor={`${formId}-Proxy`}
+										>
 											<Field
 												type="radio"
 												name="location"
 												value={"Proxy" satisfies UserLocation}
 												className="radio radio-primary"
+												id={`${formId}-Proxy`}
 											/>
 											<span className="label-text text-xs md:text-sm">
 												{locationEnumLabel.Proxy}
