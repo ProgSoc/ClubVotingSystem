@@ -19,7 +19,7 @@ export function CreateRoomPage() {
   };
 
   const invalid = pageName.trim().length === 0;
-  const disabled = mutation.isLoading || mutation.isSuccess;
+  const disabled = mutation.isPending || mutation.isSuccess;
 
   return (
     <CenteredPageContainer className="gap-4">
@@ -35,7 +35,7 @@ export function CreateRoomPage() {
           className="btn btn-primary m-3"
           disabled={invalid || disabled}
           onClick={onSubmit}
-          isLoading={mutation.isLoading}
+          isLoading={mutation.isPending}
         >
           Create
         </Button>

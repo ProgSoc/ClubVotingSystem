@@ -21,7 +21,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
 
   const mutation = trpc.room.joinWaitingList.useMutation();
 
-  const disabled = mutation.isLoading || mutation.isSuccess;
+  const disabled = mutation.isPending || mutation.isSuccess;
 
   const onSubmit = async (data: FormValues) => {
     if (disabled) {
@@ -94,7 +94,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
                     className="btn-primary w-28 self-center m-3"
                     type="submit"
                     disabled={disabled || Object.values(form.errors).length > 0}
-                    isLoading={mutation.isLoading}
+                    isLoading={mutation.isPending}
                   >
                     Join
                   </Button>

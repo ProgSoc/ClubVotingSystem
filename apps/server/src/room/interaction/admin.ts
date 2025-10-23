@@ -1,4 +1,4 @@
-import { roomVoterNotifications, roomWaitingListNotifications, userWaitingListNotifications } from '../../live';
+import { pubSub, roomVoterNotifications, roomWaitingListNotifications, userWaitingListNotifications } from '../../live';
 import { VoterState } from '../../live/states';
 import type { CreateQuestionParams } from '../types';
 import type { RoomUsersList } from './db/users';
@@ -33,7 +33,7 @@ function makeRoomAdminFunctions(roomId: string) {
 
     async admitUser(userId: string) {
       const { votingKey } = await voterFns.admitUser(userId);
-      userWaitingListNotifications.notify({ userId }, RoomUserState.admitted({ id: userId, votingKey }));
+      pubSub.publish("userWaitingList", userId, { data: RoomUserState.admitted({ id: userId, votingKey })});
 
       await helpers.notifyAdminsOfUsersChanged();
       await helpers.notifyEveryoneOfBoardChange();
@@ -41,7 +41,7 @@ function makeRoomAdminFunctions(roomId: string) {
 
     async declineUser(userId: string) {
       await voterFns.declineUser(userId);
-      userWaitingListNotifications.notify({ userId }, RoomUserState.declined({ id: userId }));
+      pubSub.publish("userWaitingList", userId, { data: RoomUserState.declined({ id: userId })});
 
       await helpers.notifyAdminsOfUsersChanged();
       await helpers.notifyEveryoneOfBoardChange();
@@ -53,7 +53,7 @@ function makeRoomAdminFunctions(roomId: string) {
       // Should always have a voter, but checking just in case
       if (user?.votingKey) {
         await voterFns.kickVoter(userId);
-        await roomVoterNotifications.notify({ roomId, votingKey: user.votingKey }, VoterState.kicked({}));
+        pubSub.publish("roomVoter", `${roomId}-${user.votingKey}`, { data: VoterState.kicked({})})
         await helpers.notifyAdminsOfUsersChanged();
         await helpers.notifyEveryoneOfBoardChange();
       }
@@ -79,14 +79,15 @@ export function withRoomAdminFunctions<T>(
   });
 }
 
-export function subscribeToUserListNotifications(
+export async function* subscribeToUserListNotifications(
   roomId: string,
   adminKey: string,
-  callback: (users: RoomUsersList) => void,
 ) {
-  return roomWaitingListNotifications.subscribe(
-    { roomId },
-    () => withRoomAdminFunctions(roomId, adminKey, async fns => fns.currentRoomUsersList()),
-    callback,
-  );
+  yield withRoomAdminFunctions(roomId, adminKey, async fns => fns.currentRoomUsersList())
+
+  const newNotifications = pubSub.subscribe("roomWaitingList", roomId)
+
+  for await (const _notification of newNotifications) {
+    yield withRoomAdminFunctions(roomId, adminKey, async fns => fns.currentRoomUsersList())
+  }
 }

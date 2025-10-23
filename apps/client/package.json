@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "server": "workspace:*",
+    "@graphql-yoga/subscription": "^5.0.5",
     "@hookform/resolvers": "^3.9.0",
-    "@tanstack/react-query": "^4.20.9",
-    "@trpc/client": "^10.7.0",
-    "@trpc/react-query": "^10.7.0",
+    "@tanstack/react-query": "^5",
+    "@tanstack/react-query-devtools": "^5",
+    "@trpc/client": "^11",
+    "@trpc/react-query": "^11",
     "@types/qrcode": "^1.5.0",
     "@types/react-transition-group": "^4.4.5",
     "autoprefixer": "^10.4.12",

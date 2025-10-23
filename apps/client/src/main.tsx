@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createWSClient, wsLink } from '@trpc/client/links/wsLink';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { browserRouter } from './routes';
 import { trpc } from './utils/trpc';
 
 import './index.css';
+import { createWSClient, wsLink } from '@trpc/client';
 
 const queryClient = new QueryClient();
 

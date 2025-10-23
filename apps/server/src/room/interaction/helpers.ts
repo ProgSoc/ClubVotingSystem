@@ -1,5 +1,5 @@
 import { NoQuestionOpenError, QuestionAlreadyOpenError, RoomIsClosedError } from '../../errors';
-import { roomBoardEventsNotifications, roomVoterNotifications, roomWaitingListNotifications } from '../../live';
+import { pubSub, roomBoardEventsNotifications, roomVoterNotifications, roomWaitingListNotifications } from '../../live';
 import type { ShowingQuestionState, ShowingResultsState } from '../../live/states';
 import { BoardState, VoterState } from '../../live/states';
 import { AyncKeyLock } from '../../lock';
@@ -22,7 +22,7 @@ export function makeQuestionHelpers(roomId: string) {
 
     async notifyAdminsOfUsersChanged() {
       const usersList = await voterFns.currentRoomUsersList();
-      roomWaitingListNotifications.notify({ roomId }, usersList);
+      pubSub.publish("roomWaitingList", roomId, { data: usersList})
     },
 
     async notifyEveryoneOfBoardChange() {
@@ -30,9 +30,9 @@ export function makeQuestionHelpers(roomId: string) {
       const voterState = boardStateToVoterState(boardState);
       const voters = await voterFns.currentRoomUsersListWithvotingKeys();
 
-      roomBoardEventsNotifications.notify({ roomId }, boardState);
+      pubSub.publish("roomBoardEvents", roomId, { data: boardState})
       voters.admitted.forEach((voter) => {
-        roomVoterNotifications.notify({ roomId, votingKey: voter.votingKey }, voterState);
+        pubSub.publish("roomVoter", `${roomId}-${voter.votingKey}`, { data: voterState})
       });
     },
 

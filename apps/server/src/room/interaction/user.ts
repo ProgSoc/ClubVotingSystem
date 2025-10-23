@@ -1,5 +1,5 @@
 import { VoterNotFoundError } from '../../errors';
-import { roomBoardEventsNotifications, roomVoterNotifications, userWaitingListNotifications } from '../../live';
+import { pubSub, roomBoardEventsNotifications, roomVoterNotifications, userWaitingListNotifications } from '../../live';
 import type { QuestionResponse } from '../../live/question';
 import type { BoardState } from '../../live/states';
 import { VoterState } from '../../live/states';
@@ -109,27 +109,35 @@ export function waitForAdmission(roomId: string, userId: string) {
     // This never happened in testing, but adding this here just in case.
     setTimeout(async () => {
       const status = await getAdmissionStatus();
-      userWaitingListNotifications.notify({ userId }, status);
+      pubSub.publish("userWaitingList", userId, { data: status})
     }, 5000);
   });
 }
 
-export function subscribeToBoardNotifications(roomId: string, callback: (users: BoardState) => void) {
-  return roomBoardEventsNotifications.subscribe(
-    { roomId },
-    () => withRoomVoterFunctions(roomId, async fns => fns.getCurrentBoardState()),
-    callback,
+export async function* subscribeToBoardNotifications(roomId: string) {
+  yield withRoomVoterFunctions(roomId, async fns => fns.getCurrentBoardState())
+
+   const newNotifications = pubSub.subscribe(
+    "roomBoardEvents",
+    roomId,
   );
+
+  for await (const _notificationData of newNotifications) {
+    yield withRoomVoterFunctions(roomId, async fns => fns.getCurrentBoardState())
+  }
 }
 
-export function subscribeToVoterNotifications(
+export async function* subscribeToVoterNotifications(
   roomId: string,
   votingKey: string,
-  callback: (users: VoterState) => void,
 ) {
-  return roomVoterNotifications.subscribe(
-    { roomId, votingKey },
-    () => withRoomVoterFunctions(roomId, async fns => fns.getCurrentVoterState(votingKey)),
-    callback,
+  yield withRoomVoterFunctions(roomId, async fns => fns.getCurrentVoterState(votingKey))
+
+  const newNotifications = pubSub.subscribe("roomVoter",
+    `${roomId}-${votingKey}`,
   );
+
+  for await (const _notificationData of newNotifications) {
+   yield withRoomVoterFunctions(roomId, async fns => fns.getCurrentVoterState(votingKey))
+  }
 }

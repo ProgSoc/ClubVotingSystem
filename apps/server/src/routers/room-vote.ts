@@ -14,15 +14,7 @@ export const roomVoteRouter = router({
         votingKey: z.string(),
       }),
     )
-    .subscription(async ({ ctx, input }) => {
-      return observable<VoterState>((emit) => {
-        const unsubscribe = operations.subscribeToVoterNotifications(input.roomId, input.votingKey, (state) => {
-          emit.next(state);
-        });
-
-        return unsubscribe;
-      });
-    }),
+    .subscription(async ({ ctx, input }) => operations.subscribeToVoterNotifications(input.roomId, input.votingKey)),
   getMyVote: publicProcedure
     .input(
       z.object({

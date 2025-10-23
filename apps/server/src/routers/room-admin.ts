@@ -14,14 +14,7 @@ const roomUsersAdminRouter = router({
         adminKey: z.string(),
       }),
     )
-    .subscription(async ({ input }) => {
-      return observable<RoomUsersList>((emit) => {
-        const unsubscribe = operations.subscribeToUserListNotifications(input.roomId, input.adminKey, users =>
-          emit.next(users));
-
-        return unsubscribe;
-      });
-    }),
+    .subscription(async ({ input }) => operations.subscribeToUserListNotifications(input.roomId, input.adminKey)),
   admitUser: publicProcedure
     .input(
       z.object({

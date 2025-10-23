@@ -25,4 +25,4 @@ COPY --from=builder /app/apps/client/dist ./apps/client/dist
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/apps/client/dist
 
-CMD bunx gel migrate && bun apps/server/main.js
+CMD bunx gel migrate && bun run start

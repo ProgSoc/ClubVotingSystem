@@ -7,9 +7,6 @@
     "baseUrl": "./src",
     "module": "ESNext",
     "moduleResolution": "Node",
-    "paths": {
-      "@server/*": ["../../server/src/*"]
-    },
     "resolveJsonModule": true,
     "allowJs": false,
     "strict": true,
@@ -18,7 +15,8 @@
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "outDir": "./dist-ts"
   },
   "references": [
     {

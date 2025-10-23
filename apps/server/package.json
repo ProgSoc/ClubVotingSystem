@@ -10,8 +10,9 @@
     "migrate": "gel migration create && gel migrate && bun generate",
     "generate": "bunx @gel/generate interfaces && bunx @gel/generate edgeql-js"
   },
+  "types": "./dist-ts/main.d.ts",
   "dependencies": {
-    "@trpc/server": "^10.7.0",
+    "@trpc/server": "^11",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "dotenv-cli": "^6.0.0",

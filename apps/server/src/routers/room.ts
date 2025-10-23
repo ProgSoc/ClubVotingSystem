@@ -1,7 +1,4 @@
-import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
-
-import type { BoardState } from '../live/states';
 import { operations } from '../room';
 import { withRoomVoterFunctions } from '../room/interaction/user';
 import { publicProcedure, router } from '../trpc';
@@ -73,13 +70,6 @@ export const roomRouter = router({
         roomId: z.string(),
       }),
     )
-    .subscription(async ({ input }) => {
-      return observable<BoardState>((emit) => {
-        const unsubscribe = operations.subscribeToBoardNotifications(input.roomId, (state) => {
-          emit.next(state);
-        });
-
-        return unsubscribe;
-      });
-    }),
+    .subscription(async ({ input }) => operations.subscribeToBoardNotifications(input.roomId))
+    
 });

@@ -1,9 +1,9 @@
 import path from 'node:path';
-import * as trpcExpress from '@trpc/server/adapters/express';
-import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import cors from 'cors';
 import express from 'express';
 import ws from 'ws';
+import * as trpcExpress from '@trpc/server/adapters/express';
+import { applyWSSHandler } from '@trpc/server/adapters/ws';
 
 import { env } from './env';
 import { roomRouter } from './routers/room';
