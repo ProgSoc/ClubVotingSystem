@@ -11,10 +11,14 @@ RUN bun install
 
 COPY . .
 
-RUN bun run build
-
 WORKDIR /app/apps/server
 RUN bunx gel project init --non-interactive 
+
+WORKDIR /app
+
+RUN bun run build
+
+
 
 FROM oven/bun:1.1.17-alpine
 
