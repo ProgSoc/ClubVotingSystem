@@ -1,105 +1,118 @@
-import type { QuestionResponse } from 'server/src/live/question';
-import type { ShowingQuestionState, ShowingResultsState } from 'server/src/live/states';
-import { VoterState } from 'server/src/live/states';
-import type { GetStatesUnion } from 'server/src/state';
-import { makeStates, state } from 'server/src/state';
-import { useEffect, useRef, useState } from 'react';
-import { trpc } from 'utils/trpc';
+import { useEffect, useRef, useState } from "react";
+import type { QuestionResponse } from "server/src/live/question";
+import type {
+	ShowingQuestionState,
+	ShowingResultsState,
+} from "server/src/live/states";
+import { VoterState } from "server/src/live/states";
+import type { GetStatesUnion } from "server/src/state";
+import { makeStates, state } from "server/src/state";
+import { trpc } from "utils/trpc";
 
 export interface QuestionVotingData {
-  question: ShowingQuestionState;
-  lastVote?: QuestionResponse;
-  castVote: (params: QuestionResponse) => void;
+	question: ShowingQuestionState;
+	lastVote?: QuestionResponse;
+	castVote: (params: QuestionResponse) => void;
 }
 
 export type VotingPageState = GetStatesUnion<typeof VotingPageState.enum>;
-export const VotingPageState = makeStates('vps', {
-  loading: state<{}>(),
-  waiting: state<{}>(),
-  ended: state<{}>(),
-  viewingResults: state<ShowingResultsState>(),
-  voting: state<QuestionVotingData>(),
-  kicked: state<{}>(),
+export const VotingPageState = makeStates("vps", {
+	loading: state<{}>(),
+	waiting: state<{}>(),
+	ended: state<{}>(),
+	viewingResults: state<ShowingResultsState>(),
+	voting: state<QuestionVotingData>(),
+	kicked: state<{}>(),
 });
 
 interface LastVote {
-  questionId: string;
-  response: QuestionResponse;
+	questionId: string;
+	response: QuestionResponse;
 }
 
-export function useVoterState(props: { roomId: string; votingKey: string }): VotingPageState {
-  const [state, setState] = useState<VoterState | null>(null);
-  const [lastVote, setLastVote] = useState<LastVote | null>(null);
-  const voteLock = useRef<Promise<void>>(Promise.resolve());
+export function useVoterState(props: {
+	roomId: string;
+	votingKey: string;
+}): VotingPageState {
+	const [state, setState] = useState<VoterState | null>(null);
+	const [lastVote, setLastVote] = useState<LastVote | null>(null);
+	const voteLock = useRef<Promise<void>>(Promise.resolve());
 
-  const castVoteMutation = trpc.vote.castVote.useMutation();
+	const castVoteMutation = trpc.vote.castVote.useMutation();
 
-  const runSyncAsync = async (fn: () => Promise<void>) => {
-    const promise = voteLock.current.catch(() => {}).then(fn);
-    voteLock.current = promise;
-    await promise;
-  };
+	const runSyncAsync = async (fn: () => Promise<void>) => {
+		const promise = voteLock.current.catch(() => {}).then(fn);
+		voteLock.current = promise;
+		await promise;
+	};
 
-  trpc.vote.listen.useSubscription(
-    { roomId: props.roomId, votingKey: props.votingKey },
-    {
-      onData: (data) => {
-        setState(data);
-      },
-      onError: (err) => {
-        console.error(err);
-      },
-    },
-  );
+	trpc.vote.listen.useSubscription(
+		{ roomId: props.roomId, votingKey: props.votingKey },
+		{
+			onData: (data) => {
+				setState(data);
+			},
+			onError: (err) => {
+				console.error(err);
+			},
+		},
+	);
 
-  const { isInitialVoteLoading } = useFetchInitialVote(props, state, setLastVote);
+	const { isInitialVoteLoading } = useFetchInitialVote(
+		props,
+		state,
+		setLastVote,
+	);
 
-  if (!state) {
-    return VotingPageState.loading({});
-  }
+	if (!state) {
+		return VotingPageState.loading({});
+	}
 
-  return VoterState.match<VotingPageState>(state, {
-    blank: () => VotingPageState.waiting({}),
-    ended: () => VotingPageState.ended({}),
-    kicked: () => VotingPageState.kicked({}),
+	return VoterState.match<VotingPageState>(state, {
+		blank: () => VotingPageState.waiting({}),
+		ended: () => VotingPageState.ended({}),
+		kicked: () => VotingPageState.kicked({}),
 
-    showingResults: state => VotingPageState.viewingResults(state),
+		showingResults: (state) => VotingPageState.viewingResults(state),
 
-    showingQuestion: (state) => {
-      if (isInitialVoteLoading) {
-        return VotingPageState.loading({});
-      }
+		showingQuestion: (state) => {
+			if (isInitialVoteLoading) {
+				return VotingPageState.loading({});
+			}
 
-      const castVote = (response: QuestionResponse) => {
-        void runSyncAsync(async () => {
-          await castVoteMutation.mutateAsync({
-            questionId: state.questionId,
-            roomId: props.roomId,
-            votingKey: props.votingKey,
-            response,
-          });
-        });
-        setLastVote({
-          questionId: state.questionId,
-          response,
-        });
-      };
+			const castVote = (response: QuestionResponse) => {
+				void runSyncAsync(async () => {
+					await castVoteMutation.mutateAsync({
+						questionId: state.questionId,
+						roomId: props.roomId,
+						votingKey: props.votingKey,
+						response,
+					});
+				});
+				setLastVote({
+					questionId: state.questionId,
+					response,
+				});
+			};
 
-      return VotingPageState.voting({
-        question: state,
-        lastVote: lastVote?.questionId === state.questionId ? lastVote.response : undefined,
-        castVote,
-      });
-    },
-  });
+			return VotingPageState.voting({
+				question: state,
+				lastVote:
+					lastVote?.questionId === state.questionId
+						? lastVote.response
+						: undefined,
+				castVote,
+			});
+		},
+	});
 }
 
 type InitialVoteFetchState = GetStatesUnion<typeof InitialVoteFetchState.enum>;
-const InitialVoteFetchState = makeStates('ivfs', {
-  waitingForVoterState: state<{}>(),
-  ignoring: state<{}>(),
-  fetching: state<{ questionId: string }>(),
-  fetched: state<{}>(),
+const InitialVoteFetchState = makeStates("ivfs", {
+	waitingForVoterState: state<{}>(),
+	ignoring: state<{}>(),
+	fetching: state<{ questionId: string }>(),
+	fetched: state<{}>(),
 });
 
 /**
@@ -110,51 +123,71 @@ const InitialVoteFetchState = makeStates('ivfs', {
  * the `setLastVote` callback with the last vote.
  */
 function useFetchInitialVote(
-  props: { roomId: string; votingKey: string },
-  voterState: VoterState | null,
-  setLastVote: (vote: LastVote | null) => void,
+	props: { roomId: string; votingKey: string },
+	voterState: VoterState | null,
+	setLastVote: (vote: LastVote | null) => void,
 ) {
-  const [fetchState, setFetchState] = useState<InitialVoteFetchState>(InitialVoteFetchState.waitingForVoterState({}));
+	const [fetchState, setFetchState] = useState<InitialVoteFetchState>(
+		InitialVoteFetchState.waitingForVoterState({}),
+	);
 
-  const initialVoteQuery = trpc.vote.getMyVote.useQuery(
-    {
-      roomId: props.roomId,
-      votingKey: props.votingKey,
+	const initialVoteQuery = trpc.vote.getMyVote.useQuery(
+		{
+			roomId: props.roomId,
+			votingKey: props.votingKey,
 
-      // If we're not fetching, then the query is disabled anyway and this arg doesnt matter
-      questionId: InitialVoteFetchState.is.fetching(fetchState) ? fetchState.questionId : '',
-    },
-    {
-      enabled: InitialVoteFetchState.is.fetching(fetchState),
-    },
-  );
+			// If we're not fetching, then the query is disabled anyway and this arg doesnt matter
+			questionId: InitialVoteFetchState.is.fetching(fetchState)
+				? fetchState.questionId
+				: "",
+		},
+		{
+			enabled: InitialVoteFetchState.is.fetching(fetchState),
+		},
+	);
 
-  useEffect(() => {
-    if (InitialVoteFetchState.is.waitingForVoterState(fetchState) && voterState) {
-      if (VoterState.is.showingQuestion(voterState)) {
-        setFetchState(InitialVoteFetchState.fetching({ questionId: voterState.questionId }));
-      }
-      else {
-        setFetchState(InitialVoteFetchState.ignoring({}));
-      }
-    }
-  }, [voterState]);
+	useEffect(() => {
+		if (
+			InitialVoteFetchState.is.waitingForVoterState(fetchState) &&
+			voterState
+		) {
+			if (VoterState.is.showingQuestion(voterState)) {
+				setFetchState(
+					InitialVoteFetchState.fetching({ questionId: voterState.questionId }),
+				);
+			} else {
+				setFetchState(InitialVoteFetchState.ignoring({}));
+			}
+		}
+	}, [voterState]);
 
-  useEffect(() => {
-    if (initialVoteQuery.data !== undefined && InitialVoteFetchState.is.fetching(fetchState) && voterState) {
-      if (VoterState.is.showingQuestion(voterState) && voterState.questionId === fetchState.questionId) {
-        setFetchState(InitialVoteFetchState.fetched({}));
-        setLastVote(initialVoteQuery.data && { questionId: voterState.questionId, response: initialVoteQuery.data });
-      }
-      else {
-        setFetchState(InitialVoteFetchState.ignoring({}));
-      }
-    }
-  }, [initialVoteQuery.data]);
+	useEffect(() => {
+		if (
+			initialVoteQuery.data !== undefined &&
+			InitialVoteFetchState.is.fetching(fetchState) &&
+			voterState
+		) {
+			if (
+				VoterState.is.showingQuestion(voterState) &&
+				voterState.questionId === fetchState.questionId
+			) {
+				setFetchState(InitialVoteFetchState.fetched({}));
+				setLastVote(
+					initialVoteQuery.data && {
+						questionId: voterState.questionId,
+						response: initialVoteQuery.data,
+					},
+				);
+			} else {
+				setFetchState(InitialVoteFetchState.ignoring({}));
+			}
+		}
+	}, [initialVoteQuery.data]);
 
-  return {
-    // We're loading if we're waiting for the board state, or if we're fetching
-    isInitialVoteLoading:
-      InitialVoteFetchState.is.waitingForVoterState(fetchState) || InitialVoteFetchState.is.fetching(fetchState),
-  };
+	return {
+		// We're loading if we're waiting for the board state, or if we're fetching
+		isInitialVoteLoading:
+			InitialVoteFetchState.is.waitingForVoterState(fetchState) ||
+			InitialVoteFetchState.is.fetching(fetchState),
+	};
 }

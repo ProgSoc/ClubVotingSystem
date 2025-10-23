@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
 		"outDir": "./dist-ts",
 		// Environment setup & latest features
@@ -26,10 +26,7 @@
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false,
-		"types": [
-			"@types/bun"
-		]
+		"types": ["@types/bun"]
 	},
-  "include": ["./src/**/*.ts"],
-	
+	"include": ["./src/**/*.ts"]
 }

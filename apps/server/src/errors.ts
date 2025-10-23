@@ -1,61 +1,61 @@
-import type { DbRoom } from './room/interaction/db/queries';
+import type { DbRoom } from "./room/interaction/db/queries";
 
 export class RoomNotFoundError extends Error {
-  constructor(readonly roomId: string) {
-    super('Room not found');
-  }
+	constructor(readonly roomId: string) {
+		super("Room not found");
+	}
 }
 
 export class RoomIsClosedError extends Error {
-  constructor(readonly room: DbRoom) {
-    super('This room is closed');
-  }
+	constructor(readonly room: DbRoom) {
+		super("This room is closed");
+	}
 }
 
 export class NoQuestionOpenError extends Error {
-  constructor() {
-    super('No question open');
-  }
+	constructor() {
+		super("No question open");
+	}
 }
 
 export class QuestionAlreadyOpenError extends Error {
-  constructor() {
-    super('A question is already open');
-  }
+	constructor() {
+		super("A question is already open");
+	}
 }
 
 export class UserNotFoundError extends Error {
-  constructor(userId: string) {
-    super(`User not found: ${userId}`);
-  }
+	constructor(userId: string) {
+		super(`User not found: ${userId}`);
+	}
 }
 
 export class VoterNotFoundError extends Error {
-  constructor(userId: string) {
-    super(`Voter not found: ${userId}`);
-  }
+	constructor(userId: string) {
+		super(`Voter not found: ${userId}`);
+	}
 }
 
 export class UserNotInWaitingRoom extends Error {
-  constructor(userId: string) {
-    super(`User not in waiting room: ${userId}`);
-  }
+	constructor(userId: string) {
+		super(`User not in waiting room: ${userId}`);
+	}
 }
 
 export class UserNotAVoter extends Error {
-  constructor(userId: string) {
-    super(`User not a voter: ${userId}`);
-  }
+	constructor(userId: string) {
+		super(`User not a voter: ${userId}`);
+	}
 }
 
 export class InvalidAdminKeyError extends Error {
-  constructor() {
-    super('Invalid admin key');
-  }
+	constructor() {
+		super("Invalid admin key");
+	}
 }
 
 export class QuestionAlreadyClosedError extends Error {
-  constructor() {
-    super('Question already closed');
-  }
+	constructor() {
+		super("Question already closed");
+	}
 }

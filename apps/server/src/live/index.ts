@@ -1,11 +1,14 @@
-import type { RoomUserState } from '../room/interaction/db/users';
-import type { BoardState, VoterState } from './states';
-import type { RoomUsersList } from './user';
-import { createPubSub } from '@graphql-yoga/subscription'
+import { createPubSub } from "@graphql-yoga/subscription";
+import type { RoomUserState } from "../room/interaction/db/users";
+import type { BoardState, VoterState } from "./states";
+import type { RoomUsersList } from "./user";
 
 export const pubSub = createPubSub<{
-  "roomWaitingList": [roomId: string, payload: { data: RoomUsersList}],
-  "roomVoter": [roomAndVotingKey: `${string}-${string}`, payload: { data: VoterState }],
-  "roomBoardEvents": [roomId: string, payload: { data: BoardState }],
-  "userWaitingList": [userId: string, payload: { data: RoomUserState }]
-}>()
+	roomWaitingList: [roomId: string, payload: { data: RoomUsersList }];
+	roomVoter: [
+		roomAndVotingKey: `${string}-${string}`,
+		payload: { data: VoterState },
+	];
+	roomBoardEvents: [roomId: string, payload: { data: BoardState }];
+	userWaitingList: [userId: string, payload: { data: RoomUserState }];
+}>();

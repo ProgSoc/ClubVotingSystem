@@ -1,109 +1,124 @@
-import type { UserLocation } from 'server/src/dbschema/interfaces';
-import { Button, CenteredPageContainer, Heading } from 'components/styles';
-import { Field, Form, Formik } from 'formik';
-import { useNavigate } from 'react-router-dom';
-import { routeBuilders } from 'routes';
-import { locationEnumLabel } from 'utils/enumLabels';
-import { trpc } from 'utils/trpc';
-import type { TypeOf } from 'zod';
-import { z } from 'zod';
-import { toFormikValidationSchema } from 'zod-formik-adapter';
+import { Button, CenteredPageContainer, Heading } from "components/styles";
+import { Field, Form, Formik } from "formik";
+import { useNavigate } from "react-router-dom";
+import { routeBuilders } from "routes";
+import type { UserLocation } from "server/src/dbschema/interfaces";
+import { locationEnumLabel } from "utils/enumLabels";
+import { trpc } from "utils/trpc";
+import type { TypeOf } from "zod";
+import { z } from "zod";
+import { toFormikValidationSchema } from "zod-formik-adapter";
 
 const schema = z.object({
-  email: z.string().email(),
-  location: z.enum<UserLocation, readonly [UserLocation, ...UserLocation[]]>(['InPerson', 'Online', 'Proxy']),
+	email: z.string().email(),
+	location: z.enum<UserLocation, readonly [UserLocation, ...UserLocation[]]>([
+		"InPerson",
+		"Online",
+		"Proxy",
+	]),
 });
 
 type FormValues = TypeOf<typeof schema>;
 
 export function JoinWaitingRoomPage(props: { roomId: string }) {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
 
-  const mutation = trpc.room.joinWaitingList.useMutation();
+	const mutation = trpc.room.joinWaitingList.useMutation();
 
-  const disabled = mutation.isPending || mutation.isSuccess;
+	const disabled = mutation.isPending || mutation.isSuccess;
 
-  const onSubmit = async (data: FormValues) => {
-    if (disabled) {
-      return;
-    }
-    const result = await mutation.mutateAsync({
-      roomId: props.roomId,
-      location: data.location,
-      email: data.email,
-    });
+	const onSubmit = async (data: FormValues) => {
+		if (disabled) {
+			return;
+		}
+		const result = await mutation.mutateAsync({
+			roomId: props.roomId,
+			location: data.location,
+			email: data.email,
+		});
 
-    navigate(routeBuilders.waitInWaitingRoom({ roomId: props.roomId, userId: result.userId }));
-  };
+		navigate(
+			routeBuilders.waitInWaitingRoom({
+				roomId: props.roomId,
+				userId: result.userId,
+			}),
+		);
+	};
 
-  return (
-    <CenteredPageContainer className="gap-4">
-      <Heading>Join voting room</Heading>
-      <fieldset className="w-full" disabled={disabled}>
-        <Formik<FormValues>
-          initialValues={{
-            email: '',
-            location: undefined as any,
-          }}
-          onSubmit={onSubmit}
-          validationSchema={toFormikValidationSchema(schema)}
-          validateOnMount={true}
-        >
-          {form => (
-            <Form>
-              <div className="gap-4 w-full flex flex-col justify-center items-center">
-                <div className="flex flex-col gap-4">
-                  <Field
-                    className="input input-bordered w-full sm:w-96 text-sm md:text-base"
-                    placeholder="Student Email (firstname.lastname)"
-                    type="email"
-                    name="email"
-                    value={form.values.email}
-                    onChange={form.handleChange}
-                  />
-                  <div className="flex items-start justify-center gap-4">
-                    <label className="flex items-center gap-2">
-                      <Field
-                        type="radio"
-                        name="location"
-                        value={'InPerson' satisfies UserLocation}
-                        className="radio radio-primary"
-                      />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.InPerson}</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <Field
-                        type="radio"
-                        name="location"
-                        value={'Online' satisfies UserLocation}
-                        className="radio radio-primary"
-                      />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.Online}</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <Field
-                        type="radio"
-                        name="location"
-                        value={'Proxy' satisfies UserLocation}
-                        className="radio radio-primary"
-                      />
-                      <span className="label-text text-xs md:text-sm">{locationEnumLabel.Proxy}</span>
-                    </label>
-                  </div>
-                  <Button
-                    className="btn-primary w-28 self-center m-3"
-                    type="submit"
-                    disabled={disabled || Object.values(form.errors).length > 0}
-                    isLoading={mutation.isPending}
-                  >
-                    Join
-                  </Button>
-                </div>
-              </div>
-            </Form>
-          )}
-        </Formik>
-      </fieldset>
-    </CenteredPageContainer>
-  );
+	return (
+		<CenteredPageContainer className="gap-4">
+			<Heading>Join voting room</Heading>
+			<fieldset className="w-full" disabled={disabled}>
+				<Formik<FormValues>
+					initialValues={{
+						email: "",
+						location: undefined as any,
+					}}
+					onSubmit={onSubmit}
+					validationSchema={toFormikValidationSchema(schema)}
+					validateOnMount={true}
+				>
+					{(form) => (
+						<Form>
+							<div className="gap-4 w-full flex flex-col justify-center items-center">
+								<div className="flex flex-col gap-4">
+									<Field
+										className="input input-bordered w-full sm:w-96 text-sm md:text-base"
+										placeholder="Student Email (firstname.lastname)"
+										type="email"
+										name="email"
+										value={form.values.email}
+										onChange={form.handleChange}
+									/>
+									<div className="flex items-start justify-center gap-4">
+										<label className="flex items-center gap-2">
+											<Field
+												type="radio"
+												name="location"
+												value={"InPerson" satisfies UserLocation}
+												className="radio radio-primary"
+											/>
+											<span className="label-text text-xs md:text-sm">
+												{locationEnumLabel.InPerson}
+											</span>
+										</label>
+										<label className="flex items-center gap-2">
+											<Field
+												type="radio"
+												name="location"
+												value={"Online" satisfies UserLocation}
+												className="radio radio-primary"
+											/>
+											<span className="label-text text-xs md:text-sm">
+												{locationEnumLabel.Online}
+											</span>
+										</label>
+										<label className="flex items-center gap-2">
+											<Field
+												type="radio"
+												name="location"
+												value={"Proxy" satisfies UserLocation}
+												className="radio radio-primary"
+											/>
+											<span className="label-text text-xs md:text-sm">
+												{locationEnumLabel.Proxy}
+											</span>
+										</label>
+									</div>
+									<Button
+										className="btn-primary w-28 self-center m-3"
+										type="submit"
+										disabled={disabled || Object.values(form.errors).length > 0}
+										isLoading={mutation.isPending}
+									>
+										Join
+									</Button>
+								</div>
+							</div>
+						</Form>
+					)}
+				</Formik>
+			</fieldset>
+		</CenteredPageContainer>
+	);
 }

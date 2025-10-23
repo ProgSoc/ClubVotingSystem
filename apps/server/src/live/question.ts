@@ -1,71 +1,74 @@
-import type { TypeOf } from 'zod';
-import { z } from 'zod';
-import type { QuestionFormat } from '../dbschema/interfaces';
+import type { TypeOf } from "zod";
+import { z } from "zod";
+import type { QuestionFormat } from "../dbschema/interfaces";
 
-const singleVoteType = 'SingleVote' satisfies QuestionFormat;
+const singleVoteType = "SingleVote" satisfies QuestionFormat;
 
-const preferentialVoteType = 'PreferentialVote' satisfies QuestionFormat;
+const preferentialVoteType = "PreferentialVote" satisfies QuestionFormat;
 
 export interface SingleVoteQuestionFormat {
-  type: typeof singleVoteType;
+	type: typeof singleVoteType;
 }
 
 export interface PreferentialVoteQuestionFormat {
-  type: typeof preferentialVoteType;
+	type: typeof preferentialVoteType;
 }
 
 export type QuestionFormatDetails =
-  | SingleVoteQuestionFormat
-  | PreferentialVoteQuestionFormat;
+	| SingleVoteQuestionFormat
+	| PreferentialVoteQuestionFormat;
 
 const abstainQuestionResponse = z.object({
-  type: z.literal('Abstain'),
+	type: z.literal("Abstain"),
 });
 
 const singleVoteQuestionResponse = z.object({
-  type: z.literal(singleVoteType),
-  candidateId: z.string(),
+	type: z.literal(singleVoteType),
+	candidateId: z.string(),
 });
 
 const preferentialVoteQuestionResponse = z.object({
-  type: z.literal(preferentialVoteType),
-  votes: z.array(z.object({
-    candidateId: z.string(),
-    rank: z.number(),
-  })),
+	type: z.literal(preferentialVoteType),
+	votes: z.array(
+		z.object({
+			candidateId: z.string(),
+			rank: z.number(),
+		}),
+	),
 });
 
 export const questionResponse = z.union([
-  abstainQuestionResponse,
-  singleVoteQuestionResponse,
-  preferentialVoteQuestionResponse,
+	abstainQuestionResponse,
+	singleVoteQuestionResponse,
+	preferentialVoteQuestionResponse,
 ]);
 
 export type QuestionResponse = TypeOf<typeof questionResponse>;
 
 export interface CandidateWithVotes {
-  id: string;
-  name: string;
-  votes: number;
+	id: string;
+	name: string;
+	votes: number;
 }
 
 export interface CandidateWithRank {
-  id: string;
-  name: string;
-  rank: number;
-  votes: number;
+	id: string;
+	name: string;
+	rank: number;
+	votes: number;
 }
 
 export interface SingleVoteResultsView {
-  type: typeof singleVoteType;
-  results: CandidateWithVotes[];
+	type: typeof singleVoteType;
+	results: CandidateWithVotes[];
 }
 
 export interface PreferentialVoteResultsView {
-  type: typeof preferentialVoteType;
-  results: CandidateWithRank[];
+	type: typeof preferentialVoteType;
+	results: CandidateWithRank[];
 }
 
-export type ResultsView =
-  & { abstained: number }
-  & (SingleVoteResultsView | PreferentialVoteResultsView);
+export type ResultsView = { abstained: number } & (
+	| SingleVoteResultsView
+	| PreferentialVoteResultsView
+);

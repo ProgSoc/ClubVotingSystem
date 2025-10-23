@@ -1,5 +1,5 @@
 export class UnreachableError extends Error {
-  constructor(val: never) {
-    super('Unreachable');
-  }
+	constructor(val: never) {
+		super("Unreachable");
+	}
 }

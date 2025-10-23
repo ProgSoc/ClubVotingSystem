@@ -5,23 +5,23 @@
  * @returns Array of candidates and their votes
  */
 function tallyVotes(
-  candidates: readonly string[],
-  votes: readonly string[][],
+	candidates: readonly string[],
+	votes: readonly string[][],
 ): Record<string, number> {
-  const voteCounts: Record<string, number> = {};
-  candidates.forEach((candidate) => {
-    voteCounts[candidate] = 0;
-  });
+	const voteCounts: Record<string, number> = {};
+	candidates.forEach((candidate) => {
+		voteCounts[candidate] = 0;
+	});
 
-  // Tally first-choice votes
-  votes.forEach((vote) => {
-    const firstChoice = vote[0];
-    if (voteCounts[firstChoice!] !== undefined) {
-      voteCounts[firstChoice!]! += 1;
-    }
-  });
+	// Tally first-choice votes
+	votes.forEach((vote) => {
+		const firstChoice = vote[0];
+		if (voteCounts[firstChoice!] !== undefined) {
+			voteCounts[firstChoice!]! += 1;
+		}
+	});
 
-  return voteCounts;
+	return voteCounts;
 }
 
 /**
@@ -30,20 +30,19 @@ function tallyVotes(
  * @returns Array of candidate identifiers with the fewest votes
  */
 function findLowestVoteCandidates(
-  voteCounts: Record<string, number>,
+	voteCounts: Record<string, number>,
 ): readonly string[] {
-  let minVotes = Infinity;
-  let lowestCandidates: string[] = [];
-  for (const candidate in voteCounts) {
-    if (voteCounts[candidate]! < minVotes) {
-      minVotes = voteCounts[candidate]!;
-      lowestCandidates = [candidate];
-    }
-    else if (voteCounts[candidate] === minVotes) {
-      lowestCandidates.push(candidate);
-    }
-  }
-  return lowestCandidates;
+	let minVotes = Infinity;
+	let lowestCandidates: string[] = [];
+	for (const candidate in voteCounts) {
+		if (voteCounts[candidate]! < minVotes) {
+			minVotes = voteCounts[candidate]!;
+			lowestCandidates = [candidate];
+		} else if (voteCounts[candidate] === minVotes) {
+			lowestCandidates.push(candidate);
+		}
+	}
+	return lowestCandidates;
 }
 
 /**
@@ -53,17 +52,19 @@ function findLowestVoteCandidates(
  * @returns New preference lists with eliminated candidates removed
  */
 function reassignVotes(
-  votes: readonly string[][],
-  candidatesToRemove: readonly string[],
+	votes: readonly string[][],
+	candidatesToRemove: readonly string[],
 ): readonly string[][] {
-  return votes.map(vote =>
-    vote.filter(candidate => !candidatesToRemove.includes(candidate)),
-  ).filter(vote => vote.length > 0);
+	return votes
+		.map((vote) =>
+			vote.filter((candidate) => !candidatesToRemove.includes(candidate)),
+		)
+		.filter((vote) => vote.length > 0);
 }
 
 interface CandidateWithVotes {
-  id: string;
-  votes: number;
+	id: string;
+	votes: number;
 }
 
 /**
@@ -74,53 +75,52 @@ interface CandidateWithVotes {
  * @returns Array of strings representing the elected candidates
  */
 export function rankedChoiceVoting(
-  candidates: readonly string[],
-  voteSets: readonly string[][],
-  maxElected: number,
+	candidates: readonly string[],
+	voteSets: readonly string[][],
+	maxElected: number,
 ): readonly CandidateWithVotes[] {
-  const electedCandidates: string[] = [];
+	const electedCandidates: string[] = [];
 
-  // remove votes from people that are not candidates
-  voteSets = voteSets.map(preferences =>
-    preferences.filter(preference => candidates.includes(preference)),
-  );
+	// remove votes from people that are not candidates
+	voteSets = voteSets.map((preferences) =>
+		preferences.filter((preference) => candidates.includes(preference)),
+	);
 
-  while (electedCandidates.length < maxElected) {
-    // Tally the current votes
-    const voteCounts = tallyVotes(candidates, voteSets);
+	while (electedCandidates.length < maxElected) {
+		// Tally the current votes
+		const voteCounts = tallyVotes(candidates, voteSets);
 
-    // Check if we have enough candidates to meet maxElected
-    if (candidates.length <= maxElected) {
-      // Add remaining candidates to elected list
-      electedCandidates.push(...candidates);
-      return electedCandidates.map(candidate => ({
-        id: candidate,
-        votes: voteCounts[candidate]!,
-      }));
-    }
+		// Check if we have enough candidates to meet maxElected
+		if (candidates.length <= maxElected) {
+			// Add remaining candidates to elected list
+			electedCandidates.push(...candidates);
+			return electedCandidates.map((candidate) => ({
+				id: candidate,
+				votes: voteCounts[candidate]!,
+			}));
+		}
 
-    // Find the candidates with the fewest votes
-    const lowestCandidates = findLowestVoteCandidates(voteCounts);
+		// Find the candidates with the fewest votes
+		const lowestCandidates = findLowestVoteCandidates(voteCounts);
 
-    // Determine if eliminating these candidates would drop below maxElected
-    if (candidates.length - lowestCandidates.length >= maxElected) {
-      // Eliminate the candidates with the fewest votes
-      candidates = candidates.filter(candidate =>
-        !lowestCandidates.includes(candidate),
-      );
+		// Determine if eliminating these candidates would drop below maxElected
+		if (candidates.length - lowestCandidates.length >= maxElected) {
+			// Eliminate the candidates with the fewest votes
+			candidates = candidates.filter(
+				(candidate) => !lowestCandidates.includes(candidate),
+			);
 
-      // Reassign votes from the eliminated candidates to remaining candidates
-      voteSets = reassignVotes(voteSets, lowestCandidates);
-    }
-    else {
-      // Add the remaining candidates to the elected list
-      electedCandidates.push(...candidates);
-      return electedCandidates.map(candidate => ({
-        id: candidate,
-        votes: voteCounts[candidate]!,
-      }));
-    }
-  }
+			// Reassign votes from the eliminated candidates to remaining candidates
+			voteSets = reassignVotes(voteSets, lowestCandidates);
+		} else {
+			// Add the remaining candidates to the elected list
+			electedCandidates.push(...candidates);
+			return electedCandidates.map((candidate) => ({
+				id: candidate,
+				votes: voteCounts[candidate]!,
+			}));
+		}
+	}
 
-  return electedCandidates.map(candidate => ({ id: candidate, votes: 0 }));
+	return electedCandidates.map((candidate) => ({ id: candidate, votes: 0 }));
 }

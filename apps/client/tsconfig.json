@@ -1,31 +1,31 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "jsx": "react-jsx",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "useDefineForClassFields": true,
-    "baseUrl": "./src",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "allowJs": false,
-    "strict": true,
-    "noEmit": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": false,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "skipLibCheck": true,
-    "outDir": "./dist-ts",
-    "types": ["vite/client"]
-  },
-  "references": [
-    {
-      "path": "../server/tsconfig.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ],
-  "include": ["src"]
+	"compilerOptions": {
+		"target": "ESNext",
+		"jsx": "react-jsx",
+		"lib": ["DOM", "DOM.Iterable", "ESNext"],
+		"useDefineForClassFields": true,
+		"baseUrl": "./src",
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"resolveJsonModule": true,
+		"allowJs": false,
+		"strict": true,
+		"noEmit": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": false,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"outDir": "./dist-ts",
+		"types": ["vite/client"]
+	},
+	"references": [
+		{
+			"path": "../server/tsconfig.json"
+		},
+		{
+			"path": "./tsconfig.node.json"
+		}
+	],
+	"include": ["src"]
 }

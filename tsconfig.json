@@ -1,16 +1,16 @@
 {
-  "extends": "./tsconfig.base.json",
-  "files": [],
-  "compilerOptions": {
-    "composite": true,
-    "outDir": "dist"
-  },
-  "references": [
-    {
-      "path": "./apps/server",
-    },
-    {
-      "path": "./apps/client"
-    }
-  ]
+	"extends": "./tsconfig.base.json",
+	"files": [],
+	"compilerOptions": {
+		"composite": true,
+		"outDir": "dist"
+	},
+	"references": [
+		{
+			"path": "./apps/server"
+		},
+		{
+			"path": "./apps/client"
+		}
+	]
 }

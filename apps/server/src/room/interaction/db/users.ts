@@ -1,65 +1,68 @@
-import { nanoid } from 'nanoid';
-import type { UserLocation, WaitingState } from '../../../dbschema/interfaces';
-import { UserNotAVoter, UserNotFoundError, UserNotInWaitingRoom } from '../../../errors';
-import type { GetStatesUnion } from '../../../state';
-import { makeStates, state } from '../../../state';
-import { UnreachableError } from '../../../unreachableError';
-import type {
-  DbRoomUser,
-  RoomUserDetails,
-} from './queries';
+import { nanoid } from "nanoid";
+import type { UserLocation, WaitingState } from "../../../dbschema/interfaces";
 import {
-  dbCreateUser,
-  dbGetAllRoomUsers,
-  dbGetRoomUserById,
-  dbGetRoomUserByVotingKey,
-  dbSetUserState,
-} from './queries';
+	UserNotAVoter,
+	UserNotFoundError,
+	UserNotInWaitingRoom,
+} from "../../../errors";
+import type { GetStatesUnion } from "../../../state";
+import { makeStates, state } from "../../../state";
+import { UnreachableError } from "../../../unreachableError";
+import type { DbRoomUser, RoomUserDetails } from "./queries";
+import {
+	dbCreateUser,
+	dbGetAllRoomUsers,
+	dbGetRoomUserById,
+	dbGetRoomUserByVotingKey,
+	dbSetUserState,
+} from "./queries";
 
 export interface JoinWaitingRoomParams {
-  studentEmail: string;
-  location: UserLocation;
+	studentEmail: string;
+	location: UserLocation;
 }
 
 interface WithUserId {
-  id: string;
+	id: string;
 }
 
 interface WithvotingKey extends WithUserId {
-  votingKey: string;
+	votingKey: string;
 }
 
 export interface WaitingRoomUser {
-  id: string;
-  state: Extract<WaitingState, 'Waiting'>;
+	id: string;
+	state: Extract<WaitingState, "Waiting">;
 }
 
 export interface RoomUserWithDetails extends WithUserId {
-  details: RoomUserDetails;
+	details: RoomUserDetails;
 }
 
 export interface RoomVoterWithDetails extends RoomUserWithDetails {
-  votingKey: string;
+	votingKey: string;
 }
 
-export type RoomUserResolvedState = GetStatesUnion<typeof RoomUserResolvedState.enum>;
-export const RoomUserResolvedState = makeStates('rurs', {
-  admitted: state<WithvotingKey>(),
-  declined: state<WithUserId>(),
-  kicked: state<WithUserId>(),
+export type RoomUserResolvedState = GetStatesUnion<
+	typeof RoomUserResolvedState.enum
+>;
+export const RoomUserResolvedState = makeStates("rurs", {
+	admitted: state<WithvotingKey>(),
+	declined: state<WithUserId>(),
+	kicked: state<WithUserId>(),
 });
 
 export type RoomUserState = GetStatesUnion<typeof RoomUserState.enum>;
-export const RoomUserState = makeStates('rus', {
-  waiting: state<WithUserId>(),
-  admitted: state<WithvotingKey>(),
-  declined: state<WithUserId>(),
-  kicked: state<WithUserId>(),
+export const RoomUserState = makeStates("rus", {
+	waiting: state<WithUserId>(),
+	admitted: state<WithvotingKey>(),
+	declined: state<WithUserId>(),
+	kicked: state<WithUserId>(),
 });
 
 export interface RoomUsersList {
-  waiting: RoomUserWithDetails[];
-  admitted: RoomUserWithDetails[];
+	waiting: RoomUserWithDetails[];
+	admitted: RoomUserWithDetails[];
 }
 
 /**
@@ -67,156 +70,159 @@ export interface RoomUsersList {
  * however it contains votingKeys which must be private.
  */
 export interface RoomUsersListWithvotingKeys {
-  waiting: RoomUserWithDetails[];
-  admitted: RoomVoterWithDetails[];
+	waiting: RoomUserWithDetails[];
+	admitted: RoomVoterWithDetails[];
 }
 
 function getRoomStateFromUser(user: DbRoomUser): RoomUserState {
-  switch (user.state) {
-    case 'Waiting':
-      return RoomUserState.waiting({
-        id: user.id,
-      });
-    case 'Admitted':
-      return RoomUserState.admitted({
-        id: user.id,
+	switch (user.state) {
+		case "Waiting":
+			return RoomUserState.waiting({
+				id: user.id,
+			});
+		case "Admitted":
+			return RoomUserState.admitted({
+				id: user.id,
 
-        // When admitted, it's assumed that user is not null
-        votingKey: user.votingKey!,
-      });
-    case 'Declined':
-      return RoomUserState.declined({
-        id: user.id,
-      });
-    case 'Kicked':
-      return RoomUserState.kicked({
-        id: user.id,
-      });
+				// When admitted, it's assumed that user is not null
+				votingKey: user.votingKey!,
+			});
+		case "Declined":
+			return RoomUserState.declined({
+				id: user.id,
+			});
+		case "Kicked":
+			return RoomUserState.kicked({
+				id: user.id,
+			});
 
-    default:
-      throw new UnreachableError(user.state);
-  }
+		default:
+			throw new UnreachableError(user.state);
+	}
 }
 
-export function userRoomStateToResolvedState(user: RoomUserState): RoomUserResolvedState | null {
-  return RoomUserState.match<RoomUserResolvedState | null>(user, {
-    waiting: state => null,
-    admitted: state => RoomUserResolvedState.admitted(state),
-    declined: state => RoomUserResolvedState.declined(state),
-    kicked: state => RoomUserResolvedState.kicked(state),
-  });
+export function userRoomStateToResolvedState(
+	user: RoomUserState,
+): RoomUserResolvedState | null {
+	return RoomUserState.match<RoomUserResolvedState | null>(user, {
+		waiting: (state) => null,
+		admitted: (state) => RoomUserResolvedState.admitted(state),
+		declined: (state) => RoomUserResolvedState.declined(state),
+		kicked: (state) => RoomUserResolvedState.kicked(state),
+	});
 }
 
 export function makeVoterInteractionFunctions(roomId: string) {
-  let currentRoomUsersListPromise: Promise<RoomUsersListWithvotingKeys> | null = null;
+	let currentRoomUsersListPromise: Promise<RoomUsersListWithvotingKeys> | null =
+		null;
 
-  async function fetchCurrentList(): Promise<RoomUsersListWithvotingKeys> {
-    const roomUsers = await dbGetAllRoomUsers(roomId);
+	async function fetchCurrentList(): Promise<RoomUsersListWithvotingKeys> {
+		const roomUsers = await dbGetAllRoomUsers(roomId);
 
-    return {
-      admitted: roomUsers
-        .filter(u => u.state === 'Admitted')
-        .map(u => ({
-          id: u.id,
-          details: u.userDetails,
-          votingKey: u.votingKey!,
-        })),
-      waiting: roomUsers
-        .filter(u => u.state === 'Waiting')
-        .map(u => ({
-          id: u.id,
-          details: u.userDetails,
-        })),
-    };
-  }
+		return {
+			admitted: roomUsers
+				.filter((u) => u.state === "Admitted")
+				.map((u) => ({
+					id: u.id,
+					details: u.userDetails,
+					votingKey: u.votingKey!,
+				})),
+			waiting: roomUsers
+				.filter((u) => u.state === "Waiting")
+				.map((u) => ({
+					id: u.id,
+					details: u.userDetails,
+				})),
+		};
+	}
 
-  async function getUser(userId: string): Promise<DbRoomUser> {
-    const user = await dbGetRoomUserById(userId);
+	async function getUser(userId: string): Promise<DbRoomUser> {
+		const user = await dbGetRoomUserById(userId);
 
-    if (!user) {
-      throw new UserNotFoundError(userId);
-    }
+		if (!user) {
+			throw new UserNotFoundError(userId);
+		}
 
-    return user;
-  }
+		return user;
+	}
 
-  const fns = {
-    currentRoomUsersListWithvotingKeys: () => {
-      if (!currentRoomUsersListPromise) {
-        currentRoomUsersListPromise = fetchCurrentList();
-      }
-      return currentRoomUsersListPromise;
-    },
+	const fns = {
+		currentRoomUsersListWithvotingKeys: () => {
+			if (!currentRoomUsersListPromise) {
+				currentRoomUsersListPromise = fetchCurrentList();
+			}
+			return currentRoomUsersListPromise;
+		},
 
-    currentRoomUsersList: async (): Promise<RoomUsersList> => {
-      const list = await fns.currentRoomUsersListWithvotingKeys();
-      return {
-        admitted: list.admitted.map(u => ({
-          id: u.id,
-          details: u.details,
-        })),
-        waiting: list.waiting,
-      };
-    },
+		currentRoomUsersList: async (): Promise<RoomUsersList> => {
+			const list = await fns.currentRoomUsersListWithvotingKeys();
+			return {
+				admitted: list.admitted.map((u) => ({
+					id: u.id,
+					details: u.details,
+				})),
+				waiting: list.waiting,
+			};
+		},
 
-    joinWaitingList: async (params: JoinWaitingRoomParams) => {
-      const waitingUser = await dbCreateUser(roomId, {
-        studentEmail: params.studentEmail,
-        location: params.location,
-      });
+		joinWaitingList: async (params: JoinWaitingRoomParams) => {
+			const waitingUser = await dbCreateUser(roomId, {
+				studentEmail: params.studentEmail,
+				location: params.location,
+			});
 
-      currentRoomUsersListPromise = null;
+			currentRoomUsersListPromise = null;
 
-      return { userId: waitingUser.id };
-    },
+			return { userId: waitingUser.id };
+		},
 
-    getUserAdmissionStatus: async (userId: string): Promise<RoomUserState> => {
-      return getRoomStateFromUser(await getUser(userId));
-    },
+		getUserAdmissionStatus: async (userId: string): Promise<RoomUserState> => {
+			return getRoomStateFromUser(await getUser(userId));
+		},
 
-    assertUserIsInWaitingRoom: async (userId: string) => {
-      const user = await getUser(userId);
-      if (user.state !== 'Waiting') {
-        throw new UserNotInWaitingRoom(userId);
-      }
-    },
+		assertUserIsInWaitingRoom: async (userId: string) => {
+			const user = await getUser(userId);
+			if (user.state !== "Waiting") {
+				throw new UserNotInWaitingRoom(userId);
+			}
+		},
 
-    assertUserAdmitted: async (userId: string) => {
-      const user = await getUser(userId);
-      if (user.state !== 'Admitted') {
-        throw new UserNotAVoter(userId);
-      }
-    },
+		assertUserAdmitted: async (userId: string) => {
+			const user = await getUser(userId);
+			if (user.state !== "Admitted") {
+				throw new UserNotAVoter(userId);
+			}
+		},
 
-    admitUser: async (userId: string) => {
-      await fns.assertUserIsInWaitingRoom(userId);
+		admitUser: async (userId: string) => {
+			await fns.assertUserIsInWaitingRoom(userId);
 
-      const key = nanoid();
-      await dbSetUserState(userId, 'Admitted', key);
+			const key = nanoid();
+			await dbSetUserState(userId, "Admitted", key);
 
-      return {
-        votingKey: key!,
-      };
-    },
+			return {
+				votingKey: key!,
+			};
+		},
 
-    declineUser: async (userId: string) => {
-      await fns.assertUserIsInWaitingRoom(userId);
-      await dbSetUserState(userId, 'Declined', null);
-    },
+		declineUser: async (userId: string) => {
+			await fns.assertUserIsInWaitingRoom(userId);
+			await dbSetUserState(userId, "Declined", null);
+		},
 
-    kickVoter: async (userId: string) => {
-      await fns.assertUserAdmitted(userId);
-      await dbSetUserState(userId, 'Kicked');
-    },
+		kickVoter: async (userId: string) => {
+			await fns.assertUserAdmitted(userId);
+			await dbSetUserState(userId, "Kicked");
+		},
 
-    getUserByVotingKey: async (votingKey: string) => {
-      return dbGetRoomUserByVotingKey(votingKey);
-    },
+		getUserByVotingKey: async (votingKey: string) => {
+			return dbGetRoomUserByVotingKey(votingKey);
+		},
 
-    getUserById: async (userId: string) => {
-      return dbGetRoomUserById(userId);
-    },
-  };
+		getUserById: async (userId: string) => {
+			return dbGetRoomUserById(userId);
+		},
+	};
 
-  return fns;
+	return fns;
 }
