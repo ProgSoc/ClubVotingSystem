@@ -11,11 +11,6 @@ RUN bun install
 
 COPY . .
 
-WORKDIR /app/apps/server
-RUN bunx gel project init --non-interactive 
-
-WORKDIR /app
-
 RUN bun run build
 
 

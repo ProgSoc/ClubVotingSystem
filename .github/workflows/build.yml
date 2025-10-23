@@ -24,9 +24,6 @@ jobs:
       - name: init gel
         run: cd apps/server && bunx gel project init --non-interactive
 
-      - name: generate gel schema types
-        run: bun run --filter server generate
-
       - name: Docker Meta Release
         id: meta-release
         uses: docker/metadata-action@v5
