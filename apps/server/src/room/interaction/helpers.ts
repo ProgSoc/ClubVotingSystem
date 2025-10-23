@@ -1,5 +1,5 @@
 import { NoQuestionOpenError, QuestionAlreadyOpenError, RoomIsClosedError } from '../../errors';
-import { pubSub, roomBoardEventsNotifications, roomVoterNotifications, roomWaitingListNotifications } from '../../live';
+import { pubSub } from '../../live';
 import type { ShowingQuestionState, ShowingResultsState } from '../../live/states';
 import { BoardState, VoterState } from '../../live/states';
 import { AyncKeyLock } from '../../lock';

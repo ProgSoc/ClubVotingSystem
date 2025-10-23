@@ -1,5 +1,5 @@
 import { VoterNotFoundError } from '../../errors';
-import { pubSub, roomBoardEventsNotifications, roomVoterNotifications, userWaitingListNotifications } from '../../live';
+import { pubSub } from '../../live';
 import type { QuestionResponse } from '../../live/question';
 import type { BoardState } from '../../live/states';
 import { VoterState } from '../../live/states';
@@ -94,16 +94,13 @@ export function waitForAdmission(roomId: string, userId: string) {
     });
   };
 
-  return new Promise<RoomUserResolvedState>((resolve, reject) => {
-    const unsubscribe = userWaitingListNotifications.subscribe({ userId }, getAdmissionStatus, (state) => {
-      const resolvedState = userRoomStateToResolvedState(state);
-      if (!resolvedState) {
-        return;
+  return new Promise<RoomUserResolvedState>(async (resolve, reject) => {
+    for await (const {data} of pubSub.subscribe("userWaitingList", userId)) {
+      const resolvedState = userRoomStateToResolvedState(data);
+      if (resolvedState) {
+        resolve(resolvedState);
       }
-
-      resolve(resolvedState);
-      unsubscribe();
-    });
+    }
 
     // In case some unexpected race condition happened, try sending the state again 5 seconds later.
     // This never happened in testing, but adding this here just in case.
