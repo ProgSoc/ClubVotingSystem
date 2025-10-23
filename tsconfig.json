@@ -1,20 +1,16 @@
 {
+  "extends": "./tsconfig.base.json",
+  "files": [],
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "strict": true,
-    "noImplicitAny": true,
-    "noEmit": false,
-    "outDir": "dist-ts",
-    "preserveConstEnums": true,
-    "removeComments": true,
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "skipLibCheck": true
+    "composite": true,
+    "outDir": "dist"
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "eslint.config.mjs"],
-  "exclude": ["node_modules", "test/**/*.test.tsx", "test/**/*.test.ts", ".eslint.config.js"]
+  "references": [
+    {
+      "path": "./apps/server",
+    },
+    {
+      "path": "./apps/client"
+    }
+  ]
 }

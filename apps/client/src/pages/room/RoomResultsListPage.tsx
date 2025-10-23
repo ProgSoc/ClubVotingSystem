@@ -1,4 +1,4 @@
-import type { RoomPublicInfo } from '@server/room/types';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Heading, PageContainer, Question } from 'components/styles';
 import { trpc } from 'utils/trpc';

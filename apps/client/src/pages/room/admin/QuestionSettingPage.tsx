@@ -1,10 +1,10 @@
-import type { QuestionFormat } from '@server/dbschema/interfaces';
-import type { ShowingQuestionState, ShowingResultsState } from '@server/live/states';
-import { BoardState } from '@server/live/states';
-import type { CreateQuestionParams, RoomPublicInfo } from '@server/room/types';
-import type { GetStatesUnion } from '@server/state';
-import { makeStates, state } from '@server/state';
-import { UnreachableError } from '@server/unreachableError';
+import type { QuestionFormat } from 'server/src/dbschema/interfaces';
+import type { ShowingQuestionState, ShowingResultsState } from 'server/src/live/states';
+import { BoardState } from 'server/src/live/states';
+import type { CreateQuestionParams, RoomPublicInfo } from 'server/src/room/types';
+import type { GetStatesUnion } from 'server/src/state';
+import { makeStates, state } from 'server/src/state';
+import { UnreachableError } from 'server/src/unreachableError';
 import { AdminRouter } from 'components/adminRouter';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, Heading, PageContainer, Question } from 'components/styles';

@@ -1,5 +1,5 @@
-import type { ShowingResultsState } from '@server/live/states';
-import type { RoomPublicInfo } from '@server/room/types';
+import type { ShowingResultsState } from 'server/src/live/states';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import { ResultsViewer } from 'components/ResultsViewer';
 import { Button, CenteredPageContainer, Heading, Question } from 'components/styles';
 import { useEffect, useMemo } from 'react';

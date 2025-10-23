@@ -82,7 +82,7 @@ export function withRoomAdminFunctions<T>(
 export async function* subscribeToUserListNotifications(
   roomId: string,
   adminKey: string,
-) {
+): AsyncGenerator<RoomUsersList, void, unknown> {
   yield withRoomAdminFunctions(roomId, adminKey, async fns => fns.currentRoomUsersList())
 
   const newNotifications = pubSub.subscribe("roomWaitingList", roomId)

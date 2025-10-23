@@ -16,8 +16,8 @@ function tallyVotes(
   // Tally first-choice votes
   votes.forEach((vote) => {
     const firstChoice = vote[0];
-    if (voteCounts[firstChoice] !== undefined) {
-      voteCounts[firstChoice] += 1;
+    if (voteCounts[firstChoice!] !== undefined) {
+      voteCounts[firstChoice!] += 1;
     }
   });
 
@@ -35,8 +35,8 @@ function findLowestVoteCandidates(
   let minVotes = Infinity;
   let lowestCandidates: string[] = [];
   for (const candidate in voteCounts) {
-    if (voteCounts[candidate] < minVotes) {
-      minVotes = voteCounts[candidate];
+    if (voteCounts[candidate]! < minVotes) {
+      minVotes = voteCounts[candidate]!;
       lowestCandidates = [candidate];
     }
     else if (voteCounts[candidate] === minVotes) {
@@ -95,7 +95,7 @@ export function rankedChoiceVoting(
       electedCandidates.push(...candidates);
       return electedCandidates.map(candidate => ({
         id: candidate,
-        votes: voteCounts[candidate],
+        votes: voteCounts[candidate]!,
       }));
     }
 
@@ -117,7 +117,7 @@ export function rankedChoiceVoting(
       electedCandidates.push(...candidates);
       return electedCandidates.map(candidate => ({
         id: candidate,
-        votes: voteCounts[candidate],
+        votes: voteCounts[candidate]!,
       }));
     }
   }

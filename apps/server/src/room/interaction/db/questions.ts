@@ -92,7 +92,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
           if (!voterAndCandidateRank[vote.voterId]) {
             voterAndCandidateRank[vote.voterId] = [];
           }
-          voterAndCandidateRank[vote.voterId].push({
+          voterAndCandidateRank[vote.voterId]!.push({
             candidateId: vote.candidateId,
             rank: vote.rank,
           });

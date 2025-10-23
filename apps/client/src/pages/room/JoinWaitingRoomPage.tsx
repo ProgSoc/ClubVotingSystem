@@ -1,4 +1,4 @@
-import type { UserLocation } from '@server/dbschema/interfaces';
+import type { UserLocation } from 'server/src/dbschema/interfaces';
 import { Button, CenteredPageContainer, Heading } from 'components/styles';
 import { Field, Form, Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';

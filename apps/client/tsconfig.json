@@ -16,12 +16,16 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "outDir": "./dist-ts"
+    "outDir": "./dist-ts",
+    "types": ["vite/client"]
   },
   "references": [
+    {
+      "path": "../server/tsconfig.json"
+    },
     {
       "path": "./tsconfig.node.json"
     }
   ],
-  "include": ["src", "../server/src", "../../test.ts"]
+  "include": ["src"]
 }

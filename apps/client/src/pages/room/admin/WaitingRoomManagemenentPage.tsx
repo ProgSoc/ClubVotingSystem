@@ -1,5 +1,5 @@
-import type { RoomUserWithDetails } from '@server/live/user';
-import type { RoomPublicInfo } from '@server/room/types';
+import type { RoomUserWithDetails } from 'server/src/live/user';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import { AdminRouter } from 'components/adminRouter';
 import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
@@ -80,7 +80,7 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
         setUsers((users) => {
           const getUserById = (userId: string) => users.find(u => u.id === userId);
 
-          return waiting.map(user => ({
+          return waiting.map((user: RoomUserWithDetails) => ({
             ...user,
 
             // If the user already exist then keep the loading state, otherwise set it to waiting
@@ -91,7 +91,7 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
         setVoters((voters) => {
           const getUserById = (userId: string) => voters.find(u => u.id === userId);
 
-          return admitted.map(voters => ({
+          return admitted.map((voters: RoomUserWithDetails) => ({
             ...voters,
 
             // If the user already exist then keep the loading state, otherwise set it to voting

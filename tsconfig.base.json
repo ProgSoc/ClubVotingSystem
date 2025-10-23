@@ -1,0 +1,12 @@
+{
+	"compilerOptions": {
+		"composite": true,
+		"skipLibCheck": true,
+		"declaration": true,
+		"strict": true,
+		"paths": {
+			"server": ["./apps/server"],
+			"server/*": ["./apps/server/*"]
+		}
+	}
+}

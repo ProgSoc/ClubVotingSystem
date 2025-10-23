@@ -17,7 +17,7 @@ type CreateVariantFn<Prefix extends string, Name extends string, Obj extends obj
 ) => Variant<VariantName<Prefix, Name>, Obj>;
 
 /** An empty type to store an inner type. The value is never T, but that's necessary for typescript to not simplify it */
-interface Empty<T> { _dummy?: T }
+export interface Empty<T> { _dummy?: T }
 
 /** Get the type inside an empty */
 type UnwrapEmpty<T extends Empty<any>> = T extends Empty<infer U> ? U : never;
@@ -33,7 +33,7 @@ type StateObjectCreateFns<P extends string, O extends Record<string, Empty<any>>
 };
 
 /** The helper fields a state object has: a reference to the enum object and a reference to the match function for the object */
-interface StateObjectHelperFields<P extends string, O extends Record<string, Empty<any>>> {
+export interface StateObjectHelperFields<P extends string, O extends Record<string, Empty<any>>> {
   enum: StateEnum<P, O>;
   match: <Ret>(
     value: GetStatesUnion<StateEnum<P, O>>,
@@ -103,7 +103,7 @@ export function makeStates<P extends string, O extends Record<string, Empty<any>
     enum: result,
     is: isFns,
     match: (value, matcher) => {
-      const handler = matcher[enumReverse[value[variantField]]] as any;
+      const handler = matcher[enumReverse[value[variantField]]!] as any;
       if (handler) {
         return handler(value);
       }

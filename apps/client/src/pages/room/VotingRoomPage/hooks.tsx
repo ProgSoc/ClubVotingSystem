@@ -1,8 +1,8 @@
-import type { QuestionResponse } from '@server/live/question';
-import type { ShowingQuestionState, ShowingResultsState } from '@server/live/states';
-import { VoterState } from '@server/live/states';
-import type { GetStatesUnion } from '@server/state';
-import { makeStates, state } from '@server/state';
+import type { QuestionResponse } from 'server/src/live/question';
+import type { ShowingQuestionState, ShowingResultsState } from 'server/src/live/states';
+import { VoterState } from 'server/src/live/states';
+import type { GetStatesUnion } from 'server/src/state';
+import { makeStates, state } from 'server/src/state';
 import { useEffect, useRef, useState } from 'react';
 import { trpc } from 'utils/trpc';
 

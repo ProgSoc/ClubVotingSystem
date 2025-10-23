@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@server/': path.join(__dirname, '../server/src/'),
+      // 'server/src/': path.join(__dirname, '../server/src/'),
       'pages/': path.join(__dirname, 'src/pages/'),
       'components/': path.join(__dirname, 'src/components/'),
       'routes/': path.join(__dirname, 'src/routes/'),

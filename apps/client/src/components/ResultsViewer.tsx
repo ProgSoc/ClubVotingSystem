@@ -1,5 +1,5 @@
-import type { ResultsView } from '@server/live/question';
-import { UnreachableError } from '@server/unreachableError';
+import type { ResultsView } from 'server/src/live/question';
+import { UnreachableError } from 'server/src/unreachableError';
 import { twMerge } from 'tailwind-merge';
 
 function asWidthPercentage(val: number, max: number) {

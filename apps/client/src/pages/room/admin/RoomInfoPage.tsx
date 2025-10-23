@@ -1,5 +1,5 @@
-import { BoardState } from '@server/live/states';
-import type { RoomPublicInfo } from '@server/room/types';
+import { BoardState } from 'server/src/live/states';
+import type { RoomPublicInfo } from 'server/src/room/types';
 import { AdminRouter } from 'components/adminRouter';
 import { Button, Heading, PageContainer } from 'components/styles';
 import { useState } from 'react';
