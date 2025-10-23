@@ -1,7 +1,5 @@
-import { observable } from "@trpc/server/observable";
 import { z } from "zod";
 import type { QuestionFormat } from "../dbschema/interfaces";
-import type { RoomUsersList } from "../live/user";
 import { operations } from "../room";
 import { publicProcedure, router } from "../trpc";
 

@@ -159,7 +159,7 @@ function useFetchInitialVote(
 				setFetchState(InitialVoteFetchState.ignoring({}));
 			}
 		}
-	}, [voterState]);
+	}, [voterState, fetchState]);
 
 	useEffect(() => {
 		if (
@@ -182,7 +182,7 @@ function useFetchInitialVote(
 				setFetchState(InitialVoteFetchState.ignoring({}));
 			}
 		}
-	}, [initialVoteQuery.data]);
+	}, [initialVoteQuery.data, fetchState, setLastVote, voterState]);
 
 	return {
 		// We're loading if we're waiting for the board state, or if we're fetching

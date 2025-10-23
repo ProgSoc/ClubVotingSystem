@@ -80,7 +80,7 @@ function useQuestionSetter(props: {
 	};
 
 	return BoardState.match<QuestionSettingPageState>(state, {
-		blank: (state) => {
+		blank: (_state) => {
 			return QuestionSettingPageState.setQuestion({
 				setQuestion: createQuestion,
 			});

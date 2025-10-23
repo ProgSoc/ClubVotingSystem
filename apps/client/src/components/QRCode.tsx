@@ -6,8 +6,8 @@ import { oklch2rgb } from "utils/oklch2rgb";
 // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 function rgb2hex(c: string) {
 	return `#${c
-		.match(/\d+/g)!
-		.map((x) => (+x).toString(16).padStart(2, "0"))
+		.match(/\d+/g)
+		?.map((x) => (+x).toString(16).padStart(2, "0"))
 		.join("")}`;
 }
 
@@ -48,7 +48,7 @@ export function QRCodeRender(props: { content: string; size?: number }) {
 				dark: getHexColour(style.color) || "#0000ff",
 			},
 		});
-	}, [canvasRef.current, styleDivRef.current, props.size, props.content]);
+	}, [props.size, props.content]);
 
 	return (
 		<div className="flex items-center justify-center">

@@ -105,7 +105,7 @@ export function userRoomStateToResolvedState(
 	user: RoomUserState,
 ): RoomUserResolvedState | null {
 	return RoomUserState.match<RoomUserResolvedState | null>(user, {
-		waiting: (state) => null,
+		waiting: (_state) => null,
 		admitted: (state) => RoomUserResolvedState.admitted(state),
 		declined: (state) => RoomUserResolvedState.declined(state),
 		kicked: (state) => RoomUserResolvedState.kicked(state),

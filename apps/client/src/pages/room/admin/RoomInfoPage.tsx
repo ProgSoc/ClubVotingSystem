@@ -21,7 +21,7 @@ export function RoomInfoPage(props: {
 					blank: (data) => setRoomVoters(data.totalPeople),
 					showingQuestion: (data) => setRoomVoters(data.totalPeople),
 					showingResults: (data) => setRoomVoters(data.totalPeople),
-					ended: (data) => setRoomVoters(0),
+					ended: (_data) => setRoomVoters(0),
 				});
 			},
 		},

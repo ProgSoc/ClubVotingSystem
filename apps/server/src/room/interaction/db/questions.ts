@@ -100,7 +100,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					if (!voterAndCandidateRank[vote.voterId]) {
 						voterAndCandidateRank[vote.voterId] = [];
 					}
-					voterAndCandidateRank[vote.voterId]!.push({
+					voterAndCandidateRank[vote.voterId]?.push({
 						candidateId: vote.candidateId,
 						rank: vote.rank,
 					});
@@ -125,8 +125,8 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 
 				const results = resultIds.map((c, index) => ({
 					id: c.id,
-					name: question.candidates.find((candidate) => candidate.id === c.id)!
-						.name,
+					name: question.candidates.find((candidate) => candidate.id === c.id)
+						?.name,
 					rank: index + 1,
 					votes: candidateWithVotes.filter((vote) => vote.candidateId === c.id)
 						.length,

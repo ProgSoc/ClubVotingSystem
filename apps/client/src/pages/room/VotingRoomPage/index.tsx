@@ -36,7 +36,7 @@ export function VotingRoomPage(props: {
 				}),
 			);
 		}
-	}, [VotingPageState.is.kicked(data)]);
+	}, [data, navigate, props.roomId, props.userId]);
 
 	return (
 		<CenteredPageContainer className="pt-32 sm:pt-4">
@@ -80,7 +80,7 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 
 	const candidatesReordered = useMemo(
 		() => randomizeArray(question.candidates),
-		[question.questionId],
+		[question.candidates],
 	);
 
 	const onSubmit = handleSubmit(async (data) => {
@@ -97,7 +97,7 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 		if (lastVote && lastVote.type === "Abstain") {
 			reset({ candidateId: undefined });
 		}
-	}, [lastVote]);
+	}, [lastVote, reset]);
 
 	return (
 		<div className="flex gap-4 flex-wrap flex-col items-stretch justify-center w-full max-w-xl">
@@ -144,7 +144,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
 	const candidatesReordered = useMemo(
 		() => randomizeArray(question.candidates),
-		[question.questionId],
+		[question.candidates],
 	);
 
 	const {
@@ -203,7 +203,7 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 		if (lastVote && lastVote.type === "PreferentialVote") {
 			reset(lastVote);
 		}
-	}, [lastVote]);
+	}, [lastVote, reset]);
 
 	const candidateRankList = useMemo(
 		() => Array.from({ length: question.candidates.length }, (_, i) => i + 1),

@@ -47,7 +47,7 @@ if (env.publicDir) {
 	const publicDir = env.publicDir;
 	// Serve up the single page app
 	app.use(express.static(publicDir));
-	app.get("*", (req, res) => {
+	app.get("*", (_req, res) => {
 		res.sendFile(path.resolve(publicDir, "index.html"));
 	});
 }

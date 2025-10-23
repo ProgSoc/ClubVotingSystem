@@ -21,7 +21,7 @@ export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
 			cacheFetchedRoom(roomQuery.data);
 			navigate(props.makePath(roomQuery.data.id));
 		}
-	}, [roomQuery.data?.id]);
+	}, [roomQuery.data?.id, props.makePath, navigate, roomQuery.data]);
 
 	return (
 		<CenteredPageContainer className="gap-2">

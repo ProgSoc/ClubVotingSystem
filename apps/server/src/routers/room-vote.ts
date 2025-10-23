@@ -1,8 +1,6 @@
-import { observable } from "@trpc/server/observable";
 import { z } from "zod";
 
 import { questionResponse } from "../live/question";
-import type { VoterState } from "../live/states";
 import { operations } from "../room";
 import { publicProcedure, router } from "../trpc";
 

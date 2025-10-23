@@ -1,7 +1,6 @@
 import { VoterNotFoundError } from "../../errors";
 import { pubSub } from "../../live";
 import type { QuestionResponse } from "../../live/question";
-import type { BoardState } from "../../live/states";
 import { VoterState } from "../../live/states";
 import type { RoomPublicInfo } from "../types";
 import type { JoinWaitingRoomParams, RoomUserResolvedState } from "./db/users";
@@ -103,7 +102,7 @@ export function waitForAdmission(roomId: string, userId: string) {
 		});
 	};
 
-	return new Promise<RoomUserResolvedState>(async (resolve, reject) => {
+	return new Promise<RoomUserResolvedState>(async (resolve, _reject) => {
 		for await (const { data } of pubSub.subscribe("userWaitingList", userId)) {
 			const resolvedState = userRoomStateToResolvedState(data);
 			if (resolvedState) {

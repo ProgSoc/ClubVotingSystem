@@ -33,7 +33,7 @@ export function WaitingRoomPage(props: {
 				);
 			}
 		}
-	}, [response.data]);
+	}, [response.data, navigate, props.roomId, props.userId]);
 
 	if (!state) {
 		return (
