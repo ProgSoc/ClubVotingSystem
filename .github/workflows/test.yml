@@ -26,7 +26,7 @@ jobs:
         run: bun lint
 
       - name: check types
-        run: bun tsc
+        run: bun tsc -b
 
       - name: run tests
         run: bun test

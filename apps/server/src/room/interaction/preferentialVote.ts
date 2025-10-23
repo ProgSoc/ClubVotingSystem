@@ -17,7 +17,7 @@ function tallyVotes(
   votes.forEach((vote) => {
     const firstChoice = vote[0];
     if (voteCounts[firstChoice!] !== undefined) {
-      voteCounts[firstChoice!] += 1;
+      voteCounts[firstChoice!]! += 1;
     }
   });
 
