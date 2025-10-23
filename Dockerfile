@@ -13,6 +13,9 @@ COPY . .
 
 RUN bun run build
 
+WORKDIR /app/apps/server
+RUN bunx gel project init --non-interactive 
+
 FROM oven/bun:1.1.17-alpine
 
 WORKDIR /app
@@ -21,6 +24,10 @@ COPY --from=builder /app/apps/server/dist ./apps/server/dist
 COPY --from=builder /app/apps/server/src/dbschema ./apps/server/src/dbschema
 COPY --from=builder /app/apps/server/gel.toml ./apps/server/gel.toml
 COPY --from=builder /app/apps/client/dist ./apps/client/dist
+
+# CD into server app and run gel project initial setup
+
+
 
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/apps/client/dist
