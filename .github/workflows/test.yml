@@ -16,17 +16,11 @@ jobs:
         with:
           bun-version: latest
 
-      - name: edgedb install
-        run: bash <(curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com) -y
+      - name: init gel
+        run: cd apps/server && bunx gel project init --non-interactive
 
-      - name: install
-        run: bun install
-
-      - name: init edgedb
-        run: cd apps/server && edgedb project init --non-interactive
-
-      - name: generate edgedb schema types
-        run: bun server gen-edgedb
+      - name: generate gel schema types
+        run: bun run --filter server generate
 
       - name: check linting
         run: bun lint

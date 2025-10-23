@@ -8,17 +8,14 @@ services:
       - 8080:8080
     environment:
       PORT: 8080
-      EDGEDB_DSN: edgedb://edgedb
-      EDGEDB_CLIENT_TLS_SECURITY: insecure
+      GEL_DSN: gel://gel
+      GEL_CLIENT_TLS_SECURITY: insecure
 
     # volumes:
 
-  edgedb:
-    image: edgedb/edgedb
+  gel:
+    image: geldata/gel:6.4
     restart: unless-stopped
     environment:
-      # EDGEDB_SERVER_PASSWORD: edgedb
-      EDGEDB_SERVER_TLS_CERT_MODE: generate_self_signed
-      EDGEDB_SERVER_SECURITY: insecure_dev_mode
-    # ports:
-    # volumes:
+      GEL_SERVER_TLS_CERT_MODE: generate_self_signed
+      GEL_SERVER_SECURITY: insecure_dev_mode

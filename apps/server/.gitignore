@@ -4,3 +4,4 @@ dist
 
 src/dbschema/edgeql-js
 src/dbschema/interfaces.ts
+**/*.local.toml

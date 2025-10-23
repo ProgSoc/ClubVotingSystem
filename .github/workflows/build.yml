@@ -21,14 +21,11 @@ jobs:
         with:
           bun-version: latest
 
-      - name: edgedb install
-        run: bash <(curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com) -y
+      - name: init gel
+        run: cd apps/server && bunx gel project init --non-interactive
 
-      - name: init edgedb
-        run: cd apps/server && edgedb project init --non-interactive
-
-      - name: generate edgedb schema types
-        run: bun server generate
+      - name: generate gel schema types
+        run: bun run --filter server generate
 
       - name: Docker Meta Release
         id: meta-release
