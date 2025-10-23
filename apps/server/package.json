@@ -2,10 +2,11 @@
   "name": "server",
   "version": "1.0.0",
   "license": "MIT",
-  "main": "server.js",
+  "main": "./dist/main.js",
   "scripts": {
-    "dev": "bun --watch ./src/server.ts",
-    "build": "bun build --sourcemap=inline --target bun --outdir ./dist ./src/server.ts",
+    "dev": "bun --watch ./src/main.ts",
+    "build": "bun build --sourcemap=inline --target bun --outdir ./dist ./src/main.ts",
+    "start": "bun ./dist/main.js",
     "migrate": "edgedb migration create && edgedb migrate && bun gen-edgedb",
     "generate": "bunx @edgedb/generate interfaces && bunx @edgedb/generate edgeql-js"
   },

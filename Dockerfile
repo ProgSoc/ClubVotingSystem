@@ -19,12 +19,12 @@ WORKDIR /app
 
 RUN bun install --global edgedb
 
-COPY --from=builder /app/apps/server/dist ./src
-COPY --from=builder /app/apps/server/src/dbschema ./src/dbschema
-COPY --from=builder /app/apps/server/edgedb.toml ./edgedb.toml
-COPY --from=builder /app/apps/client/dist ./www
+COPY --from=builder /app/apps/server/dist ./apps/server/dist
+COPY --from=builder /app/apps/server/src/dbschema ./apps/server/src/dbschema
+COPY --from=builder /app/apps/server/edgedb.toml ./apps/server/edgedb.toml
+COPY --from=builder /app/apps/client/dist ./apps/client/dist
 
 ENV NODE_ENV=production
-ENV PUBLIC_DIR=/app/www
+ENV PUBLIC_DIR=/app/apps/client/dist
 
 CMD bun run edgedb migrate && bun apps/server/server.js

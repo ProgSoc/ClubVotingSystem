@@ -8,11 +8,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@server/': path.join(__dirname, '../server/src/'),
-
       'pages/': path.join(__dirname, 'src/pages/'),
       'components/': path.join(__dirname, 'src/components/'),
       'routes/': path.join(__dirname, 'src/routes/'),
       'utils/': path.join(__dirname, 'src/utils/'),
     },
   },
+  server: {
+    port: 3000,
+    proxy: {
+      '/trpc': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        ws: true,
+      }
+    },
+  }
 });
