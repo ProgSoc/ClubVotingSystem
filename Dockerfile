@@ -27,4 +27,4 @@ COPY --from=builder /app/apps/client/dist ./apps/client/dist
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/apps/client/dist
 
-CMD bun run edgedb migrate && bun apps/server/server.js
+CMD bun run edgedb migrate && bun apps/server/main.js
