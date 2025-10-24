@@ -41,8 +41,8 @@ type QuestionSettingPageState = GetStatesUnion<
 	typeof QuestionSettingPageState.enum
 >;
 const QuestionSettingPageState = makeStates("qsps", {
-	loading: state(),
-	ended: state(),
+	loading: state<{}>(),
+	ended: state<{}>(),
 	setQuestion: state<QuestionSettingData>(),
 	askingQuestion: state<QuestionAskingData>(),
 });
