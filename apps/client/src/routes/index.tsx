@@ -8,11 +8,8 @@ import { RoomResultsListPage } from "pages/room/RoomResultsListPage";
 import { VotingRoomPage } from "pages/room/VotingRoomPage";
 import { WaitingRoomPage } from "pages/room/WaitingRoomPage";
 import { ShortRedirectPage } from "pages/ShortRedirectPage";
-import { createBrowserRouter, useLocation, useOutlet } from "react-router-dom";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
-import { twMerge } from "tailwind-merge";
+import { createBrowserRouter, useOutlet } from "react-router-dom";
 import { withRoomFetched } from "utils/withRoomData";
-import styles from "./animations.module.css";
 import { buildBuilders, buildRoutes, path, route } from "./routeBuilder";
 
 const routes = {
@@ -80,28 +77,11 @@ export const browserRouter = createBrowserRouter([
 ]);
 
 function AnimationRouter() {
-	const location = useLocation();
 	const currentOutlet = useOutlet();
 
 	return (
-		<TransitionGroup className="w-screen h-screen relative overflow-x-hidden">
-			<CSSTransition key={location.pathname} timeout={300} unmountOnExit={true}>
-				{(state) => {
-					const style =
-						state === "entering"
-							? styles.entering
-							: state === "exiting"
-								? styles.exiting
-								: state === "exited"
-									? styles.exited
-									: undefined;
-					return (
-						<div className={twMerge("absolute min-h-full", style)}>
-							{currentOutlet}
-						</div>
-					);
-				}}
-			</CSSTransition>
-		</TransitionGroup>
+		<div className="w-screen h-screen relative overflow-x-hidden">
+			<div className={"absolute min-h-full"}>{currentOutlet}</div>
+		</div>
 	);
 }
