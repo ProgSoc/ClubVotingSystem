@@ -16,11 +16,7 @@ export const Route = createFileRoute("/join/$roomId")({
 
 const schema = z.object({
 	email: z.string().email(),
-	location: z.enum<UserLocation, readonly [UserLocation, ...UserLocation[]]>([
-		"InPerson",
-		"Online",
-		"Proxy",
-	]),
+	location: z.enum(["InPerson", "Online", "Proxy"] as UserLocation[]),
 });
 
 type FormValues = TypeOf<typeof schema>;
