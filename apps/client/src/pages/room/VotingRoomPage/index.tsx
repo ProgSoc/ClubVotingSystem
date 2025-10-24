@@ -5,13 +5,14 @@ import {
 	Heading,
 	Question,
 } from "components/styles";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { routeBuilders } from "routes";
-import type { ShowingResultsState } from "server/src/live/states";
+import type { ShowingResultsState, VotingCandidate } from "server/src/live/states";
 import type { RoomPublicInfo } from "server/src/room/types";
 import { twMerge } from "tailwind-merge";
+import { makeRandomSeed, secureShuffle } from "utils/shuffleArray";
 import { z } from "zod";
 import useZodForm from "../../../hooks/useZodForm";
 import type { QuestionVotingData } from "./hooks";
@@ -56,18 +57,6 @@ function QuestionVoter({ data }: { data: VotingPageState }) {
 	});
 }
 
-function randomizeArray<T>(array: T[]): T[] {
-	const indexes = Array.from({ length: array.length }, (_, i) => i);
-
-	// Randomly reorder indexes array
-	for (let i = indexes.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[indexes[i], indexes[j]] = [indexes[j], indexes[i]];
-	}
-
-	return indexes.map((i) => array[i]);
-}
-
 function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 	const { question, lastVote, castVote } = data;
 
@@ -78,10 +67,15 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 		defaultValues: lastVote?.type === "SingleVote" ? lastVote : undefined,
 	});
 
-	const candidatesReordered = useMemo(
-		() => randomizeArray(question.candidates),
-		[question.candidates],
-	);
+	const randomSeed = useMemo(() => makeRandomSeed(), []);
+
+	const [candidatesReordered, setCandidatesReordered] = useState<Array<VotingCandidate>>([]);
+
+	useEffect(() => {
+		secureShuffle(question.candidates, randomSeed).then((data) =>
+			setCandidatesReordered(data),
+		);
+	}, [question.candidates, randomSeed]);
 
 	const onSubmit = handleSubmit(async (data) => {
 		castVote({
@@ -142,10 +136,15 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 	const { question, lastVote, castVote } = data;
 
-	const candidatesReordered = useMemo(
-		() => randomizeArray(question.candidates),
-		[question.candidates],
-	);
+	const randomSeed = useMemo(() => makeRandomSeed(), []);
+
+	const [candidatesReordered, setCandidatesReordered] = useState<Array<VotingCandidate>>([]);
+
+	useEffect(() => {
+		secureShuffle(question.candidates, randomSeed).then((data) =>
+			setCandidatesReordered(data),
+		);
+	}, [question.candidates, randomSeed]);
 
 	const {
 		register,
@@ -184,11 +183,11 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 			lastVote?.type === "PreferentialVote"
 				? lastVote
 				: {
-						votes: candidatesReordered.map((candidate, index) => ({
-							candidateId: candidate.id,
-							rank: index + 1,
-						})),
-					},
+					votes: candidatesReordered.map((candidate, index) => ({
+						candidateId: candidate.id,
+						rank: index + 1,
+					})),
+				},
 	});
 
 	const onSubmit = handleSubmit(async ({ votes }) => {
