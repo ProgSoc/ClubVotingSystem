@@ -5,11 +5,14 @@ import {
 	Heading,
 	Question,
 } from "components/styles";
+import { routeBuilders } from "old_routes";
 import { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { routeBuilders } from "routes";
-import type { ShowingResultsState, VotingCandidate } from "server/src/live/states";
+import type {
+	ShowingResultsState,
+	VotingCandidate,
+} from "server/src/live/states";
 import type { RoomPublicInfo } from "server/src/room/types";
 import { twMerge } from "tailwind-merge";
 import { makeRandomSeed, secureShuffle } from "utils/shuffleArray";
@@ -69,7 +72,9 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 
 	const randomSeed = useMemo(() => makeRandomSeed(), []);
 
-	const [candidatesReordered, setCandidatesReordered] = useState<Array<VotingCandidate>>([]);
+	const [candidatesReordered, setCandidatesReordered] = useState<
+		Array<VotingCandidate>
+	>([]);
 
 	useEffect(() => {
 		secureShuffle(question.candidates, randomSeed).then((data) =>
@@ -138,7 +143,9 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 
 	const randomSeed = useMemo(() => makeRandomSeed(), []);
 
-	const [candidatesReordered, setCandidatesReordered] = useState<Array<VotingCandidate>>([]);
+	const [candidatesReordered, setCandidatesReordered] = useState<
+		Array<VotingCandidate>
+	>([]);
 
 	useEffect(() => {
 		secureShuffle(question.candidates, randomSeed).then((data) =>
@@ -183,11 +190,11 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 			lastVote?.type === "PreferentialVote"
 				? lastVote
 				: {
-					votes: candidatesReordered.map((candidate, index) => ({
-						candidateId: candidate.id,
-						rank: index + 1,
-					})),
-				},
+						votes: candidatesReordered.map((candidate, index) => ({
+							candidateId: candidate.id,
+							rank: index + 1,
+						})),
+					},
 	});
 
 	const onSubmit = handleSubmit(async ({ votes }) => {

@@ -1,30 +1,45 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSubscription } from "@trpc/tanstack-react-query";
 import { QRCodeRender } from "components/QRCode";
 import { ResultsViewer } from "components/ResultsViewer";
 import { CenteredPageContainer, Heading, Question } from "components/styles";
-import { routeBuilders } from "old_routes";
 import { BoardState } from "server/src/live/states";
 import type { RoomPublicInfo } from "server/src/room/types";
 import { twMerge } from "tailwind-merge";
 import { trpc } from "utils/trpc";
 
-export function BoardPage(props: { roomId: string; room: RoomPublicInfo }) {
+export const Route = createFileRoute("/room/$roomId/board")({
+	component: RouteComponent,
+});
+
+export function RouteComponent() {
+	const roomId = Route.useParams({
+		select: (p) => p.roomId,
+	});
+
+	const roomData = useSuspenseQuery(
+		trpc.room.getRoomById.queryOptions({
+			id: roomId,
+		}),
+	);
+
 	return (
 		<CenteredPageContainer>
-			<Heading className="text-accent mb-8">{props.room.name}</Heading>
+			<Heading className="text-accent mb-8">{roomData.data.name}</Heading>
 			<div className="flex flex-col lg:flex-row items-center gap-24">
-				<JoinPanel room={props.room} />
-				<StatusPanel room={props.room} />
+				<JoinPanel room={roomData.data} />
+				<StatusPanel room={roomData.data} />
 			</div>
 		</CenteredPageContainer>
 	);
 }
 
 function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
-	const joinLink =
-		location.origin + routeBuilders.shortJoin({ shortId: props.room.shortId });
-	const boardLink =
-		location.origin + routeBuilders.shortView({ shortId: props.room.shortId });
+	const joinLink = `${location.origin}/j/${props.room.shortId}`;
+
+	const boardLink = `${location.origin}/b/${props.room.shortId}`;
+
 	return (
 		<div
 			className={twMerge(
@@ -39,14 +54,15 @@ function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
 				<QRCodeRender content={joinLink} />
 				{joinLink && (
 					<p>
-						<a
+						<Link
 							target="_blank"
 							rel="noreferrer"
-							href={joinLink}
+							to="/j/$shortId"
+							params={{ shortId: props.room.shortId }}
 							className="text-sm md:text-xl underline text-info font-mono"
 						>
 							{joinLink}
-						</a>
+						</Link>
 					</p>
 				)}
 			</div>
@@ -54,14 +70,15 @@ function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
 				<Heading className="text-2xl md:text-3xl">View board</Heading>
 				{joinLink && (
 					<p>
-						<a
+						<Link
 							target="_blank"
 							rel="noreferrer"
-							href={boardLink}
+							to="/b/$shortId"
+							params={{ shortId: props.room.shortId }}
 							className="text-sm md:text-xl underline text-info font-mono"
 						>
 							{boardLink}
-						</a>
+						</Link>
 					</p>
 				)}
 			</div>

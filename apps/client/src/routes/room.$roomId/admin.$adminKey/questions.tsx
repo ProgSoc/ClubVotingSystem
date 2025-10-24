@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useSubscription } from "@trpc/tanstack-react-query";
-import { AdminRouter } from "components/adminRouter";
 import { ResultsViewer } from "components/ResultsViewer";
-import { Button, Heading, PageContainer, Question } from "components/styles";
+import { Button, Heading, Question } from "components/styles";
 import { Field, Form, Formik } from "formik";
 import type React from "react";
 import { createRef, useId, useState } from "react";
@@ -12,10 +12,7 @@ import type {
 	ShowingResultsState,
 } from "server/src/live/states";
 import { BoardState } from "server/src/live/states";
-import type {
-	CreateQuestionParams,
-	RoomPublicInfo,
-} from "server/src/room/types";
+import type { CreateQuestionParams } from "server/src/room/types";
 import type { GetStatesUnion } from "server/src/state";
 import { makeStates, state } from "server/src/state";
 import { UnreachableError } from "server/src/unreachableError";
@@ -23,6 +20,12 @@ import { trpc } from "utils/trpc";
 import type { TypeOf } from "zod";
 import { z } from "zod";
 import { toFormikValidationSchema } from "zod-formik-adapter";
+
+export const Route = createFileRoute("/room/$roomId/admin/$adminKey/questions")(
+	{
+		component: RouteComponent,
+	},
+);
 
 interface QuestionSettingData {
 	previousResults?: ShowingResultsState;
@@ -48,14 +51,17 @@ function useQuestionSetter(props: {
 	roomId: string;
 	adminKey: string;
 }): QuestionSettingPageState {
-	const createQuestionMutation =
-		useMutation(trpc.admin.questions.createQuestion.mutationOptions());
+	const createQuestionMutation = useMutation(
+		trpc.admin.questions.createQuestion.mutationOptions(),
+	);
 
 	const closeQuestionMutation = useMutation(
 		trpc.admin.questions.closeQuestion.mutationOptions(),
 	);
 
-	const { data: state } = useSubscription(trpc.room.listenBoardEvents.subscriptionOptions({ roomId: props.roomId },))
+	const { data: state } = useSubscription(
+		trpc.room.listenBoardEvents.subscriptionOptions({ roomId: props.roomId }),
+	);
 
 	if (!state) {
 		return QuestionSettingPageState.loading({});
@@ -106,21 +112,14 @@ function useQuestionSetter(props: {
 	});
 }
 
-export function QuestionSettingPage(props: {
-	roomId: string;
-	room: RoomPublicInfo;
-	adminKey: string;
-}) {
-	const data = useQuestionSetter(props);
-	return (
-		<PageContainer>
-			<AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
-			<QuestionSetter data={data} />
-		</PageContainer>
-	);
-}
+function RouteComponent() {
+	const { adminKey, roomId } = Route.useParams();
 
-function QuestionSetter({ data }: { data: QuestionSettingPageState }) {
+	const data = useQuestionSetter({
+		adminKey,
+		roomId,
+	});
+
 	return QuestionSettingPageState.match(data, {
 		loading: () => <Heading>Loading...</Heading>,
 		ended: () => <Heading>Ended</Heading>,

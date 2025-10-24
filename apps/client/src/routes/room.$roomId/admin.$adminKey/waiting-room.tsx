@@ -1,13 +1,18 @@
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useSubscription } from "@trpc/tanstack-react-query";
-import { AdminRouter } from "components/adminRouter";
-import { Button, Heading, PageContainer } from "components/styles";
+import { Button, Heading } from "components/styles";
 import { useState } from "react";
 import type { RoomUserWithDetails } from "server/src/live/user";
-import type { RoomPublicInfo } from "server/src/room/types";
 import { twMerge } from "tailwind-merge";
 import { locationEnumLabel } from "utils/enumLabels";
 import { trpc } from "utils/trpc";
+
+export const Route = createFileRoute(
+	"/room/$roomId/admin/$adminKey/waiting-room",
+)({
+	component: RouteComponent,
+});
 
 // Waiting = waiting for an admin to do something
 enum WaitingUserState {
@@ -160,69 +165,21 @@ function Email(props: { email: string; className?: string }) {
 	}
 }
 
-export function WaitingRoomManagementPage(props: {
-	roomId: string;
-	room: RoomPublicInfo;
-	adminKey: string;
-}) {
+export function RouteComponent() {
+	const { roomId, adminKey } = Route.useParams();
+
 	const { users, voters, admitUser, declineUser, kickVoter } =
-		useUserWaitingRoom(props);
+		useUserWaitingRoom({
+			adminKey,
+			roomId,
+		});
 
 	return (
-		<PageContainer>
-			<AdminRouter adminKey={props.adminKey} roomId={props.roomId} />
-
-			<div className="flex flex-col items-center w-full m-8 gap-24">
-				<div className="flex flex-col gap-8">
-					<Heading>Waiting Room</Heading>
-					<div className="gap-2 flex flex-col">
-						{users.map((user) => (
-							<div
-								key={user.id}
-								className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]"
-							>
-								<Email
-									email={user.details.studentEmail}
-									className="ml-2 mr-auto flex-shrink"
-								/>
-								<div className="shrink-0">
-									{locationEnumLabel[user.details.location]}
-								</div>
-								<div className="gap-4">
-									<Button
-										className="btn-primary"
-										onClick={async () => {
-											if (user.uiLoadingState === WaitingUserState.Waiting) {
-												admitUser(user.id);
-											}
-										}}
-										isLoading={
-											user.uiLoadingState === WaitingUserState.Admitting
-										}
-									>
-										Admit
-									</Button>
-									<Button
-										className="btn-error"
-										onClick={async () => {
-											if (user.uiLoadingState === WaitingUserState.Waiting) {
-												declineUser(user.id);
-											}
-										}}
-										isLoading={
-											user.uiLoadingState === WaitingUserState.Declining
-										}
-									>
-										Decline
-									</Button>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-				<div className="flex flex-col gap-8">
-					<Heading>Voters</Heading>
-					{voters.map((user) => (
+		<div className="flex flex-col items-center w-full m-8 gap-24">
+			<div className="flex flex-col gap-8">
+				<Heading>Waiting Room</Heading>
+				<div className="gap-2 flex flex-col">
+					{users.map((user) => (
 						<div
 							key={user.id}
 							className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]"
@@ -236,18 +193,59 @@ export function WaitingRoomManagementPage(props: {
 							</div>
 							<div className="gap-4">
 								<Button
+									className="btn-primary"
+									onClick={async () => {
+										if (user.uiLoadingState === WaitingUserState.Waiting) {
+											admitUser(user.id);
+										}
+									}}
+									isLoading={user.uiLoadingState === WaitingUserState.Admitting}
+								>
+									Admit
+								</Button>
+								<Button
 									className="btn-error"
 									onClick={async () => {
-										kickVoter(user.id);
+										if (user.uiLoadingState === WaitingUserState.Waiting) {
+											declineUser(user.id);
+										}
 									}}
+									isLoading={user.uiLoadingState === WaitingUserState.Declining}
 								>
-									Kick
+									Decline
 								</Button>
 							</div>
 						</div>
 					))}
 				</div>
 			</div>
-		</PageContainer>
+			<div className="flex flex-col gap-8">
+				<Heading>Voters</Heading>
+				{voters.map((user) => (
+					<div
+						key={user.id}
+						className="navbar bg-base-300 rounded-lg text-lg gap-4 w-[600px]"
+					>
+						<Email
+							email={user.details.studentEmail}
+							className="ml-2 mr-auto flex-shrink"
+						/>
+						<div className="shrink-0">
+							{locationEnumLabel[user.details.location]}
+						</div>
+						<div className="gap-4">
+							<Button
+								className="btn-error"
+								onClick={async () => {
+									kickVoter(user.id);
+								}}
+							>
+								Kick
+							</Button>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
 	);
 }

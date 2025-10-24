@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { CenteredPageContainer, Heading } from "components/styles";
+import { routeBuilders } from "old_routes";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { routeBuilders } from "routes";
 import { RoomUserResolvedState } from "server/src/live/user";
 import type { RoomPublicInfo } from "server/src/room/types";
 import { trpc } from "utils/trpc";

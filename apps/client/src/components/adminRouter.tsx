@@ -1,50 +1,53 @@
-import { Link } from "react-router-dom";
-import { routeBuilders } from "routes";
-import { twMerge } from "tailwind-merge";
+import { Link } from "@tanstack/react-router";
+import { Route } from "routes/room.$roomId/admin.$adminKey";
 
-function AdminLink(props: { path: string; name: string }) {
-	const selected = window.location.pathname === props.path;
+export function AdminRouter() {
+	const { roomId, adminKey } = Route.useParams();
 
 	return (
-		<Link to={props.path}>
-			<button
-				className={twMerge("btn", selected && "btn-secondary")}
-				type="button"
+		<div className={"flex gap-4 mb-8"}>
+			<Link
+				to="/room/$roomId/admin/$adminKey"
+				params={{
+					adminKey,
+					roomId,
+				}}
+				className="btn"
+				activeOptions={{
+					exact: true,
+				}}
+				activeProps={{
+					className: "btn btn-secondary",
+				}}
 			>
-				{props.name}
-			</button>
-		</Link>
-	);
-}
-
-export function AdminRouter(props: {
-	className?: string;
-	roomId: string;
-	adminKey: string;
-}) {
-	return (
-		<div className={twMerge("flex gap-4 mb-8", props.className)}>
-			<AdminLink
-				path={routeBuilders.manageRoomInfo({
-					roomId: props.roomId,
-					adminKey: props.adminKey,
-				})}
-				name="Room Info"
-			/>
-			<AdminLink
-				path={routeBuilders.manageWaitingRoom({
-					roomId: props.roomId,
-					adminKey: props.adminKey,
-				})}
-				name="Waiting Room"
-			/>
-			<AdminLink
-				path={routeBuilders.setRoomQuestions({
-					roomId: props.roomId,
-					adminKey: props.adminKey,
-				})}
-				name="Set Questions"
-			/>
+				Room Info
+			</Link>
+			<Link
+				to="/room/$roomId/admin/$adminKey/waiting-room"
+				params={{
+					adminKey,
+					roomId,
+				}}
+				className="btn"
+				activeProps={{
+					className: "btn btn-secondary",
+				}}
+			>
+				Waiting Room
+			</Link>
+			<Link
+				to="/room/$roomId/admin/$adminKey/questions"
+				params={{
+					adminKey,
+					roomId,
+				}}
+				className="btn"
+				activeProps={{
+					className: "btn btn-secondary",
+				}}
+			>
+				Set Questions
+			</Link>
 		</div>
 	);
 }

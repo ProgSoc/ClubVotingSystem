@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { Button, CenteredPageContainer, Heading } from "components/styles";
 import { Field, Form, Formik } from "formik";
+import { routeBuilders } from "old_routes";
 import { useId } from "react";
 import { useNavigate } from "react-router-dom";
-import { routeBuilders } from "routes";
 import type { UserLocation } from "server/src/dbschema/interfaces";
 import { locationEnumLabel } from "utils/enumLabels";
 import { trpc } from "utils/trpc";

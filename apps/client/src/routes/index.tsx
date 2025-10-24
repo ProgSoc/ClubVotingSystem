@@ -1,87 +1,53 @@
-import { CreateRoomPage } from "pages/CreateRoomPage";
-import { QuestionSettingPage } from "pages/room/admin/QuestionSettingPage";
-import { RoomInfoPage } from "pages/room/admin/RoomInfoPage";
-import { WaitingRoomManagementPage } from "pages/room/admin/WaitingRoomManagemenentPage";
-import { BoardPage } from "pages/room/BoardPage";
-import { JoinWaitingRoomPage } from "pages/room/JoinWaitingRoomPage";
-import { RoomResultsListPage } from "pages/room/RoomResultsListPage";
-import { VotingRoomPage } from "pages/room/VotingRoomPage";
-import { WaitingRoomPage } from "pages/room/WaitingRoomPage";
-import { ShortRedirectPage } from "pages/ShortRedirectPage";
-import { createBrowserRouter, useOutlet } from "react-router-dom";
-import { withRoomFetched } from "utils/withRoomData";
-import { buildBuilders, buildRoutes, path, route } from "./routeBuilder";
+import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Button, CenteredPageContainer, Heading } from "components/styles";
+import { useState } from "react";
+import { trpc } from "utils/trpc";
 
-const routes = {
-	home: route({
-		path: path`/`,
-		component: CreateRoomPage,
-	}),
-	manageWaitingRoom: route({
-		path: path`/room/${"roomId"}/admin/${"adminKey"}/waiting-room`,
-		component: withRoomFetched(WaitingRoomManagementPage),
-	}),
-	manageRoomInfo: route({
-		path: path`/room/${"roomId"}/admin/${"adminKey"}`,
-		component: withRoomFetched(RoomInfoPage),
-	}),
-	setRoomQuestions: route({
-		path: path`/room/${"roomId"}/admin/${"adminKey"}/questions`,
-		component: withRoomFetched(QuestionSettingPage),
-	}),
-	viewRoomBoard: route({
-		path: path`/room/${"roomId"}/board`,
-		component: withRoomFetched(BoardPage),
-	}),
-	viewRoomResults: route({
-		path: path`/room/${"roomId"}/results`,
-		component: withRoomFetched(RoomResultsListPage),
-	}),
-	joinRoom: route({
-		path: path`/join/${"roomId"}`,
-		component: JoinWaitingRoomPage,
-	}),
-	waitInWaitingRoom: route({
-		path: path`/room/${"roomId"}/wait/${"userId"}`,
-		component: withRoomFetched(WaitingRoomPage),
-	}),
-	votingRoom: route({
-		path: path`/room/${"roomId"}/vote/${"userId"}/${"votingKey"}`,
-		component: withRoomFetched(VotingRoomPage),
-	}),
-	shortView: route({
-		path: path`/b/${"shortId"}`,
-		component: ShortRedirectPage((roomId) => `/room/${roomId}/board`),
-	}),
-	shortJoin: route({
-		path: path`/j/${"shortId"}`,
-		component: ShortRedirectPage((roomId) => `/join/${roomId}`),
-	}),
-};
+export const Route = createFileRoute("/")({
+	component: Index,
+});
 
-export const routeBuilders = buildBuilders(routes);
+function Index() {
+	// Make a form for entering page name and submitting it
+	const [pageName, setPageName] = useState("");
+	const navigate = Route.useNavigate();
 
-export const browserRoutes = buildRoutes(routes);
-// export const browserRouter = createBrowserRouter(browserRoutes);
+	const mutation = useMutation(trpc.room.createNewRoom.mutationOptions());
 
-export const browserRouter = createBrowserRouter([
-	{
-		path: "/",
-		element: <AnimationRouter />,
-		children: browserRoutes.map((route) => ({
-			index: route.path === "/",
-			path: route.path === "/" ? undefined : route.path,
-			element: route.element,
-		})),
-	},
-]);
+	const onSubmit = async () => {
+		const result = await mutation.mutateAsync({ name: pageName.trim() });
+		navigate({
+			to: "/room/$roomId/admin/$adminKey",
+			params: { roomId: result.id, adminKey: result.adminKey },
+		});
+	};
 
-function AnimationRouter() {
-	const currentOutlet = useOutlet();
+	const invalid = pageName.trim().length === 0;
+	const disabled = mutation.isPending || mutation.isSuccess;
 
 	return (
-		<div className="w-screen h-screen relative overflow-x-hidden">
-			<div className={"absolute min-h-full"}>{currentOutlet}</div>
-		</div>
+		<CenteredPageContainer className="gap-4">
+			<Heading>Create a new room</Heading>
+			<fieldset
+				disabled={disabled}
+				className="gap-2 w-full flex flex-col justify-center items-center"
+			>
+				<input
+					className="input input-bordered w-full sm:w-96"
+					type="text"
+					value={pageName}
+					onChange={(e) => setPageName(e.target.value)}
+				/>
+				<Button
+					className="btn btn-primary m-3"
+					disabled={invalid || disabled}
+					onClick={onSubmit}
+					isLoading={mutation.isPending}
+				>
+					Create
+				</Button>
+			</fieldset>
+		</CenteredPageContainer>
 	);
 }
