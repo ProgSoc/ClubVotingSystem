@@ -1,3 +1,5 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSubscription } from "@trpc/tanstack-react-query";
 import { useEffect, useRef, useState } from "react";
 import type { QuestionResponse } from "server/src/live/question";
 import type {
@@ -34,41 +36,30 @@ export function useVoterState(props: {
 	roomId: string;
 	votingKey: string;
 }): VotingPageState {
-	const [state, setState] = useState<VoterState | null>(null);
 	const [lastVote, setLastVote] = useState<LastVote | null>(null);
 	const voteLock = useRef<Promise<void>>(Promise.resolve());
 
-	const castVoteMutation = trpc.vote.castVote.useMutation();
+	const castVoteMutation = useMutation(trpc.vote.castVote.mutationOptions())
 
 	const runSyncAsync = async (fn: () => Promise<void>) => {
-		const promise = voteLock.current.catch(() => {}).then(fn);
+		const promise = voteLock.current.catch(() => { }).then(fn);
 		voteLock.current = promise;
 		await promise;
 	};
 
-	trpc.vote.listen.useSubscription(
-		{ roomId: props.roomId, votingKey: props.votingKey },
-		{
-			onData: (data) => {
-				setState(data);
-			},
-			onError: (err) => {
-				console.error(err);
-			},
-		},
-	);
+	const subscription = useSubscription(trpc.vote.listen.subscriptionOptions({ roomId: props.roomId, votingKey: props.votingKey }))
 
 	const { isInitialVoteLoading } = useFetchInitialVote(
 		props,
-		state,
+		subscription.data ?? null,
 		setLastVote,
 	);
 
-	if (!state) {
+	if (!subscription.data) {
 		return VotingPageState.loading({});
 	}
 
-	return VoterState.match<VotingPageState>(state, {
+	return VoterState.match<VotingPageState>(subscription.data, {
 		blank: () => VotingPageState.waiting({}),
 		ended: () => VotingPageState.ended({}),
 		kicked: () => VotingPageState.kicked({}),
@@ -131,20 +122,17 @@ function useFetchInitialVote(
 		InitialVoteFetchState.waitingForVoterState({}),
 	);
 
-	const initialVoteQuery = trpc.vote.getMyVote.useQuery(
-		{
-			roomId: props.roomId,
-			votingKey: props.votingKey,
+	const initialVoteQuery = useQuery(trpc.vote.getMyVote.queryOptions({
+		roomId: props.roomId,
+		votingKey: props.votingKey,
 
-			// If we're not fetching, then the query is disabled anyway and this arg doesnt matter
-			questionId: InitialVoteFetchState.is.fetching(fetchState)
-				? fetchState.questionId
-				: "",
-		},
-		{
-			enabled: InitialVoteFetchState.is.fetching(fetchState),
-		},
-	);
+		// If we're not fetching, then the query is disabled anyway and this arg doesnt matter
+		questionId: InitialVoteFetchState.is.fetching(fetchState)
+			? fetchState.questionId
+			: "",
+	}, {
+		enabled: InitialVoteFetchState.is.fetching(fetchState),
+	}))
 
 	useEffect(() => {
 		if (

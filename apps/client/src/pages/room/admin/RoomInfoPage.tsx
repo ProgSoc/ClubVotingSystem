@@ -1,3 +1,4 @@
+import { useSubscription } from "@trpc/tanstack-react-query";
 import { AdminRouter } from "components/adminRouter";
 import { Button, Heading, PageContainer } from "components/styles";
 import { useState } from "react";
@@ -13,19 +14,16 @@ export function RoomInfoPage(props: {
 }) {
 	const [roomVoters, setRoomVoters] = useState(0);
 
-	trpc.room.listenBoardEvents.useSubscription(
-		{ roomId: props.roomId },
-		{
-			onData: (data) => {
-				BoardState.match(data, {
-					blank: (data) => setRoomVoters(data.totalPeople),
-					showingQuestion: (data) => setRoomVoters(data.totalPeople),
-					showingResults: (data) => setRoomVoters(data.totalPeople),
-					ended: (_data) => setRoomVoters(0),
-				});
-			},
+	useSubscription(trpc.room.listenBoardEvents.subscriptionOptions({ roomId: props.roomId }, {
+		onData: (data) => {
+			BoardState.match(data, {
+				blank: (data) => setRoomVoters(data.totalPeople),
+				showingQuestion: (data) => setRoomVoters(data.totalPeople),
+				showingResults: (data) => setRoomVoters(data.totalPeople),
+				ended: (_data) => setRoomVoters(0),
+			});
 		},
-	);
+	}))
 
 	const boardLink =
 		location.origin + routeBuilders.shortView({ shortId: props.room.shortId });

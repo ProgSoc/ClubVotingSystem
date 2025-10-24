@@ -39,7 +39,7 @@ function makeRoomVoterFunctions(roomId: string) {
 		},
 
 		getCurrentBoardState: helpers.getCurrentBoardState,
-		async getCurrentVoterState(votingKey: string) {
+		async getCurrentVoterState(votingKey: string): Promise<VoterState> {
 			const voter = await voterFns.getUserByVotingKey(votingKey);
 			if (!voter) {
 				throw new VoterNotFoundError(votingKey);

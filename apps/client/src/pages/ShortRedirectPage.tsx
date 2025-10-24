@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { CenteredPageContainer, Heading } from "components/styles";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -12,9 +13,11 @@ interface ShortRedirectPageProps {
 export function ShortRedirectPageInner(props: ShortRedirectPageProps) {
 	const navigate = useNavigate();
 
-	const roomQuery = trpc.room.getRoomByShortId.useQuery({
-		shortId: props.shortId,
-	});
+	const roomQuery = useQuery(
+		trpc.room.getRoomByShortId.queryOptions({
+			shortId: props.shortId,
+		}),
+	);
 
 	useEffect(() => {
 		if (roomQuery.data?.id) {

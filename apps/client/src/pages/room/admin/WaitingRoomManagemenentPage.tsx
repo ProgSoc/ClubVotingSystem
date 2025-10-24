@@ -1,3 +1,5 @@
+import { useMutation } from "@tanstack/react-query";
+import { useSubscription } from "@trpc/tanstack-react-query";
 import { AdminRouter } from "components/adminRouter";
 import { Button, Heading, PageContainer } from "components/styles";
 import { useState } from "react";
@@ -32,9 +34,15 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
 	const [users, setUsers] = useState<UserWithState[]>([]);
 	const [voters, setVoters] = useState<VoterWithState[]>([]);
 
-	const admitUserMutation = trpc.admin.users.admitUser.useMutation();
-	const declineUserMutation = trpc.admin.users.declineUser.useMutation();
-	const kickVoterMutation = trpc.admin.users.kickVoter.useMutation();
+	const admitUserMutation = useMutation(
+		trpc.admin.users.admitUser.mutationOptions(),
+	);
+	const declineUserMutation = useMutation(
+		trpc.admin.users.declineUser.mutationOptions(),
+	);
+	const kickVoterMutation = useMutation(
+		trpc.admin.users.kickVoter.mutationOptions(),
+	);
 
 	const setUserState = (userId: string, uiLoadingState: WaitingUserState) => {
 		setUsers((users) => {
@@ -85,42 +93,45 @@ function useUserWaitingRoom(props: { roomId: string; adminKey: string }) {
 		setVoterState(userId, VoterState.Kicking);
 	};
 
-	trpc.admin.users.listenWaitingRoom.useSubscription(
-		{ roomId: props.roomId, adminKey: props.adminKey },
-		{
-			onData: (data) => {
-				const { waiting, admitted } = data;
+	useSubscription(
+		trpc.admin.users.listenWaitingRoom.subscriptionOptions(
+			{ roomId: props.roomId, adminKey: props.adminKey },
+			{
+				onData: (data) => {
+					const { waiting, admitted } = data;
 
-				setUsers((users) => {
-					const getUserById = (userId: string) =>
-						users.find((u) => u.id === userId);
+					setUsers((users) => {
+						const getUserById = (userId: string) =>
+							users.find((u) => u.id === userId);
 
-					return waiting.map((user: RoomUserWithDetails) => ({
-						...user,
+						return waiting.map((user: RoomUserWithDetails) => ({
+							...user,
 
-						// If the user already exist then keep the loading state, otherwise set it to waiting
-						uiLoadingState:
-							getUserById(user.id)?.uiLoadingState ?? WaitingUserState.Waiting,
-					}));
-				});
+							// If the user already exist then keep the loading state, otherwise set it to waiting
+							uiLoadingState:
+								getUserById(user.id)?.uiLoadingState ??
+								WaitingUserState.Waiting,
+						}));
+					});
 
-				setVoters((voters) => {
-					const getUserById = (userId: string) =>
-						voters.find((u) => u.id === userId);
+					setVoters((voters) => {
+						const getUserById = (userId: string) =>
+							voters.find((u) => u.id === userId);
 
-					return admitted.map((voters: RoomUserWithDetails) => ({
-						...voters,
+						return admitted.map((voters: RoomUserWithDetails) => ({
+							...voters,
 
-						// If the user already exist then keep the loading state, otherwise set it to voting
-						uiLoadingState:
-							getUserById(voters.id)?.uiLoadingState ?? VoterState.Voting,
-					}));
-				});
+							// If the user already exist then keep the loading state, otherwise set it to voting
+							uiLoadingState:
+								getUserById(voters.id)?.uiLoadingState ?? VoterState.Voting,
+						}));
+					});
+				},
+				onError: (err) => {
+					console.error(err);
+				},
 			},
-			onError: (err) => {
-				console.error(err);
-			},
-		},
+		),
 	);
 
 	return { users, voters, admitUser, declineUser, kickVoter };

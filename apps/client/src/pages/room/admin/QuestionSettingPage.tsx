@@ -1,3 +1,5 @@
+import { useMutation } from "@tanstack/react-query";
+import { useSubscription } from "@trpc/tanstack-react-query";
 import { AdminRouter } from "components/adminRouter";
 import { ResultsViewer } from "components/ResultsViewer";
 import { Button, Heading, PageContainer, Question } from "components/styles";
@@ -46,24 +48,14 @@ function useQuestionSetter(props: {
 	roomId: string;
 	adminKey: string;
 }): QuestionSettingPageState {
-	const [state, setState] = useState<BoardState | null>(null);
-
 	const createQuestionMutation =
-		trpc.admin.questions.createQuestion.useMutation();
-	const closeQuestionMutation =
-		trpc.admin.questions.closeQuestion.useMutation();
+		useMutation(trpc.admin.questions.createQuestion.mutationOptions());
 
-	trpc.room.listenBoardEvents.useSubscription(
-		{ roomId: props.roomId },
-		{
-			onData: (data) => {
-				setState(data);
-			},
-			onError: (err) => {
-				console.error(err);
-			},
-		},
+	const closeQuestionMutation = useMutation(
+		trpc.admin.questions.closeQuestion.mutationOptions(),
 	);
+
+	const { data: state } = useSubscription(trpc.room.listenBoardEvents.subscriptionOptions({ roomId: props.roomId },))
 
 	if (!state) {
 		return QuestionSettingPageState.loading({});

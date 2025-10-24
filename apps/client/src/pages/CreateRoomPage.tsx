@@ -1,3 +1,4 @@
+import { useMutation } from "@tanstack/react-query";
 import { Button, CenteredPageContainer, Heading } from "components/styles";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +11,7 @@ export function CreateRoomPage() {
 	const [pageName, setPageName] = useState("");
 	const navigate = useNavigate();
 
-	const mutation = trpc.room.createNewRoom.useMutation();
+	const mutation = useMutation(trpc.room.createNewRoom.mutationOptions());
 
 	const onSubmit = async () => {
 		const result = await mutation.mutateAsync({ name: pageName.trim() });

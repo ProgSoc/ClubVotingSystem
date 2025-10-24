@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { CenteredPageContainer, Heading } from "components/styles";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +16,12 @@ export function WaitingRoomPage(props: {
 
 	const [state, setState] = useState<RoomUserResolvedState | null>(null);
 
-	const response = trpc.waitingRoom.waitResponse.useQuery({
-		roomId: props.roomId,
-		userId: props.userId,
-	});
+	const response = useQuery(
+		trpc.waitingRoom.waitResponse.queryOptions({
+			roomId: props.roomId,
+			userId: props.userId,
+		}),
+	);
 
 	useEffect(() => {
 		if (response.data) {

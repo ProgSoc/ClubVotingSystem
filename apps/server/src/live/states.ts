@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/complexity/noBannedTypes: <explanation> */
 import type { GetStatesUnion } from "../state";
 import { makeStates, state } from "../state";
 import type { QuestionFormatDetails, ResultsView } from "./question";
@@ -11,7 +12,7 @@ interface OpenRoomBaseState {
 	totalPeople: number;
 }
 
-export interface BlankRoomState extends OpenRoomBaseState {}
+export interface BlankRoomState extends OpenRoomBaseState { }
 
 export interface ShowingQuestionState extends OpenRoomBaseState {
 	questionId: string;
@@ -23,7 +24,7 @@ export interface ShowingQuestionState extends OpenRoomBaseState {
 
 export interface ShowingResultsState
 	extends ShowingQuestionState,
-		OpenRoomBaseState {
+	OpenRoomBaseState {
 	results: ResultsView;
 }
 
@@ -45,6 +46,6 @@ export const VoterState = makeStates("vs", {
 	blank: state<BlankRoomState>(),
 	showingQuestion: state<ShowingQuestionState>(),
 	showingResults: state<ShowingResultsState>(),
-	ended: state(),
-	kicked: state(),
+	ended: state<{}>(),
+	kicked: state<{}>(),
 });

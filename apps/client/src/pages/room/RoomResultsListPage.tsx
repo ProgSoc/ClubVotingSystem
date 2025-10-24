@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { ResultsViewer } from "components/ResultsViewer";
 import { Heading, PageContainer, Question } from "components/styles";
 import type { RoomPublicInfo } from "server/src/room/types";
@@ -7,7 +8,9 @@ export function RoomResultsListPage(props: {
 	roomId: string;
 	room: RoomPublicInfo;
 }) {
-	const roomResults = trpc.room.getResults.useQuery({ roomId: props.roomId });
+	const roomResults = useQuery(
+		trpc.room.getResults.queryOptions({ roomId: props.roomId }),
+	);
 
 	return (
 		<PageContainer className="gap-4">

@@ -1,6 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { CenteredPageContainer, Heading } from "components/styles";
 import type { RoomPublicInfo } from "server/src/room/types";
-
 import { trpc } from "./trpc";
 
 const cachedRooms: Record<string, RoomPublicInfo | undefined> = {};
@@ -9,11 +9,13 @@ export function withRoomFetched<Props extends { room: RoomPublicInfo }>(
 	Component: React.ComponentType<Props>,
 ) {
 	return function RoomFetched(props: { roomId: string } & Omit<Props, "room">) {
-		const roomQuery = trpc.room.getRoomById.useQuery(
-			{ id: props.roomId },
-			{
-				enabled: !cachedRooms[props.roomId],
-			},
+		const roomQuery = useQuery(
+			trpc.room.getRoomById.queryOptions(
+				{ id: props.roomId },
+				{
+					enabled: !cachedRooms[props.roomId],
+				},
+			),
 		);
 
 		if (roomQuery.data) {

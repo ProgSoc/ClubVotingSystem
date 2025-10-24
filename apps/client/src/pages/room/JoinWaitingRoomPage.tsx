@@ -1,3 +1,4 @@
+import { useMutation } from "@tanstack/react-query";
 import { Button, CenteredPageContainer, Heading } from "components/styles";
 import { Field, Form, Formik } from "formik";
 import { useId } from "react";
@@ -26,7 +27,7 @@ export function JoinWaitingRoomPage(props: { roomId: string }) {
 
 	const formId = useId();
 
-	const mutation = trpc.room.joinWaitingList.useMutation();
+	const mutation = useMutation(trpc.room.joinWaitingList.mutationOptions());
 
 	const disabled = mutation.isPending || mutation.isSuccess;
 

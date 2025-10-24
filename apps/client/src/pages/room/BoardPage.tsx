@@ -1,7 +1,7 @@
+import { useSubscription } from "@trpc/tanstack-react-query";
 import { QRCodeRender } from "components/QRCode";
 import { ResultsViewer } from "components/ResultsViewer";
 import { CenteredPageContainer, Heading, Question } from "components/styles";
-import { useState } from "react";
 import { routeBuilders } from "routes";
 import { BoardState } from "server/src/live/states";
 import type { RoomPublicInfo } from "server/src/room/types";
@@ -70,18 +70,8 @@ function JoinPanel(props: { room: RoomPublicInfo; className?: string }) {
 }
 
 function StatusPanel(props: { room: RoomPublicInfo }) {
-	const [state, setState] = useState<BoardState | null>(null);
-
-	trpc.room.listenBoardEvents.useSubscription(
-		{ roomId: props.room.id },
-		{
-			onData: (data) => {
-				setState(data);
-			},
-			onError: (err) => {
-				console.error(err);
-			},
-		},
+	const { data: state } = useSubscription(
+		trpc.room.listenBoardEvents.subscriptionOptions({ roomId: props.room.id }),
 	);
 
 	if (!state) {

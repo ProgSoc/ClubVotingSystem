@@ -43,10 +43,10 @@ type StateObjectCreateFns<
 	P extends string,
 	O extends Record<string, Empty<any>>,
 > = {
-	[K in keyof O]: K extends string
+		[K in keyof O]: K extends string
 		? CreateVariantFn<P, K, UnwrapEmpty<O[K]>>
 		: never;
-};
+	};
 
 /** The helper fields a state object has: a reference to the enum object and a reference to the match function for the object */
 export interface StateObjectHelperFields<
@@ -85,8 +85,8 @@ type RecordToStatesUnion<
 	R extends Record<string, Empty<any>>,
 > = ValuesOf<{
 	[K in keyof R]: K extends string
-		? Variant<VariantName<P, K>, UnwrapEmpty<R[K]>>
-		: never;
+	? Variant<VariantName<P, K>, UnwrapEmpty<R[K]>>
+	: never;
 }>;
 
 type MakeIsFn<
@@ -102,10 +102,10 @@ type MakeIsFnsForStates<
 	P extends string,
 	O extends Record<string, Empty<any>>,
 > = {
-	[K in keyof O]: K extends string
+		[K in keyof O]: K extends string
 		? MakeIsFn<P, K, O, RecordToStatesUnion<P, O>>
 		: never;
-};
+	};
 
 /** Creates a union of an object's keys */
 type ValuesOf<O extends Record<string, any>> = O[keyof O];
@@ -116,7 +116,8 @@ export type GetStatesUnion<
 > = RecordToStatesUnion<StateEnumInnerPrefix<SE>, StateEnumInnerObj<SE>>;
 
 /** Empty function to track the state for typescript via the generic */
-export function state<T = unknown>(): Empty<T> {
+// biome-ignore lint/complexity/noBannedTypes: Literally need to allow any here
+export function state<T = {}>(): Empty<T> {
 	return {};
 }
 
