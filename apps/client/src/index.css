@@ -1,7 +1,8 @@
-/** biome-ignore-all lint/suspicious/noUnknownAtRules: Tailwind does exist though isn't being detected */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind directives */
+@plugin "daisyui" {
+	themes: dracula --default;
+}
 
 body {
 	font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
