@@ -6,7 +6,7 @@ import type { QuestionResponse, ResultsView } from "../../../live/question";
 import type { VotingCandidate } from "../../../live/states";
 import { UnreachableError } from "../../../unreachableError";
 import type { CreateQuestionParams, QuestionFormatDetails } from "../../types";
-import { rankedChoiceVoting } from "../preferentialVote";
+import { rankedElection } from "../preferentialVote";
 import type { CloseQuestionDetails, DbQuestionData } from "./queries";
 import {
 	dbCloseQuestion,
@@ -117,13 +117,13 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					(candidate) => candidate.id,
 				);
 
-				const resultIds = rankedChoiceVoting(
+				const { elected } = rankedElection(
 					candidateIds,
 					votingPreferences,
 					question.maxElected,
 				); // get the result in order of preference
 
-				const results = resultIds.map((c, index) => ({
+				const results = elected.map((c, index) => ({
 					id: c.id,
 					// biome-ignore lint/style/noNonNullAssertion: Known keys
 					name: question.candidates.find((candidate) => candidate.id === c.id)

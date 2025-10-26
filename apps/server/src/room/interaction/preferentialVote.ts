@@ -1,132 +1,247 @@
-/**
- * This file contains the logic for ranked-choice voting.
- * @param candidates Array of candidate identifiers
- * @param votes Array of arrays of candidate identifiers, representing votes, in order of preference
- * @returns Array of candidates and their votes
- */
-function tallyVotes(
-	candidates: readonly string[],
-	votes: readonly string[][],
-): Record<string, number> {
-	const voteCounts: Record<string, number> = {};
-	candidates.forEach((candidate) => {
-		voteCounts[candidate] = 0;
-	});
-
-	// Tally first-choice votes
-	votes.forEach((vote) => {
-		const firstChoice = vote[0];
-		// biome-ignore lint/style/noNonNullAssertion: Known keys
-		if (voteCounts[firstChoice!] !== undefined) {
-			// biome-ignore lint/style/noNonNullAssertion: Known keys
-			voteCounts[firstChoice!]! += 1;
-		}
-	});
-
-	return voteCounts;
-}
-
-/**
- * Find the candidate(s) with the fewest votes.
- * @param voteCounts Current vote counts for each candidate
- * @returns Array of candidate identifiers with the fewest votes
- */
-function findLowestVoteCandidates(
-	voteCounts: Record<string, number>,
-): readonly string[] {
-	let minVotes = Infinity;
-	let lowestCandidates: string[] = [];
-	for (const candidate in voteCounts) {
-		// biome-ignore lint/style/noNonNullAssertion: Known keys
-		if (voteCounts[candidate]! < minVotes) {
-			// biome-ignore lint/style/noNonNullAssertion: Known keys
-			minVotes = voteCounts[candidate]!;
-			lowestCandidates = [candidate];
-		} else if (voteCounts[candidate] === minVotes) {
-			lowestCandidates.push(candidate);
-		}
-	}
-	return lowestCandidates;
-}
-
-/**
- * A helper function to reassign votes from eliminated candidates to remaining candidates.
- * @param votes The current votes
- * @param candidatesToRemove Array of candidate identifiers to remove
- * @returns New preference lists with eliminated candidates removed
- */
-function reassignVotes(
-	votes: readonly string[][],
-	candidatesToRemove: readonly string[],
-): readonly string[][] {
-	return votes
-		.map((vote) =>
-			vote.filter((candidate) => !candidatesToRemove.includes(candidate)),
-		)
-		.filter((vote) => vote.length > 0);
-}
+import crypto from "node:crypto";
 
 interface CandidateWithVotes {
 	id: string;
 	votes: number;
 }
 
+interface TransferLogEntry {
+	from: string;
+	to?: string;
+	type: "surplus" | "elimination";
+	transferred: number;
+	note?: string;
+}
+
+interface RoundRecord {
+	round: number;
+	counts: Record<string, number>;
+	elected?: string[];
+	eliminated?: string[];
+	transfers: TransferLogEntry[];
+}
+
 /**
- * Perform ranked-choice voting.
- * @param candidates Array of strings representing candidate identifiers
- * @param voteSets Array of arrays of strings representing votes, in order of preference
- * @param maxElected Maximum number of candidates to elect
- * @returns Array of strings representing the elected candidates
+ * Calculate Droop quota (or majority for 1-seat elections)
  */
-export function rankedChoiceVoting(
-	candidates: readonly string[],
-	voteSets: readonly string[][],
-	maxElected: number,
-): readonly CandidateWithVotes[] {
-	const electedCandidates: string[] = [];
+function calculateQuota(totalVotes: number, seats: number): number {
+	if (seats === 1) return Math.floor(totalVotes / 2) + 1; // IRV majority
+	return Math.floor(totalVotes / (seats + 1)) + 1; // STV Droop quota
+}
 
-	// remove votes from people that are not candidates
-	voteSets = voteSets.map((preferences) =>
-		preferences.filter((preference) => candidates.includes(preference)),
+/**
+ * Count first-preference votes for remaining candidates
+ */
+function tallyVotes(candidates: readonly string[], votes: readonly string[][]) {
+	const counts: Record<string, number> = {};
+	candidates.forEach((c) => { counts[c] = 0 });
+	votes.forEach((vote) => {
+		const first = vote.find((c) => candidates.includes(c));
+		if (first) counts[first] = (counts[first] ?? 0) + 1;
+	});
+	return counts;
+}
+
+/**
+ * Redistribute surplus votes proportionally with log
+ */
+function transferSurplus(
+	votes: readonly string[][],
+	elected: string,
+	surplus: number,
+	totalVotesForElected: number,
+	remainingCandidates: readonly string[],
+	transfers: TransferLogEntry[],
+): string[][] {
+	const weight = surplus / totalVotesForElected;
+	const redistributed: string[][] = [];
+	const retained: string[][] = [];
+
+	votes.forEach((vote) => {
+		if (vote[0] === elected) {
+			const nextPrefs = vote.filter((c) => remainingCandidates.includes(c));
+			if (nextPrefs.length > 0) {
+				transfers.push({
+					from: elected,
+					to: nextPrefs[0],
+					transferred: weight,
+					type: "surplus",
+				});
+			}
+			for (let i = 0; i < weight; i += 1) {
+				redistributed.push(nextPrefs);
+			}
+		} else {
+			retained.push(vote);
+		}
+	});
+
+	return [...retained, ...redistributed];
+}
+
+/**
+ * Deterministic hybrid tie-breaker
+ */
+function deterministicTieBreak(
+	tiedCandidates: string[],
+	history: Record<string, number[]>,
+	firstRoundCounts: Record<string, number>,
+	electionSeed: string,
+): string {
+	// 1️⃣ Compare previous rounds
+	const rounds = Math.max(...Object.values(history).map((v) => v.length));
+	for (let r = rounds - 2; r >= 0; r--) {
+		const scores = tiedCandidates.map((c) => history[c]?.[r] ?? 0);
+		const max = Math.max(...scores);
+		const filtered = tiedCandidates.filter((_c, i) => scores[i] === max);
+		if (filtered.length === 1) return filtered[0] as string;
+		tiedCandidates = filtered;
+	}
+
+	// 2️⃣ Compare first-preference counts
+	const maxFirst = Math.max(...tiedCandidates.map((c) => firstRoundCounts[c] ?? 0));
+	const filtered = tiedCandidates.filter(
+		(c) => (firstRoundCounts[c] ?? 0) === maxFirst,
 	);
+	if (filtered.length === 1) return filtered[0] as string;
 
-	while (electedCandidates.length < maxElected) {
-		// Tally the current votes
-		const voteCounts = tallyVotes(candidates, voteSets);
+	// 3️⃣ Hash-based deterministic randomness
+	const hashScores = filtered.map((c) => {
+		const hash = crypto
+			.createHash("sha256")
+			.update(electionSeed + c)
+			.digest("hex");
+		return parseInt(hash.slice(0, 8), 16);
+	});
+	const maxHash = Math.max(...hashScores);
+	const hashedFiltered = filtered.filter((_c, i) => hashScores[i] === maxHash);
+	if (hashedFiltered.length === 1) return hashedFiltered[0] as string;
 
-		// Check if we have enough candidates to meet maxElected
-		if (candidates.length <= maxElected) {
-			// Add remaining candidates to elected list
-			electedCandidates.push(...candidates);
-			return electedCandidates.map((candidate) => ({
-				id: candidate,
-				// biome-ignore lint/style/noNonNullAssertion: Known keys
-				votes: voteCounts[candidate]!,
-			}));
+	// 4️⃣ Alphabetical fallback
+	return hashedFiltered.sort()[0] as string;
+}
+
+/**
+ * Unified IRV/STV function
+ */
+export function rankedElection(
+	candidates: readonly string[],
+	votes: readonly string[][],
+	seats: number,
+	electionSeed = "default-seed",
+): { elected: CandidateWithVotes[]; rounds: RoundRecord[] } {
+	let remaining = [...candidates];
+	let workingVotes = votes.map((v) => v.filter((c) => candidates.includes(c)));
+	const totalVotes = votes.length;
+	const quota = calculateQuota(totalVotes, seats);
+
+	const elected: CandidateWithVotes[] = [];
+	const history: Record<string, number[]> = {};
+	const firstRoundCounts = tallyVotes(candidates, workingVotes);
+	const rounds: RoundRecord[] = [];
+
+	candidates.forEach((c) => { history[c] = [] });
+
+	let round = 1;
+	while (elected.length < seats && remaining.length > 0) {
+		const counts = tallyVotes(remaining, workingVotes);
+		remaining.forEach((c) => { history[c]?.push(counts[c] ?? 0) });
+
+		const roundRecord: RoundRecord = {
+			round,
+			counts: { ...counts },
+			transfers: [],
+		};
+
+		// 🔹 Elected by quota
+		const winners = Object.entries(counts)
+			.filter(([_, v]) => v >= quota)
+			.sort(([a], [b]) => a.localeCompare(b));
+
+		if (winners.length > 0) {
+			roundRecord.elected = [];
+			for (const [cand, votesForCand] of winners) {
+				if (!remaining.includes(cand)) continue;
+				elected.push({ id: cand, votes: votesForCand });
+				remaining = remaining.filter((c) => c !== cand);
+				roundRecord.elected.push(cand);
+
+				const surplus = votesForCand - quota;
+				if (seats > 1 && surplus > 0 && remaining.length > 0) {
+					workingVotes = transferSurplus(
+						workingVotes,
+						cand,
+						surplus,
+						votesForCand,
+						remaining,
+						roundRecord.transfers,
+					);
+				} else {
+					workingVotes = workingVotes.filter((v) => v[0] !== cand);
+				}
+
+				if (elected.length >= seats) break;
+			}
+
+			rounds.push(roundRecord);
+			round++;
+			continue;
 		}
 
-		// Find the candidates with the fewest votes
-		const lowestCandidates = findLowestVoteCandidates(voteCounts);
+		// 🔹 No one reached quota → eliminate lowest
+		const minVotes = Math.min(...Object.values(counts));
+		let lowest = Object.entries(counts)
+			.filter(([_, v]) => v === minVotes)
+			.map(([c]) => c);
 
-		// Determine if eliminating these candidates would drop below maxElected
-		if (candidates.length - lowestCandidates.length >= maxElected) {
-			// Eliminate the candidates with the fewest votes
-			candidates = candidates.filter(
-				(candidate) => !lowestCandidates.includes(candidate),
+		if (lowest.length > 1) {
+			const eliminated = deterministicTieBreak(
+				lowest,
+				history,
+				firstRoundCounts,
+				electionSeed,
 			);
+			lowest = [eliminated];
+		}
 
-			// Reassign votes from the eliminated candidates to remaining candidates
-			voteSets = reassignVotes(voteSets, lowestCandidates);
-		} else {
-			// Add the remaining candidates to the elected list
-			electedCandidates.push(...candidates);
-			return electedCandidates.map((candidate) => ({
-				id: candidate,
-				// biome-ignore lint/style/noNonNullAssertion: Known keys
-				votes: voteCounts[candidate]!,
-			}));
+		// Guard: ensure there's at least one candidate to eliminate (type-safe)
+		if (lowest.length === 0) {
+			// no candidates to eliminate; exit loop defensively
+			break;
+		}
+
+		const eliminated = lowest[0] as string;
+		roundRecord.eliminated = [eliminated];
+
+		// Record transfers from elimination
+		workingVotes.forEach((vote) => {
+			if (vote[0] === eliminated) {
+				const next = vote.find((c) => remaining.includes(c) && c !== eliminated);
+				roundRecord.transfers.push({
+					from: eliminated,
+					to: next,
+					transferred: 1,
+					type: "elimination",
+				});
+			}
+		});
+
+		remaining = remaining.filter((c) => c !== eliminated);
+		workingVotes = workingVotes.map((v) => v.filter((c) => c !== eliminated));
+
+		rounds.push(roundRecord);
+		round++;
+	}
+
+	// Fill remaining seats deterministically if needed
+	if (elected.length < seats) {
+		remaining.sort();
+		for (const r of remaining) {
+			const counts = tallyVotes(remaining, workingVotes);
+			elected.push({ id: r, votes: counts[r] || 0 });
+			if (elected.length >= seats) break;
 		}
 	}
 
-	return electedCandidates.map((candidate) => ({ id: candidate, votes: 0 }));
+	return { elected: elected.slice(0, seats), rounds };
 }
