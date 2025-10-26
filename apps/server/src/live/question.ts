@@ -1,6 +1,7 @@
 import type { TypeOf } from "zod";
 import { z } from "zod";
 import type { QuestionFormat } from "../dbschema/interfaces";
+import type { RoundRecord } from "../room/interaction/preferentialVote";
 
 const singleVoteType = "SingleVote" satisfies QuestionFormat;
 
@@ -66,6 +67,7 @@ export interface SingleVoteResultsView {
 export interface PreferentialVoteResultsView {
 	type: typeof preferentialVoteType;
 	results: CandidateWithRank[];
+	rounds: RoundRecord[];
 }
 
 export type ResultsView = { abstained: number } & (

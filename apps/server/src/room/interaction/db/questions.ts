@@ -117,7 +117,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					(candidate) => candidate.id,
 				);
 
-				const { elected } = rankedElection(
+				const { elected, rounds } = rankedElection(
 					candidateIds,
 					votingPreferences,
 					question.maxElected,
@@ -136,6 +136,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 				return {
 					type: "PreferentialVote",
 					results,
+					rounds,
 					abstained: abstainCount,
 				};
 			}

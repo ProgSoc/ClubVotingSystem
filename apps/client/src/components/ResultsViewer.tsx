@@ -37,6 +37,18 @@ function ResultBar(props: {
 	);
 }
 
+// download text as file
+const handleDownload = (filename: string, filetype: string, text: string) => {
+	const element = document.createElement("a");
+	const file = new Blob([text], { type: filetype });
+	element.href = URL.createObjectURL(file);
+	element.download = filename;
+	document.body.appendChild(element); // Required for this to work in FireFox
+	element.click();
+
+	document.body.removeChild(element);
+};
+
 export function ResultsViewer({ results }: { results: ResultsView }) {
 	switch (results.type) {
 		case "SingleVote": {
@@ -72,6 +84,15 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
 				...results.results.map((v) => v.votes),
 			);
 
+			const handleRoundsDownload = () => {
+				const roundsText = JSON.stringify(results.rounds, null, 2);
+				handleDownload(
+					"preferential-vote-rounds.json",
+					"application/json",
+					roundsText,
+				);
+			};
+
 			return (
 				<div className="flex flex-col gap-4">
 					{candidates.map((result) => (
@@ -88,6 +109,9 @@ export function ResultsViewer({ results }: { results: ResultsView }) {
 						max={maxVote}
 						grey={true}
 					/>
+					<button className="btn" onClick={handleRoundsDownload} type="button">
+						Download Rounds Data
+					</button>
 				</div>
 			);
 		}

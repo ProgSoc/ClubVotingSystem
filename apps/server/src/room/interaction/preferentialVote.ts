@@ -13,7 +13,7 @@ interface TransferLogEntry {
 	note?: string;
 }
 
-interface RoundRecord {
+export interface RoundRecord {
 	round: number;
 	counts: Record<string, number>;
 	elected?: string[];
@@ -44,6 +44,7 @@ function tallyVotes(candidates: readonly string[], votes: readonly string[][]) {
 
 /**
  * Redistribute surplus votes proportionally with log
+ * (Fixed: handles fractional surplus correctly)
  */
 function transferSurplus(
 	votes: readonly string[][],
@@ -53,28 +54,36 @@ function transferSurplus(
 	remainingCandidates: readonly string[],
 	transfers: TransferLogEntry[],
 ): string[][] {
-	const weight = surplus / totalVotesForElected;
+	if (totalVotesForElected <= 0 || surplus <= 0) return [...votes];
+
+	const weightFraction = surplus / totalVotesForElected;
 	const redistributed: string[][] = [];
 	const retained: string[][] = [];
+
+	const transferCounts: Record<string, number> = {};
 
 	votes.forEach((vote) => {
 		if (vote[0] === elected) {
 			const nextPrefs = vote.filter((c) => remainingCandidates.includes(c));
 			if (nextPrefs.length > 0) {
-				transfers.push({
-					from: elected,
-					to: nextPrefs[0],
-					transferred: weight,
-					type: "surplus",
-				});
-			}
-			for (let i = 0; i < weight; i += 1) {
+				const to = nextPrefs[0] as string;
+				transferCounts[to] = (transferCounts[to] ?? 0) + weightFraction;
 				redistributed.push(nextPrefs);
 			}
 		} else {
 			retained.push(vote);
 		}
 	});
+
+	// Record aggregated transfers
+	for (const [to, amount] of Object.entries(transferCounts)) {
+		transfers.push({
+			from: elected,
+			to,
+			transferred: amount,
+			type: "surplus",
+		});
+	}
 
 	return [...retained, ...redistributed];
 }
@@ -88,29 +97,33 @@ function deterministicTieBreak(
 	firstRoundCounts: Record<string, number>,
 	electionSeed: string,
 ): string {
+	if (tiedCandidates.length === 1) return tiedCandidates[0] as string;
+
+	let currentTies = [...tiedCandidates];
+	const allRounds = Object.values(history).map((v) => v.length);
+	if (allRounds.length === 0) return currentTies.sort()[0] as string;
+
+	const rounds = Math.max(...allRounds);
+
 	// 1️⃣ Compare previous rounds
-	const rounds = Math.max(...Object.values(history).map((v) => v.length));
-	for (let r = rounds - 2; r >= 0; r--) {
-		const scores = tiedCandidates.map((c) => history[c]?.[r] ?? 0);
+	for (let r = Math.max(rounds - 2, 0); r >= 0; r--) {
+		const scores = currentTies.map((c) => history[c]?.[r] ?? 0);
 		const max = Math.max(...scores);
-		const filtered = tiedCandidates.filter((_c, i) => scores[i] === max);
+		const filtered = currentTies.filter((_c, i) => scores[i] === max);
 		if (filtered.length === 1) return filtered[0] as string;
-		tiedCandidates = filtered;
+		currentTies = filtered;
 	}
 
 	// 2️⃣ Compare first-preference counts
-	const maxFirst = Math.max(...tiedCandidates.map((c) => firstRoundCounts[c] ?? 0));
-	const filtered = tiedCandidates.filter(
+	const maxFirst = Math.max(...currentTies.map((c) => firstRoundCounts[c] ?? 0));
+	const filtered = currentTies.filter(
 		(c) => (firstRoundCounts[c] ?? 0) === maxFirst,
 	);
 	if (filtered.length === 1) return filtered[0] as string;
 
 	// 3️⃣ Hash-based deterministic randomness
 	const hashScores = filtered.map((c) => {
-		const hash = crypto
-			.createHash("sha256")
-			.update(electionSeed + c)
-			.digest("hex");
+		const hash = crypto.createHash("sha256").update(electionSeed + c).digest("hex");
 		return parseInt(hash.slice(0, 8), 16);
 	});
 	const maxHash = Math.max(...hashScores);
@@ -123,6 +136,11 @@ function deterministicTieBreak(
 
 /**
  * Unified IRV/STV function
+ * @param candidates list of candidate IDs
+ * @param votes list of votes, each as ordered list of candidate IDs
+ * @param seats number of seats to fill
+ * @param electionSeed optional seed for deterministic tie-breaking
+ * @returns elected candidates with vote counts and round records
  */
 export function rankedElection(
 	candidates: readonly string[],
@@ -130,6 +148,10 @@ export function rankedElection(
 	seats: number,
 	electionSeed = "default-seed",
 ): { elected: CandidateWithVotes[]; rounds: RoundRecord[] } {
+	if (votes.length === 0) {
+		return { elected: [], rounds: [] };
+	}
+
 	let remaining = [...candidates];
 	let workingVotes = votes.map((v) => v.filter((c) => candidates.includes(c)));
 	const totalVotes = votes.length;
@@ -145,6 +167,8 @@ export function rankedElection(
 	let round = 1;
 	while (elected.length < seats && remaining.length > 0) {
 		const counts = tallyVotes(remaining, workingVotes);
+		if (Object.keys(counts).length === 0) break;
+
 		remaining.forEach((c) => { history[c]?.push(counts[c] ?? 0) });
 
 		const roundRecord: RoundRecord = {
@@ -204,27 +228,27 @@ export function rankedElection(
 			lowest = [eliminated];
 		}
 
-		// Guard: ensure there's at least one candidate to eliminate (type-safe)
-		if (lowest.length === 0) {
-			// no candidates to eliminate; exit loop defensively
-			break;
-		}
+		if (lowest.length === 0) break;
 
 		const eliminated = lowest[0] as string;
 		roundRecord.eliminated = [eliminated];
 
 		// Record transfers from elimination
+		const transferCounts: Record<string, number> = {};
 		workingVotes.forEach((vote) => {
 			if (vote[0] === eliminated) {
 				const next = vote.find((c) => remaining.includes(c) && c !== eliminated);
-				roundRecord.transfers.push({
-					from: eliminated,
-					to: next,
-					transferred: 1,
-					type: "elimination",
-				});
+				if (next) transferCounts[next] = (transferCounts[next] ?? 0) + 1;
 			}
 		});
+		for (const [to, amount] of Object.entries(transferCounts)) {
+			roundRecord.transfers.push({
+				from: eliminated,
+				to,
+				transferred: amount,
+				type: "elimination",
+			});
+		}
 
 		remaining = remaining.filter((c) => c !== eliminated);
 		workingVotes = workingVotes.map((v) => v.filter((c) => c !== eliminated));
@@ -233,15 +257,27 @@ export function rankedElection(
 		round++;
 	}
 
-	// Fill remaining seats deterministically if needed
+	// 🧩 Fill remaining seats deterministically if needed
 	if (elected.length < seats) {
-		remaining.sort();
-		for (const r of remaining) {
-			const counts = tallyVotes(remaining, workingVotes);
-			elected.push({ id: r, votes: counts[r] || 0 });
+		const counts = tallyVotes(remaining, workingVotes);
+
+		// Start with remaining candidates
+		const fillPool = [...remaining];
+
+		// If no one remaining (all eliminated), revert to all original candidates
+		if (fillPool.length === 0) fillPool.push(...candidates);
+
+		// Remove already elected from the pool
+		const alreadyElected = new Set(elected.map((e) => e.id));
+		const available = fillPool.filter((c) => !alreadyElected.has(c)).sort();
+
+		for (const c of available) {
+			elected.push({ id: c, votes: counts[c] || 0 });
 			if (elected.length >= seats) break;
 		}
 	}
+
+
 
 	return { elected: elected.slice(0, seats), rounds };
 }

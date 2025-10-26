@@ -179,10 +179,12 @@ function PreferentialQuestionVoting({ data }: { data: QuestionVotingData }) {
 			lastVote?.type === "PreferentialVote"
 				? lastVote
 				: {
-						votes: candidatesReordered.map((candidate, index) => ({
-							candidateId: candidate.id,
-							rank: index + 1,
-						})),
+						votes: candidatesReordered
+							.filter(Boolean)
+							.map((candidate, index) => ({
+								candidateId: candidate.id,
+								rank: index + 1,
+							})),
 					},
 	});
 
