@@ -1,6 +1,6 @@
 Dockerfile
-node_modules
+**/node_modules
 
-dist
-apps/server/dist
-apps/client/dist
+dist*
+apps/server/dist*
+apps/client/dist*

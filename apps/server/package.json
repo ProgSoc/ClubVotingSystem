@@ -12,6 +12,7 @@
 	},
 	"types": "./dist-ts/main.d.ts",
 	"dependencies": {
+		"@graphql-yoga/subscription": "^5.0.5",
 		"@trpc/server": "^11",
 		"cors": "^2.8.5",
 		"dotenv": "^16.0.3",
