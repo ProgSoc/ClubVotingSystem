@@ -99,10 +99,10 @@ function SingleQuestionVoting({ data }: { data: QuestionVotingData }) {
 				control={control}
 				render={({ field: { value, onChange } }) => (
 					<>
-						{candidatesReordered.map((candidate) => (
+						{candidatesReordered.filter(Boolean).map((candidate) => (
 							<Button
 								className={twMerge(
-									value === candidate.id ? "btn-accent" : undefined,
+									value === candidate?.id ? "btn-accent" : undefined,
 								)}
 								onClick={() => {
 									onChange(candidate.id);
