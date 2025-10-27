@@ -7,6 +7,6 @@ export default defineConfig({
     await execaNode({
       cancelSignal: signal,
       gracefulCancel: true,
-    })`./dist/main.mjs`
+    })`./dist/main.js`
   },
 });

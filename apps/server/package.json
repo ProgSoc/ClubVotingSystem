@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"license": "MIT",
 	"main": "./dist/main.js",
+	"type": "module",
 	"scripts": {
 		"dev": "bun --watch ./src/main.ts",
 		"build": "bun build --sourcemap=inline --target bun --outdir ./dist ./src/main.ts",
