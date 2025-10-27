@@ -6,7 +6,6 @@ import type { QuestionResponse, ResultsView } from "../../../live/question";
 import type { VotingCandidate } from "../../../live/states";
 import { UnreachableError } from "../../../unreachableError";
 import type { CreateQuestionParams, QuestionFormatDetails } from "../../types";
-import { STVElection } from "../preferentialVote";
 import type { CloseQuestionDetails, DbQuestionData } from "./queries";
 import {
 	dbCloseQuestion,
@@ -106,37 +105,14 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					});
 				}
 
-				const votingPreferences = Object.entries(voterAndCandidateRank).map(
+				const _votingPreferences = Object.entries(voterAndCandidateRank).map(
 					([_voterId, votes]) => {
 						const sortedVotes = votes.sort((a, b) => a.rank - b.rank); // sort by preference
 						return sortedVotes.map((vote) => vote.candidateId);
 					},
 				);
 
-				const election = new STVElection()
-
-				for (const prefs of votingPreferences) {
-					election.addBallot(prefs);
-				}
-
-				const { elected, records } = election.runElection(question.maxElected);
-
-				const results = elected.map((c, index) => ({
-					id: c,
-					name:
-						question.candidates.find(
-							(candidate) => candidate.id === c,
-						)?.name || "Unknown Candidate",
-					rank: index + 1,
-					votes: records[records.length - 1]?.voteTotals[c] || 0,
-				}));
-
-				return {
-					type: "PreferentialVote",
-					results,
-					records,
-					abstained: abstainCount,
-				};
+				throw new Error("STV Election not implemented"); // TODO: Implement STV counting and results formatting
 			}
 			default:
 				throw new UnreachableError(question.format);
