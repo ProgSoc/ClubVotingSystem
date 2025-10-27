@@ -112,7 +112,11 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					},
 				);
 
-				throw new Error("STV Election not implemented"); // TODO: Implement STV counting and results formatting
+				return {
+					type: "PreferentialVote",
+					results: [],
+					abstained: abstainCount,
+				}
 			}
 			default:
 				throw new UnreachableError(question.format);
