@@ -1,280 +1,189 @@
-import { describe, expect, test } from "bun:test";
-import { rankedElection } from "./preferentialVote";
+import { afterEach, describe, expect, test, vi } from "bun:test";
+import crypto from "node:crypto";
+import { STVElection } from "./preferentialVote";
 
 describe("rankedElection", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test("IRV single-seat majority election", () => {
-    const candidates = ["Alice", "Bob", "Charlie"];
-    const votes = [
-      ["Alice", "Bob", "Charlie"],
-      ["Alice", "Charlie", "Bob"],
-      ["Bob", "Alice", "Charlie"],
-      ["Charlie", "Alice", "Bob"],
-      ["Alice", "Bob", "Charlie"],
-    ];
+    const election = new STVElection();
+    election.addBallot(["Alice", "Bob", "Charlie"]);
+    election.addBallot(["Alice", "Charlie", "Bob"]);
+    election.addBallot(["Alice", "Bob"]);
+    election.addBallot(["Bob", "Alice"]);
+    election.addBallot(["Charlie", "Bob"]);
 
-    const { elected, rounds } = rankedElection(candidates, votes, 1);
+    const result = election.runElection(1);
 
-    // ✅ Alice should have majority (3 of 5)
-    expect(elected[0]?.id).toBe("Alice");
-    expect(elected[0]?.votes).toBeGreaterThanOrEqual(3);
-
-    // Ensure at least 1 round happened
-    expect(rounds.length).toBeGreaterThan(0);
-  });
-
-  test("STV 2-seat election with surplus redistribution", () => {
-    const candidates = ["Alice", "Bob", "Charlie", "Diana"];
-    const votes = [
-      ["Alice", "Bob", "Charlie", "Diana"],
-      ["Alice", "Charlie", "Bob", "Diana"],
-      ["Bob", "Alice", "Charlie", "Diana"],
-      ["Charlie", "Alice", "Bob", "Diana"],
-      ["Diana", "Charlie", "Alice", "Bob"],
-      ["Alice", "Bob", "Charlie", "Diana"],
-      ["Bob", "Diana", "Charlie", "Alice"],
-    ];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 2);
-
-    // Should return exactly 2 winners
-    expect(elected.length).toBe(2);
-
-    // Verify that each elected candidate is among the initial candidates
-    elected.forEach((e) => {
-      expect(candidates).toContain(e.id);
-      expect(typeof e.votes).toBe("number");
+    expect(result.elected).toEqual(["Alice"]);
+    expect(result.eliminated).toEqual([]);
+    expect(result.records[0]?.voteTotals).toEqual({
+      Alice: 3,
+      Bob: 1,
+      Charlie: 1,
     });
-
-    // Ensure there are transfer records in at least one round
-    const anyTransfers = rounds.some((r) => r.transfers.length > 0);
-    expect(anyTransfers).toBe(true);
   });
 
-  test("Deterministic tie-breaker produces consistent result", () => {
-    const candidates = ["A", "B"];
-    const votes = [
-      ["A", "B"],
-      ["B", "A"],
-    ];
+  test("IRV elimination transfers vote weight to next preference", () => {
+    const election = new STVElection();
+    election.addBallot(["Alice", "Bob"]);
+    election.addBallot(["Alice", "Bob"]);
+    election.addBallot(["Bob", "Alice"]);
+    election.addBallot(["Bob", "Alice"]);
+    election.addBallot(["Charlie", "Bob"]);
 
-    const result1 = rankedElection(candidates, votes, 1, "seed123");
-    const result2 = rankedElection(candidates, votes, 1, "seed123");
+    const result = election.runElection(1);
 
-    // Same seed → same outcome
-    expect(result1.elected[0]?.id).toBe(result2.elected[0]?.id);
-
-    // Different seed → may change
-    const result3 = rankedElection(candidates, votes, 1, "different-seed");
-    expect(result3.elected[0]?.id).toBeOneOf(["A", "B"]);
-  });
-
-  test("Handles all votes exhausted (no preferences left)", () => {
-    const candidates = ["A", "B"];
-    const votes = [["A"], ["B"], []];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 1);
-    expect(elected.length).toBe(1);
-    expect(["A", "B"]).toContain(elected[0]?.id as string);
-    expect(rounds.length).toBeGreaterThan(0);
-  });
-
-  test("Fills remaining seats deterministically when insufficient candidates reach quota", () => {
-    const candidates = ["A", "B", "C"];
-    const votes = [
-      ["A", "B", "C"],
-      ["B", "C", "A"],
-      ["C", "A", "B"],
-    ];
-
-    const { elected } = rankedElection(candidates, votes, 2);
-
-    // Should elect exactly 2
-    expect(elected.length).toBe(2);
-    // No duplicates
-    const ids = elected.map((e) => e.id);
-    expect(new Set(ids).size).toBe(2);
-  });
-
-  test("Handles case with no votes cast", () => {
-    const candidates = ["A", "B", "C"];
-    const votes: string[][] = [];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 2);
-
-    // No votes → no one elected
-    expect(elected.length).toBe(0);
-    expect(rounds.length).toBe(0);
-  });
-
-  test("Handles case with no candidates", () => {
-    const candidates: string[] = [];
-    const votes = [
-      ["A", "B"],
-      ["B", "A"],
-    ];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 1);
-
-    // No candidates → no one elected
-    expect(elected.length).toBe(0);
-    expect(rounds.length).toBe(0);
-  })
-
-  test("Handles all candidates being eliminated without reaching quota", () => {
-    const candidates = ["A", "B", "C"];
-    const votes = [
-      ["A"],
-      ["B"],
-      ["C"],
-    ];
-
-    const { elected } = rankedElection(candidates, votes, 2);
-
-    // Should elect exactly 2
-    expect(elected.length).toBe(2);
-    // No duplicates
-    const ids = elected.map((e) => e.id);
-    expect(new Set(ids).size).toBe(2);
-  })
-
-  test("Handles tie situations during elimination", () => {
-    const candidates = ["A", "B", "C"];
-    const votes = [
-      ["A", "B", "C"],
-      ["B", "A", "C"],
-      ["C", "A", "B"],
-      ["C", "B", "A"],
-    ];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 1, "tie-seed");
-
-    // Should elect exactly 1
-    expect(elected.length).toBe(1);
-    // Elected candidate should be among the initial candidates
-    expect(candidates).toContain(elected[0]?.id as string);
-    // Ensure rounds were processed
-    expect(rounds.length).toBeGreaterThan(0);
-  });
-
-  test("Handles tie situations during surplus transfer", () => {
-    const candidates = ["A", "B", "C"];
-    const votes = [
-      ["A", "B", "C"],
-      ["A", "C", "B"],
-      ["B", "A", "C"],
-      ["C", "A", "B"],
-      ["C", "B", "A"],
-      ["C", "B", "A"],
-    ];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 2, "surplus-tie");
-
-    // Should elect exactly 2
-    expect(elected.length).toBe(2);
-    // Elected candidates should be among the initial candidates
-    elected.forEach((e) => {
-      expect(candidates).toContain(e.id);
+    expect(result.elected).toEqual(["Bob"]);
+    expect(result.eliminated).toEqual(["Charlie"]);
+    expect(result.records[0]?.voteTotals).toEqual({
+      Alice: 2,
+      Bob: 2,
+      Charlie: 1,
     });
-    // Ensure rounds were processed
-    expect(rounds.length).toBeGreaterThan(0);
-  })
-
-  test("Handles all votes being exhausted before filling seats", () => {
-    const candidates = ["A", "B", "C"];
-    const votes = [
-      ["A"],
-      ["B"],
-      ["C"],
-      [],
-      [],
-    ];
-
-    const { elected, rounds } = rankedElection(candidates, votes, 2);
-
-    // Should elect exactly 2
-    expect(elected.length).toBe(2);
-    // Elected candidates should be among the initial candidates
-    elected.forEach((e) => {
-      expect(candidates).toContain(e.id);
-    });
-    // Ensure rounds were processed
-    expect(rounds.length).toBeGreaterThan(0);
-  })
-
-  test("should elect a single winner in a simple majority case", () => {
-    const candidates = ["Alice", "Bob", "Carol"];
-    const votes = [
-      ["Alice", "Bob", "Carol"],
-      ["Alice", "Carol", "Bob"],
-      ["Bob", "Alice", "Carol"],
-      ["Alice", "Bob", "Carol"],
-    ];
-    const result = rankedElection(candidates, votes, 1);
-
-    expect(result.elected).toHaveLength(1);
-    expect(result.elected[0]?.id).toBe("Alice");
-    expect(result.elected[0]?.votes).toBeGreaterThan(0);
-    expect(result.rounds.length).toBeGreaterThanOrEqual(1);
+    expect(
+      result.records.some((round) =>
+        round.eliminatedCandidates.includes("Charlie"),
+      ),
+    ).toBe(true);
   });
 
-  test("should handle elimination and redistribution correctly", () => {
-    const candidates = ["Alice", "Bob", "Carol"];
-    const votes = [
-      ["Bob", "Alice", "Carol"],
-      ["Carol", "Alice", "Bob"],
-      ["Alice", "Bob", "Carol"],
-    ];
-    const result = rankedElection(candidates, votes, 1);
+  test("STV surplus redistribution scales ballots even when earlier choice already elected", () => {
+    const election = new STVElection();
 
-    // Expect one winner
-    expect(result.elected).toHaveLength(1);
-    const winner = result.elected[0]?.id;
+    for (let i = 0; i < 5; i++) {
+      election.addBallot(["Alice", "Bob", "Carol"]);
+    }
 
-    // Because every candidate gets one first-preference vote,
-    // tie-breaking or redistribution determines the winner
-    expect(["Alice", "Bob", "Carol"]).toContain(winner as string);
-    expect(result.rounds.length).toBeGreaterThanOrEqual(1);
-  });
+    for (let i = 0; i < 4; i++) {
+      election.addBallot(["Bob", "Alice", "Carol"]);
+    }
 
-  test("should elect multiple winners when seats > 1", () => {
-    const candidates = ["Alice", "Bob", "Carol", "Dave"];
-    const votes = [
-      ["Alice", "Bob", "Carol", "Dave"],
-      ["Bob", "Alice", "Dave", "Carol"],
-      ["Carol", "Dave", "Bob", "Alice"],
-      ["Dave", "Carol", "Bob", "Alice"],
-    ];
+    for (let i = 0; i < 3; i++) {
+      election.addBallot(["Carol", "Alice", "Bob"]);
+    }
 
-    const result = rankedElection(candidates, votes, 2);
+    const result = election.runElection(2);
 
-    expect(result.elected).toHaveLength(2);
-    for (const elected of result.elected) {
-      expect(candidates).toContain(elected.id);
-      expect(elected.votes).toBeGreaterThanOrEqual(0);
+    expect(result.elected).toEqual(["Alice", "Bob"]);
+    expect(result.eliminated).toEqual(["Carol"]);
+    expect(
+      result.records.filter((round) =>
+        round.electedCandidates.includes("Alice"),
+      ).length,
+    ).toBe(1);
+    expect(
+      result.records.filter((round) => round.electedCandidates.includes("Bob"))
+        .length,
+    ).toBe(1);
+
+    const redistributed = election.getBallotsSnapshot().slice(-3);
+    for (const ballot of redistributed) {
+      expect(ballot.weight).toBeCloseTo(2 / 7, 10);
+      expect(ballot.preferences).toEqual(["Alice"]);
     }
   });
 
-  test("should produce deterministic results given the same seed", () => {
-    const candidates = ["Alice", "Bob", "Carol"];
-    const votes = [
-      ["Bob", "Alice", "Carol"],
-      ["Carol", "Alice", "Bob"],
-      ["Alice", "Bob", "Carol"],
-    ];
+  test("Tie elimination relies on deterministic random break", () => {
+    const election = new STVElection();
+    const randomSpy = vi
+      .spyOn(crypto, "randomInt")
+      .mockImplementation(
+        ((_max: number) => 1) as unknown as typeof crypto.randomInt,
+      );
 
-    const result1 = rankedElection(candidates, votes, 1, "fixed-seed");
-    const result2 = rankedElection(candidates, votes, 1, "fixed-seed");
+    election.addBallot(["Alice", "Bob"]);
+    election.addBallot(["Bob", "Alice"]);
+    election.addBallot(["Carol", "Alice"]);
 
-    expect(result1.elected[0]?.id).toBe(result2.elected[0]?.id);
+    const result = election.runElection(1);
+
+    expect(randomSpy).toHaveBeenCalledWith(3);
+    const eliminationRound = result.records.find(
+      (round) => round.eliminatedCandidates.length > 0,
+    );
+    expect(eliminationRound?.eliminatedCandidates).toEqual(["Bob"]);
+    expect(result.elected).toEqual(["Alice"]);
   });
 
-  test("should handle empty votes gracefully", () => {
-    const candidates = ["Alice", "Bob"];
-    const votes: string[][] = [];
-    const result = rankedElection(candidates, votes, 1);
+  test("Ballots exhaust when all ranked candidates are gone", () => {
+    const election = new STVElection();
+    const randomSpy = vi
+      .spyOn(crypto, "randomInt")
+      .mockImplementation(
+        ((_max: number) => 1) as unknown as typeof crypto.randomInt,
+      );
 
-    expect(result.elected).toHaveLength(0);
-    expect(result.rounds).toEqual([]);
+    election.addBallot(["Alice"]);
+    election.addBallot(["Bob"]);
+    election.addBallot(["Charlie"]);
+    election.addBallot(["Charlie"]);
+
+    const result = election.runElection(1);
+
+    expect(randomSpy).toHaveBeenCalled();
+    expect(result.elected).toEqual(["Charlie"]);
+    expect(result.eliminated).toEqual(["Bob", "Alice"]);
+    const eliminationRound = result.records.filter(
+      (round) => round.eliminatedCandidates.length === 1,
+    );
+    expect(eliminationRound[0]?.eliminatedCandidates).toEqual(["Bob"]);
+    expect(eliminationRound[1]?.eliminatedCandidates).toEqual(["Alice"]);
+
+    const internalBallots = (
+      election as unknown as {
+        ballots: Array<{ preferences: string[]; weight: number }>;
+      }
+    ).ballots;
+
+    const exhausted = internalBallots.filter(
+      (ballot) => ballot.preferences.length === 0,
+    );
+    expect(exhausted.length).toBeGreaterThan(0);
+    expect(
+      result.records.some((round) => (round.voteTotals["Charlie"] ?? 0) === 2),
+    ).toBe(true);
   });
 
+  test("Multi-seat STV handles cascading ballot exhaustion", () => {
+    const election = new STVElection();
+    const randomSpy = vi
+      .spyOn(crypto, "randomInt")
+      .mockImplementation(
+        ((_max: number) => 1) as unknown as typeof crypto.randomInt,
+      );
+
+    for (let i = 0; i < 4; i++) {
+      election.addBallot(["Alice", "Carol", "Bob"]);
+    }
+
+    for (let i = 0; i < 2; i++) {
+      election.addBallot(["Bob", "Carol"]);
+    }
+
+    election.addBallot(["Carol"]);
+
+    election.addBallot(["Dave"]);
+    election.addBallot(["Eve"]);
+
+    const result = election.runElection(3);
+
+    expect(randomSpy).toHaveBeenCalledWith(2);
+    expect(new Set(result.elected)).toEqual(new Set(["Alice", "Bob", "Carol"]));
+    expect(result.eliminated).toEqual(["Eve", "Dave"]);
+
+    const exhausted = election
+      .getBallotsSnapshot()
+      .filter((ballot) => ballot.preferences.length === 0);
+    expect(exhausted.length).toBeGreaterThanOrEqual(2);
+
+    const debugSnapshots = election.getDebugSnapshots();
+    const tieBreakRound = debugSnapshots.find(
+      (snapshot) =>
+        snapshot.voteTotals["Dave"] === 1 && snapshot.voteTotals["Eve"] === 1,
+    );
+    expect(tieBreakRound).toBeDefined();
+  });
 });

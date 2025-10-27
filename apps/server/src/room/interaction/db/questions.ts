@@ -6,7 +6,7 @@ import type { QuestionResponse, ResultsView } from "../../../live/question";
 import type { VotingCandidate } from "../../../live/states";
 import { UnreachableError } from "../../../unreachableError";
 import type { CreateQuestionParams, QuestionFormatDetails } from "../../types";
-import { rankedElection } from "../preferentialVote";
+import { STVElection } from "../preferentialVote";
 import type { CloseQuestionDetails, DbQuestionData } from "./queries";
 import {
 	dbCloseQuestion,
@@ -113,30 +113,28 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					},
 				);
 
-				const candidateIds = question.candidates.map(
-					(candidate) => candidate.id,
-				);
+				const election = new STVElection()
 
-				const { elected, rounds } = rankedElection(
-					candidateIds,
-					votingPreferences,
-					question.maxElected,
-				); // get the result in order of preference
+				for (const prefs of votingPreferences) {
+					election.addBallot(prefs);
+				}
+
+				const { elected, records } = election.runElection(question.maxElected);
 
 				const results = elected.map((c, index) => ({
-					id: c.id,
-					// biome-ignore lint/style/noNonNullAssertion: Known keys
-					name: question.candidates.find((candidate) => candidate.id === c.id)
-						?.name!,
+					id: c,
+					name:
+						question.candidates.find(
+							(candidate) => candidate.id === c,
+						)?.name || "Unknown Candidate",
 					rank: index + 1,
-					votes: candidateWithVotes.filter((vote) => vote.candidateId === c.id)
-						.length,
+					votes: records[records.length - 1]?.voteTotals[c] || 0,
 				}));
 
 				return {
 					type: "PreferentialVote",
 					results,
-					rounds,
+					records,
 					abstained: abstainCount,
 				};
 			}

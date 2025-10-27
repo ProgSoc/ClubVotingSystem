@@ -67,7 +67,7 @@ export interface SingleVoteResultsView {
 export interface PreferentialVoteResultsView {
 	type: typeof preferentialVoteType;
 	results: CandidateWithRank[];
-	rounds: RoundRecord[];
+	records: RoundRecord[]
 }
 
 export type ResultsView = { abstained: number } & (
