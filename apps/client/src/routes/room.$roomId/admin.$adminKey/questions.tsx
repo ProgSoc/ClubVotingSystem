@@ -141,7 +141,7 @@ const schema = z.object({
 interface CandidateInnerData {
 	name: string;
 	innerId: number;
-	inputRef: React.RefObject<HTMLInputElement>;
+	inputRef: React.RefObject<HTMLInputElement | null>;
 	forceSelect: boolean;
 }
 interface FormValues extends TypeOf<typeof schema> {

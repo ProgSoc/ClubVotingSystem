@@ -3,7 +3,7 @@ import * as trpcExpress from "@trpc/server/adapters/express";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import cors from "cors";
 import express from "express";
-import ws from "ws";
+import { WebSocketServer } from "ws";
 
 import { env } from "./env";
 import { roomRouter } from "./routers/room";
@@ -58,7 +58,7 @@ const server = app.listen(8080, () => {
 
 // Create the websocket server
 
-const websocketServer = new ws.Server({
+const websocketServer = new WebSocketServer({
 	noServer: true,
 	path: "/trpc/socket",
 });
