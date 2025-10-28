@@ -96,6 +96,18 @@ if (env.PUBLIC_DIR) {
 	await server.register(import("@fastify/static"), {
 		root: publicDir,
 		prefix: "/",
+		setHeaders(res, path) {
+			if (path.startsWith(`${publicDir}/assets/`)) {
+				// Cache assets for 1 year
+				res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+			} else if (path.endsWith(".html")) {
+				// Do not cache HTML files
+				res.setHeader("Cache-Control", "no-cache");
+			} else {
+				// Cache other files for 1 hour
+				res.setHeader("Cache-Control", "public, max-age=3600");
+			}
+		},
 	});
 
 	server.setNotFoundHandler((_request, reply) => {
