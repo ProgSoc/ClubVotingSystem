@@ -1,4 +1,11 @@
-FROM node:22.21-alpine as builder
+FROM node:22.21-alpine AS base
+
+# Install Bun
+RUN apk --no-cache add curl bash
+RUN curl -fsSL https://bun.com/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+FROM base AS builder
 
 WORKDIR /app
 
@@ -15,7 +22,7 @@ RUN bun run build
 
 
 
-FROM node:22.21-alpine
+FROM base
 
 WORKDIR /app
 
