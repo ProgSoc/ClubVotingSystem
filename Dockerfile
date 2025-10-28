@@ -40,4 +40,4 @@ COPY --from=prerelease /app/apps/client/dist ./apps/client/dist
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/apps/client/dist
 
-CMD cd apps/server && bunx gel migrate && node --enable-source-maps dist/main.js
+CMD cd apps/server && bun x gel migrate && node --enable-source-maps dist/main.js
