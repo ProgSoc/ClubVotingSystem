@@ -1,10 +1,11 @@
-import path from "node:path";
-import * as trpcExpress from "@trpc/server/adapters/express";
-import { applyWSSHandler } from "@trpc/server/adapters/ws";
-import cors from "cors";
-import express from "express";
-import { WebSocketServer } from "ws";
-
+import cors from "@fastify/cors";
+import ws from "@fastify/websocket";
+import {
+	type FastifyTRPCPluginOptions,
+	fastifyTRPCPlugin,
+} from "@trpc/server/adapters/fastify";
+import type { TRPCReconnectNotification } from "@trpc/server/rpc";
+import fastify from "fastify";
 import { env } from "./env";
 import { roomRouter } from "./routers/room";
 import { roomAdminRouter } from "./routers/room-admin";
@@ -23,64 +24,90 @@ export const appRouter = mergeRouters(mainRouter);
 
 export type AppRouter = typeof appRouter;
 
-const app = express();
+const server = fastify({
+	routerOptions: {
+		maxParamLength: 5000,
+	},
+});
+
+await server.register(ws, {
+	preClose(done) {
+		console.log("Broadcasting reconnect to clients before shutdown");
+		const response: TRPCReconnectNotification = {
+			id: null,
+			method: "reconnect",
+		};
+
+		const data = JSON.stringify(response);
+
+		for (const client of server.websocketServer.clients) {
+			if (client.readyState === 1) {
+				client.send(data);
+			}
+		}
+
+		server.websocketServer.close(done);
+	},
+});
+
+server.websocketServer.on("connection", (ws) => {
+	console.log(`➕➕ Connection (${server.websocketServer.clients.size})`);
+	ws.once("close", () => {
+		console.log(`➖➖ Connection (${server.websocketServer.clients.size})`);
+	});
+})
 
 // Allow CORS for dev
 if (process.env.NODE_ENV !== "production") {
-	app.use(
-		cors({
-			origin: "*",
-			credentials: true,
-		}),
-	);
+	await server.register(cors, {
+		origin: "*",
+		credentials: true,
+	});
 }
 
 // Create the express server
-app.use(
-	"/trpc",
-	trpcExpress.createExpressMiddleware({
+await server.register(fastifyTRPCPlugin, {
+	prefix: "/trpc",
+	useWSS: true,
+	// Enable heartbeat messages to keep connection open (disabled by default)
+	keepAlive: {
+		enabled: true,
+		// server ping message interval in milliseconds
+		pingMs: 30000,
+		// connection is terminated if pong message is not received in this many milliseconds
+		pongWaitMs: 5000,
+	},
+	trpcOptions: {
 		router: appRouter,
-	}),
-);
+		onError({ path, error }) {
+			// report to error monitoring
+			console.error(`Error in tRPC handler on path '${path}':`, error);
+		},
+	} satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
+});
 
 if (env.publicDir) {
 	const publicDir = env.publicDir;
-	// Serve up the single page app
-	app.use(express.static(publicDir));
-	app.get("*", (_req, res) => {
-		res.sendFile(path.resolve(publicDir, "index.html"));
+	await server.register(import("@fastify/static"), {
+		root: publicDir,
+		prefix: "/",
+	});
+
+	server.setNotFoundHandler((_request, reply) => {
+		reply.sendFile("index.html");
 	});
 }
 
-const server = app.listen(8080, () => {
-	console.log("Server started on port 8080");
-});
-
-// Create the websocket server
-
-const websocketServer = new WebSocketServer({
-	noServer: true,
-	path: "/trpc/socket",
-});
-
-const handler = applyWSSHandler({ wss: websocketServer, router: appRouter });
-
-server.on("upgrade", (request, socket, head) => {
-	websocketServer.handleUpgrade(request, socket, head, (websocket) => {
-		websocketServer.emit("connection", websocket, request);
-	});
+const PORT = env.port || 8080;
+server.listen({ port: Number(PORT), host: "0.0.0.0" }).then(() => {
+	console.log(`Server listening on port ${PORT}`);
 });
 
 process.on("SIGTERM", () => {
-	console.log("SIGTERM");
-	handler.broadcastReconnectNotification();
-	websocketServer.close();
-	console.log("Server killed, broadcasting reconnect notification");
-});
-
-websocketServer.on("connection", (ws) => {
-	console.log(`➕➕ Connection (${websocketServer.clients.size})`);
-	ws.once("close", () => {
-		console.log(`➖➖ Connection (${websocketServer.clients.size})`);
+	server.close().then(() => {
+		console.log("Server closed");
+		process.exit(0);
 	});
 });
+
+

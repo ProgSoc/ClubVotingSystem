@@ -10,7 +10,7 @@ export const queryClient = new QueryClient();
 const trpcClient = createTRPCClient<AppRouter>({
   links: [wsLink({
     client: createWSClient({
-      url: `${secure ? "wss" : "ws"}://${location.host}/trpc/socket`,
+      url: `${secure ? "wss" : "ws"}://${location.host}/trpc`,
     }),
   }),],
 });

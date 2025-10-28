@@ -1,4 +1,8 @@
 module default {
+  scalar type UserLocation extending enum<InPerson, Online, Proxy>;
+  scalar type WaitingState extending enum<Waiting, Admitted, Declined, Kicked>;
+  scalar type QuestionFormat extending enum<SingleVote, PreferentialVote>;
+
   type Room {
     required adminKey: str;
     required name: str;
@@ -14,11 +18,7 @@ module default {
 
     link users := .<room[is RoomUser];
     multi questions: Question;
-  }
-
-  scalar type UserLocation extending enum<InPerson, Online, Proxy>;
-  scalar type WaitingState extending enum<Waiting, Admitted, Declined, Kicked>;
-  scalar type QuestionFormat extending enum<SingleVote, PreferentialVote>;
+  }  
 
   type RoomUser {
     required state: WaitingState;

@@ -1,4 +1,4 @@
-FROM oven/bun:1.3-alpine as builder
+FROM node:22.21-alpine as builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN bun run build
 
 
 
-FROM oven/bun:1.3-alpine 
+FROM node:22.21-alpine
 
 WORKDIR /app
 
@@ -31,4 +31,4 @@ COPY --from=builder /app/apps/client/dist ./apps/client/dist
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/apps/client/dist
 
-CMD cd apps/server && bunx gel migrate && bun run dist/main.js
+CMD cd apps/server && bunx gel migrate && node --enable-source-maps dist/main.js

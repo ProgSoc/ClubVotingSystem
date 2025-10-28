@@ -1,5 +1,5 @@
 import { dbClient } from "../../../dbschema/client";
-import e from "../../../dbschema/edgeql-js";
+import e from "../../../dbschema/edgeql-js/index.js";
 import type { $expr_Literal } from "../../../dbschema/edgeql-js/literal";
 import type { $QuestionFormat } from "../../../dbschema/edgeql-js/modules/default";
 import type {
@@ -153,7 +153,7 @@ export async function dbSetUserState(
 type DbQuestionElement = (typeof e.Question)["__element__"];
 type DbQuestionElementQueryShape = Readonly<
 	objectTypeToSelectShape<DbQuestionElement> &
-		SelectModifiers<DbQuestionElement>
+	SelectModifiers<DbQuestionElement>
 >;
 
 const questionQueryFields = {
@@ -197,7 +197,7 @@ export async function dbFetchCurrentQuestionData(roomId: string) {
 	const questions = await e
 		.select(e.Question, (question) => ({
 			...questionQueryFields,
-			filter: e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId)),
+			filter: e.any(e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId))),
 			order_by: { expression: question.createdAt, direction: e.DESC },
 			limit: 1,
 		}))
@@ -211,7 +211,7 @@ export async function dbFetchAllQuestionsData(roomId: string) {
 	const questions = await e
 		.select(e.Question, (question) => ({
 			...questionQueryFields,
-			filter: e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId)),
+			filter: e.any(e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId))),
 		}))
 		.run(dbClient);
 

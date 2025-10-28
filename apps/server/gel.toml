@@ -5,4 +5,4 @@ server-version = "6.4"
 schema-dir = "src/dbschema"
 
 [hooks]
-schema.update.after = "bunx @gel/generate interfaces && bunx @gel/generate edgeql-js"
+schema.update.after = "bunx @gel/generate interfaces && bunx @gel/generate edgeql-js --target esm"

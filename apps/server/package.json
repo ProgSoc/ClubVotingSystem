@@ -2,37 +2,35 @@
 	"name": "server",
 	"version": "1.0.0",
 	"license": "MIT",
-	"main": "./dist/main.js",
 	"type": "module",
 	"scripts": {
-		"dev": "bun --watch ./src/main.ts",
-		"build": "bun build --sourcemap=inline --target bun --outdir ./dist ./src/main.ts",
-		"start": "bun ./dist/main.js",
+		"dev": "bun tsdown --watch",
+		"build": "bun tsdown",
+		"start": "node ./dist/main.js",
 		"migrate": "gel migration create && gel migrate && bun generate",
-		"generate": "bunx @gel/generate interfaces && bunx @gel/generate edgeql-js"
+		"generate": "bunx @gel/generate interfaces && bunx @gel/generate edgeql-js --target esm"
 	},
-	"types": "./dist-ts/main.d.ts",
+	"types": "./dist/main.d.ts",
+	"main": "./dist/main.js",
 	"dependencies": {
+		"@fastify/cors": "^11.1.0",
+		"@fastify/static": "^8.3.0",
+		"@fastify/websocket": "^11.2.0",
 		"@graphql-yoga/subscription": "^5.0.5",
-		"@trpc/server": "^11.7.0",
-		"cors": "^2.8.5",
+		"@trpc/server": "11.6.0",
 		"dotenv": "^16.6.1",
 		"dotenv-cli": "^6.0.0",
-		"express": "^4.21.2",
+		"execa": "^9.6.0",
+		"fastify": "^5.6.1",
 		"gel": "^2.1.1",
 		"nanoid": "^3.3.11",
-		"ws": "^8.18.3",
 		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@gel/generate": "^0.7.0",
-		"@types/bun": "^1.3.1",
 		"@types/cors": "^2.8.19",
-		"@types/express": "^4.17.24",
 		"@types/node": "^20.19.23",
 		"@types/ws": "^8.18.1",
-		"execa": "^9.6.0",
-		"prettier": "^3.6.2",
 		"tsdown": "^0.15.10"
 	}
 }
