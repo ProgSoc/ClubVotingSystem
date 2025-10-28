@@ -53,11 +53,11 @@ await server.register(ws, {
 
 server.websocketServer.on("connection", (ws, req) => {
 	console.log(
-		`➕➕ Connection (${server.websocketServer.clients.size}) - ${req.socket.remoteAddress}`,
+		`➕➕ Connection (${server.websocketServer.clients.size}) - ${req.headers['x-forwarded-for'] || req.socket.remoteAddress}`,
 	);
 	ws.once("close", () => {
 		console.log(
-			`➖➖ Connection (${server.websocketServer.clients.size}) - ${req.socket.remoteAddress}`,
+			`➖➖ Connection (${server.websocketServer.clients.size}) - ${req.headers['x-forwarded-for'] || req.socket.remoteAddress}`,
 		);
 	});
 });
