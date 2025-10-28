@@ -6,7 +6,6 @@ import {
 } from "@trpc/server/adapters/fastify";
 import type { TRPCReconnectNotification } from "@trpc/server/rpc";
 import fastify from "fastify";
-import ipaddr from "ipaddr.js";
 import { env } from "./env";
 import { roomRouter } from "./routers/room";
 import { roomAdminRouter } from "./routers/room-admin";
@@ -29,38 +28,7 @@ const server = fastify({
 	routerOptions: {
 		maxParamLength: 5000,
 	},
-	trustProxy: env.TRUSTED_PROXIES
-		? (address) => {
-			const ip = ipaddr.parse(address);
-			const trustedCidrs =
-				env.TRUSTED_PROXIES?.filter((c) => ipaddr.isValidCIDR(c)).map((c) =>
-					ipaddr.parseCIDR(c),
-				) || [];
-			const trustedIps =
-				env.TRUSTED_PROXIES?.filter((c) => ipaddr.isValid(c)).map((c) =>
-					ipaddr.parse(c),
-				) || [];
-
-			// Check if the IP matches any trusted CIDR
-			for (const [range, prefix] of trustedCidrs) {
-				if (ip.match(range, prefix)) {
-					return true;
-				}
-			}
-
-			// Check if the IP matches any trusted IP directly
-			for (const trustedIp of trustedIps) {
-				if (
-					ip.kind() === trustedIp.kind() &&
-					ip.toNormalizedString() === trustedIp.toNormalizedString()
-				) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-		: false,
+	trustProxy: env.TRUSTED_PROXIES,
 });
 
 await server.register(ws, {
