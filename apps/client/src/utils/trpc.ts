@@ -7,14 +7,15 @@ const secure = location.protocol === "https:";
 
 export const queryClient = new QueryClient();
 
+export const wsClient = createWSClient({
+  url: `${secure ? "wss" : "ws"}://${location.host}/trpc`,
+})
+
 const trpcClient = createTRPCClient<AppRouter>({
   links: [wsLink({
-    client: createWSClient({
-      url: `${secure ? "wss" : "ws"}://${location.host}/trpc`,
-    }),
+    client: wsClient,
   }),],
 });
-
 export const trpc = createTRPCOptionsProxy<AppRouter>({
   client: trpcClient,
   queryClient,

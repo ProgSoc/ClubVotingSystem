@@ -6,6 +6,7 @@ import {
 	Outlet,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { ConnectionStatus } from "components/ConnectionStatus";
 
 export const Route = createRootRouteWithContext<{
 	queryClient: QueryClient;
@@ -25,6 +26,9 @@ function RootComponent() {
 	return (
 		<>
 			<div className="w-screen h-screen relative overflow-x-hidden">
+				<div className="absolute top-2 mx-auto left-0 right-0 w-fit z-50">
+					<ConnectionStatus />
+				</div>
 				<div className={"absolute min-h-full"}>
 					<Outlet />
 				</div>
