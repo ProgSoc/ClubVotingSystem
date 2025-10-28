@@ -22,8 +22,6 @@ const useConntectionStatus = () => {
 export const ConnectionStatus = () => {
 	const connectionState = useConntectionStatus();
 
-	console.log("Connection State:", connectionState?.state);
-
 	if (!connectionState) return <div className="badge">Loading...</div>;
 
 	if (connectionState.state === "connecting") {
