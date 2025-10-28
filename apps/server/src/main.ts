@@ -29,7 +29,6 @@ const server = fastify({
 		maxParamLength: 5000,
 	},
 	trustProxy: env.TRUSTED_PROXIES,
-	logger: true
 });
 
 await server.register(ws, {
