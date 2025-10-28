@@ -6,6 +6,7 @@ import {
 } from "@trpc/server/adapters/fastify";
 import type { TRPCReconnectNotification } from "@trpc/server/rpc";
 import fastify from "fastify";
+import ipaddr from "ipaddr.js";
 import { env } from "./env";
 import { roomRouter } from "./routers/room";
 import { roomAdminRouter } from "./routers/room-admin";
@@ -28,6 +29,38 @@ const server = fastify({
 	routerOptions: {
 		maxParamLength: 5000,
 	},
+	trustProxy: env.TRUSTED_PROXIES
+		? (address) => {
+			const ip = ipaddr.parse(address);
+			const trustedCidrs =
+				env.TRUSTED_PROXIES?.filter((c) => ipaddr.isValidCIDR(c)).map((c) =>
+					ipaddr.parseCIDR(c),
+				) || [];
+			const trustedIps =
+				env.TRUSTED_PROXIES?.filter((c) => ipaddr.isValid(c)).map((c) =>
+					ipaddr.parse(c),
+				) || [];
+
+			// Check if the IP matches any trusted CIDR
+			for (const [range, prefix] of trustedCidrs) {
+				if (ip.match(range, prefix)) {
+					return true;
+				}
+			}
+
+			// Check if the IP matches any trusted IP directly
+			for (const trustedIp of trustedIps) {
+				if (
+					ip.kind() === trustedIp.kind() &&
+					ip.toNormalizedString() === trustedIp.toNormalizedString()
+				) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+		: false,
 });
 
 await server.register(ws, {
@@ -50,12 +83,16 @@ await server.register(ws, {
 	},
 });
 
-server.websocketServer.on("connection", (ws) => {
-	console.log(`➕➕ Connection (${server.websocketServer.clients.size})`);
+server.websocketServer.on("connection", (ws, req) => {
+	console.log(
+		`➕➕ Connection (${server.websocketServer.clients.size}) - ${req.socket.remoteAddress}`,
+	);
 	ws.once("close", () => {
-		console.log(`➖➖ Connection (${server.websocketServer.clients.size})`);
+		console.log(
+			`➖➖ Connection (${server.websocketServer.clients.size}) - ${req.socket.remoteAddress}`,
+		);
 	});
-})
+});
 
 // Allow CORS for dev
 if (process.env.NODE_ENV !== "production") {
@@ -86,8 +123,8 @@ await server.register(fastifyTRPCPlugin, {
 	} satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
 });
 
-if (env.publicDir) {
-	const publicDir = env.publicDir;
+if (env.PUBLIC_DIR) {
+	const publicDir = env.PUBLIC_DIR;
 	await server.register(import("@fastify/static"), {
 		root: publicDir,
 		prefix: "/",
@@ -98,9 +135,8 @@ if (env.publicDir) {
 	});
 }
 
-const PORT = env.port || 8080;
-server.listen({ port: Number(PORT), host: "0.0.0.0" }).then(() => {
-	console.log(`Server listening on port ${PORT}`);
+server.listen({ port: env.PORT, host: "0.0.0.0" }).then(() => {
+	console.log(`Server listening on port ${env.PORT}`);
 });
 
 process.on("SIGTERM", () => {
@@ -109,5 +145,4 @@ process.on("SIGTERM", () => {
 		process.exit(0);
 	});
 });
-
 
