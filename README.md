@@ -39,7 +39,7 @@ cd ClubVotingSystem
 2. Install dependencies
 
 ```
-yarn install
+bun install
 ```
 
 3. Run database on Docker
