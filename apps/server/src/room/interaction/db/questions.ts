@@ -143,6 +143,49 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 	};
 }
 
+/**
+ * Create a new question in the database
+ * @param roomId The parent room
+ * @param params
+ * @returns
+ */
+export async function createNewQuestion(
+	roomId: string,
+	params: CreateQuestionParams,
+) {
+	switch (params.details.type) {
+		case "SingleVote": {
+			return dbCreateSingleVoteQuestion({
+				roomId,
+				candidates: params.candidates,
+				question: params.question,
+			});
+		}
+		case "PreferentialVote":
+			return dbCreatePreferentialVoteQuestion({
+				roomId,
+				candidates: params.candidates,
+				question: params.question,
+				maxElected: params.details.maxElected,
+			});
+		default:
+			throw new UnreachableError(params.details);
+	}
+}
+
+/**
+ * Close an open question
+ * @param questionId
+ * @param details
+ * @returns void
+ */
+export async function closeQuestion(
+	questionId: string,
+	details: CloseQuestionDetails,
+) {
+	return dbCloseQuestion(questionId, details);
+}
+
 export function makeQuestionModificationFunctions(roomId: string) {
 	let currentQuestionPromise: Promise<RoomQuestion | null> | null = null;
 
@@ -167,40 +210,6 @@ export function makeQuestionModificationFunctions(roomId: string) {
 			const questions = await dbFetchAllQuestionsData(roomId);
 			const mapped = questions.map((q) => mapDbQuestionData(q));
 			return mapped;
-		},
-		createNewQuestion: async (params: CreateQuestionParams) => {
-			let questionPromise: Promise<DbQuestionData>;
-			switch (params.details.type) {
-				case "SingleVote": {
-					questionPromise = dbCreateSingleVoteQuestion({
-						roomId,
-						candidates: params.candidates,
-						question: params.question,
-					});
-					break;
-				}
-				case "PreferentialVote":
-					questionPromise = dbCreatePreferentialVoteQuestion({
-						roomId,
-						candidates: params.candidates,
-						question: params.question,
-						maxElected: params.details.maxElected,
-					});
-					break;
-				default:
-					throw new UnreachableError(params.details);
-			}
-
-			currentQuestionPromise = questionPromise.then(mapDbQuestionData);
-			return mapDbQuestionData(await questionPromise);
-		},
-		closeQuestion: async (
-			questionId: string,
-			details: CloseQuestionDetails,
-		) => {
-			const questionPromise = dbCloseQuestion(questionId, details);
-			currentQuestionPromise = questionPromise.then(mapDbQuestionData);
-			return mapDbQuestionData(await questionPromise);
 		},
 
 		async voteForQuestion(
