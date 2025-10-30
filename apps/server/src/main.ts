@@ -18,7 +18,7 @@ const mainRouter = router({
 	admin: roomAdminRouter,
 });
 
-export const appRouter = mergeRouters(mainRouter);
+const appRouter = mergeRouters(mainRouter);
 
 export type AppRouter = typeof appRouter;
 
@@ -51,11 +51,11 @@ await server.register(import("@fastify/websocket"), {
 
 server.websocketServer.on("connection", (ws, req) => {
 	console.log(
-		`➕➕ Connection (${server.websocketServer.clients.size}) - ${req.headers['x-forwarded-for'] || req.socket.remoteAddress}`,
+		`➕➕ Connection (${server.websocketServer.clients.size}) - ${req.headers["x-forwarded-for"] || req.socket.remoteAddress}`,
 	);
 	ws.once("close", () => {
 		console.log(
-			`➖➖ Connection (${server.websocketServer.clients.size}) - ${req.headers['x-forwarded-for'] || req.socket.remoteAddress}`,
+			`➖➖ Connection (${server.websocketServer.clients.size}) - ${req.headers["x-forwarded-for"] || req.socket.remoteAddress}`,
 		);
 	});
 });
@@ -123,4 +123,3 @@ process.on("SIGTERM", () => {
 		process.exit(0);
 	});
 });
-

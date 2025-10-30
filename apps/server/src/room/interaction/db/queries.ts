@@ -153,7 +153,7 @@ export async function dbSetUserState(
 type DbQuestionElement = (typeof e.Question)["__element__"];
 type DbQuestionElementQueryShape = Readonly<
 	objectTypeToSelectShape<DbQuestionElement> &
-	SelectModifiers<DbQuestionElement>
+		SelectModifiers<DbQuestionElement>
 >;
 
 const questionQueryFields = {
@@ -197,7 +197,9 @@ export async function dbFetchCurrentQuestionData(roomId: string) {
 	const questions = await e
 		.select(e.Question, (question) => ({
 			...questionQueryFields,
-			filter: e.any(e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId))),
+			filter: e.any(
+				e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId)),
+			),
 			order_by: { expression: question.createdAt, direction: e.DESC },
 			limit: 1,
 		}))
@@ -211,7 +213,9 @@ export async function dbFetchAllQuestionsData(roomId: string) {
 	const questions = await e
 		.select(e.Question, (question) => ({
 			...questionQueryFields,
-			filter: e.any(e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId))),
+			filter: e.any(
+				e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId)),
+			),
 		}))
 		.run(dbClient);
 
@@ -225,14 +229,16 @@ function dbQuestionInteractAndResetVotesPartialQuery(
 	const deletedSingleVote = e.delete(
 		e.SingleCandidateVote,
 		(singleCandidateVote) => ({
-			filter: e.op(
+			filter: e.any(
 				e.op(
-					singleCandidateVote.candidate["<candidates[is Question]"].id,
-					"=",
-					e.uuid(questionId),
+					e.op(
+						singleCandidateVote.candidate["<candidates[is Question]"].id,
+						"=",
+						e.uuid(questionId),
+					),
+					"and",
+					e.op(singleCandidateVote.voter.id, "=", e.uuid(userId)),
 				),
-				"and",
-				e.op(singleCandidateVote.voter.id, "=", e.uuid(userId)),
 			),
 		}),
 	);
@@ -240,14 +246,16 @@ function dbQuestionInteractAndResetVotesPartialQuery(
 	const deletedPreferentialVote = e.delete(
 		e.PreferentialCandidateVote,
 		(preferentialCandidateVote) => ({
-			filter: e.op(
+			filter: e.any(
 				e.op(
-					preferentialCandidateVote.candidate["<candidates[is Question]"].id,
-					"=",
-					e.uuid(questionId),
+					e.op(
+						preferentialCandidateVote.candidate["<candidates[is Question]"].id,
+						"=",
+						e.uuid(questionId),
+					),
+					"and",
+					e.op(preferentialCandidateVote.voter.id, "=", e.uuid(userId)),
 				),
-				"and",
-				e.op(preferentialCandidateVote.voter.id, "=", e.uuid(userId)),
 			),
 		}),
 	);
