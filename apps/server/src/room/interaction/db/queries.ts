@@ -1,39 +1,21 @@
-import { dbClient } from "../../../dbschema/client";
-import e from "../../../dbschema/edgeql-js/index.js";
-import type { $expr_Literal } from "../../../dbschema/edgeql-js/literal";
-import type { $QuestionFormat } from "../../../dbschema/edgeql-js/modules/default";
-import type {
-	objectTypeToSelectShape,
-	SelectModifiers,
-} from "../../../dbschema/edgeql-js/select";
-import type * as schema from "../../../dbschema/interfaces";
-import type { RoomUser } from "../../../dbschema/interfaces";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { db } from "@/db/connection.js";
+import {
+	preferentialCandidateVoteTable,
+	questionCandidateTable,
+	questionTable,
+	roomTable,
+	roomUserTable,
+	singleCandidateVoteTable,
+	userQuestionInteractionTable,
+} from "@/db/schema.js";
+import type { RoomUserInsert, VoterStateEnum } from "@/db/types.js";
 
-// biome-ignore lint/suspicious/noExplicitAny: The any isn't avoidable here
-type FromFn<T extends (...args: any[]) => any> = NonNullable<
-	Awaited<ReturnType<T>>
->;
-type ScalarFieldsOn<T> = {
-	[K in keyof T]?: true;
-};
-
-const roomFields = {
-	id: true,
-	name: true,
-	shortId: true,
-	adminKey: true,
-	closedAt: true,
-	createdAt: true,
-} satisfies ScalarFieldsOn<schema.Room>;
-
-export type DbRoom = FromFn<typeof dbGetRoomById>;
 export async function dbGetRoomById(roomId: string) {
-	const room = await e
-		.select(e.Room, () => ({
-			...roomFields,
-			filter_single: { id: roomId },
-		}))
-		.run(dbClient);
+	const room = await db.query.roomTable.findFirst({
+		where: eq(roomTable.id, roomId),
+	});
 
 	return room;
 }
@@ -45,255 +27,158 @@ interface CreateRoomArgs {
 }
 
 export async function dbCreateRoom(args: CreateRoomArgs) {
-	const roomInsert = e.insert(e.Room, {
-		name: args.name,
-		adminKey: args.adminKey,
-		shortId: args.shortId,
-		createdAt: e.datetime_of_statement(),
-	});
+	const [insertedRoom] = await db
+		.insert(roomTable)
+		.values({
+			name: args.name,
+			adminKey: args.adminKey,
+			shortId: args.shortId,
+		})
+		.returning();
 
-	const roomResult = await e
-		.select(roomInsert, () => ({
-			...roomFields,
-		}))
-		.run(dbClient);
-
-	return roomResult;
+	return insertedRoom;
 }
 
 export async function dbRoomFindByShortId(shortId: string) {
-	const room = await e
-		.select(e.Room, () => ({
-			...roomFields,
-			filter_single: { shortId },
-		}))
-		.run(dbClient);
+	const room = await db.query.roomTable.findFirst({
+		where: (table) => eq(table.shortId, shortId),
+	});
 
 	return room;
 }
 
-const roomUserFields = {
-	id: true,
-	state: true,
-	userDetails: true,
-	votingKey: true,
-} satisfies ScalarFieldsOn<schema.RoomUser>;
-
-export type DbRoomUser = FromFn<typeof dbGetRoomUserById>;
 export async function dbGetRoomUserById(roomUserId: string) {
-	const roomUser = await e
-		.select(e.RoomUser, () => ({
-			...roomUserFields,
-			filter_single: { id: roomUserId },
-		}))
-		.run(dbClient);
+	const roomUser = await db.query.roomUserTable.findFirst({
+		where: (table) => eq(table.id, roomUserId),
+	});
 
 	return roomUser;
 }
 
 export async function dbGetRoomUserByVotingKey(votingKey: string) {
-	const roomUser = await e
-		.select(e.RoomUser, () => ({
-			...roomUserFields,
-			filter_single: { votingKey },
-		}))
-		.run(dbClient);
+	const roomUser = await db.query.roomUserTable.findFirst({
+		where: (table) => eq(table.votingKey, votingKey),
+	});
 
 	return roomUser;
 }
 
 export async function dbGetAllRoomUsers(roomId: string) {
-	const roomUser = await e
-		.select(e.RoomUser, (user) => ({
-			...roomUserFields,
-			filter: e.op(user.room.id, "=", e.uuid(roomId)),
-		}))
-		.run(dbClient);
+	const roomUser = await db.query.roomUserTable.findMany({
+		where: (table) => eq(table.roomId, roomId),
+	});
 
 	return roomUser;
 }
 
-export type RoomUserDetails = NonNullable<RoomUser["userDetails"]>;
-
 export async function dbCreateUser(
 	roomId: string,
-	userDetails: RoomUserDetails,
+	userDetails: Pick<RoomUserInsert, "studentEmail" | "location">,
 ) {
-	const userInsert = e.insert(e.RoomUser, {
-		state: "Waiting",
-		userDetails,
-		room: e.select(e.Room, () => ({ filter_single: { id: roomId } })),
-	});
+	const [userResult] = await db
+		.insert(roomUserTable)
+		.values({
+			location: userDetails.location,
+			studentEmail: userDetails.studentEmail,
+			roomId,
+			state: "Waiting",
+		})
+		.returning();
 
-	const userResult = await e
-		.select(userInsert, () => ({
-			...roomUserFields,
-		}))
-		.run(dbClient);
+	if (!userResult) {
+		throw new TRPCError({
+			code: "INTERNAL_SERVER_ERROR",
+			message: "Failed to create room user",
+		});
+	}
 
 	return userResult;
 }
 
 export async function dbSetUserState(
 	userId: string,
-	state: schema.WaitingState,
+	state: VoterStateEnum,
 	votingKey?: string | null,
 ) {
-	await e
-		.update(e.RoomUser, () => ({
-			filter_single: { id: userId },
-			set: {
-				state,
-				votingKey,
-			},
-		}))
-		.run(dbClient);
+	const [updatedUser] = await db
+		.update(roomUserTable)
+		.set({
+			state,
+			votingKey: votingKey ?? undefined,
+		})
+		.where(eq(roomUserTable.id, userId))
+		.returning();
+
+	return updatedUser;
 }
 
-type DbQuestionElement = (typeof e.Question)["__element__"];
-type DbQuestionElementQueryShape = Readonly<
-	objectTypeToSelectShape<DbQuestionElement> &
-		SelectModifiers<DbQuestionElement>
->;
-
-const questionQueryFields = {
-	id: true,
-	question: true,
-
-	format: true,
-	closed: true,
-	votersPresentAtEnd: true,
-	createdAt: true,
-
-	interactedUsers: true,
-	maxElected: true,
-	candidates: {
-		id: true,
-		name: true,
-		singleCandidateVotes: {
-			candidate: true,
-			voter: true,
-		},
-		preferentialCandidateVotes: {
-			rank: true,
-			voter: true,
-		},
-	},
-} satisfies DbQuestionElementQueryShape;
-
-export type DbQuestionData = FromFn<typeof dbFetchQuestionDataById>;
 export async function dbFetchQuestionDataById(questionId: string) {
-	const question = await e
-		.select(e.Question, () => ({
-			...questionQueryFields,
-			filter_single: { id: questionId },
-		}))
-		.run(dbClient);
+	const question = await db.query.questionTable.findFirst({
+		where: (table) => eq(table.id, questionId),
+	});
 
 	return question;
 }
 
 export async function dbFetchCurrentQuestionData(roomId: string) {
-	const questions = await e
-		.select(e.Question, (question) => ({
-			...questionQueryFields,
-			filter: e.any(
-				e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId)),
-			),
-			order_by: { expression: question.createdAt, direction: e.DESC },
-			limit: 1,
-		}))
-		.run(dbClient);
+	const question = await db.query.questionTable.findFirst({
+		where: (table) => eq(table.roomId, roomId),
+		orderBy: (table) => desc(table.createdAt),
+	});
 
-	const question = questions.at(0) ?? null;
 	return question;
 }
 
 export async function dbFetchAllQuestionsData(roomId: string) {
-	const questions = await e
-		.select(e.Question, (question) => ({
-			...questionQueryFields,
-			filter: e.any(
-				e.op(question["<questions[is Room]"].id, "=", e.uuid(roomId)),
-			),
-		}))
-		.run(dbClient);
+	const questions = await db.query.questionTable.findMany({
+		where: (table) => eq(table.roomId, roomId),
+	});
 
 	return questions;
 }
 
-function dbQuestionInteractAndResetVotesPartialQuery(
-	questionId: string,
-	userId: string,
-) {
-	const deletedSingleVote = e.delete(
-		e.SingleCandidateVote,
-		(singleCandidateVote) => ({
-			filter: e.any(
-				e.op(
-					e.op(
-						singleCandidateVote.candidate["<candidates[is Question]"].id,
-						"=",
-						e.uuid(questionId),
-					),
-					"and",
-					e.op(singleCandidateVote.voter.id, "=", e.uuid(userId)),
-				),
+export async function dbQuestionAbstain(questionId: string, userId: string) {
+	return db.transaction(async (tx) => {
+		const questionCandidates = tx
+			.select()
+			.from(questionCandidateTable)
+			.where(and(eq(questionCandidateTable.questionId, questionId)))
+			.as("questionCandidates");
+		// Delete existing votes (single or preferential)
+		await tx.delete(singleCandidateVoteTable).where(
+			and(
+				eq(singleCandidateVoteTable.voterId, userId),
+				inArray(singleCandidateVoteTable.candidateId, questionCandidates.id), // This may cause errors
 			),
-		}),
-	);
+		);
 
-	const deletedPreferentialVote = e.delete(
-		e.PreferentialCandidateVote,
-		(preferentialCandidateVote) => ({
-			filter: e.any(
-				e.op(
-					e.op(
-						preferentialCandidateVote.candidate["<candidates[is Question]"].id,
-						"=",
-						e.uuid(questionId),
-					),
-					"and",
-					e.op(preferentialCandidateVote.voter.id, "=", e.uuid(userId)),
-				),
+		await tx.delete(preferentialCandidateVoteTable).where(
+			and(
+				eq(preferentialCandidateVoteTable.voterId, userId),
+				inArray(
+					preferentialCandidateVoteTable.candidateId,
+					questionCandidates.id,
+				), // This may cause errors
 			),
-		}),
-	);
+		);
 
-	const insertedInteraction = e.update(e.Question, () => ({
-		set: {
-			interactedUsers: {
-				"+=": e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
-			},
-		},
-	}));
-
-	return e.with(
-		[deletedSingleVote, deletedPreferentialVote],
-		insertedInteraction,
-	);
-}
-
-function dbAssertQuestionKindPartialQuery(
-	questionId: string,
-	format: $expr_Literal<$QuestionFormat>,
-) {
-	return e.assert(
-		e.op(
-			e.select(e.Question, () => ({ filter_single: { id: questionId } }))
-				.format,
-			"=",
-			format,
-		),
-	);
-}
-
-export function dbQuestionAbstain(questionId: string, userId: string) {
-	const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(
-		questionId,
-		userId,
-	);
-	return resetAndInteract.run(dbClient);
+		// Abstain is the absence of a vote, so nothing more to do
+		await tx
+			.insert(userQuestionInteractionTable)
+			.values({
+				questionId,
+				userId,
+			})
+			.onConflictDoUpdate({
+				target: [
+					userQuestionInteractionTable.questionId,
+					userQuestionInteractionTable.userId,
+				],
+				set: {
+					lastInteractedAt: new Date(),
+				},
+			});
+	});
 }
 
 export async function dbInsertQuestionSingleVote(
@@ -301,29 +186,55 @@ export async function dbInsertQuestionSingleVote(
 	userId: string,
 	candidateId: string,
 ) {
-	const isSingleVoteQuestion = dbAssertQuestionKindPartialQuery(
-		questionId,
-		e.QuestionFormat.SingleVote,
-	);
-	const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(
-		questionId,
-		userId,
-	);
-	const inserted = e.insert(e.SingleCandidateVote, {
-		candidate: e.select(e.QuestionCandidate, () => ({
-			filter_single: { id: candidateId },
-		})),
-		voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
+	return db.transaction(async (tx) => {
+		const question = await tx.query.questionTable.findFirst({
+			where: (table) => eq(table.id, questionId),
+			columns: {
+				format: true,
+			},
+		});
+
+		if (question?.format !== "SingleVote") {
+			return tx.rollback();
+		}
+
+		const questionCandidates = tx
+			.select()
+			.from(questionCandidateTable)
+			.where(and(eq(questionCandidateTable.questionId, questionId)))
+			.as("questionCandidates");
+
+		// Delete existing votes (single)
+		await tx.delete(singleCandidateVoteTable).where(
+			and(
+				eq(singleCandidateVoteTable.voterId, userId),
+				inArray(singleCandidateVoteTable.candidateId, questionCandidates.id), // This may cause errors
+			),
+		);
+
+		// Insert new single vote
+		await tx.insert(singleCandidateVoteTable).values({
+			candidateId,
+			voterId: userId,
+		});
+
+		// Mark user as having interacted with the question
+		await tx
+			.insert(userQuestionInteractionTable)
+			.values({
+				questionId,
+				userId,
+			})
+			.onConflictDoUpdate({
+				target: [
+					userQuestionInteractionTable.questionId,
+					userQuestionInteractionTable.userId,
+				],
+				set: {
+					lastInteractedAt: new Date(),
+				},
+			});
 	});
-
-	const question = e.select(e.Question, () => ({
-		...questionQueryFields,
-		filter_single: { id: questionId },
-	}));
-
-	return e
-		.with([isSingleVoteQuestion, resetAndInteract, inserted], question)
-		.run(dbClient);
 }
 
 export async function dbInsertQuestionPreferentialVote(
@@ -334,46 +245,61 @@ export async function dbInsertQuestionPreferentialVote(
 		rank: number;
 	}[],
 ) {
-	const isPreferentialVoteQuestion = dbAssertQuestionKindPartialQuery(
-		questionId,
-		e.QuestionFormat.PreferentialVote,
-	);
-	const resetAndInteract = dbQuestionInteractAndResetVotesPartialQuery(
-		questionId,
-		userId,
-	);
+	return db.transaction(async (tx) => {
+		const question = await tx.query.questionTable.findFirst({
+			where: (table) => eq(table.id, questionId),
+			columns: {
+				format: true,
+			},
+		});
 
-	const inserted = votes.map(({ candidateId, rank }) =>
-		e
-			.insert(e.PreferentialCandidateVote, {
+		if (question?.format !== "PreferentialVote") {
+			return tx.rollback();
+		}
+
+		const questionCandidates = tx
+			.select()
+			.from(questionCandidateTable)
+			.where(and(eq(questionCandidateTable.questionId, questionId)))
+			.as("questionCandidates");
+
+		// Delete existing votes (preferential)
+		await tx.delete(preferentialCandidateVoteTable).where(
+			and(
+				eq(preferentialCandidateVoteTable.voterId, userId),
+				inArray(
+					preferentialCandidateVoteTable.candidateId,
+					questionCandidates.id,
+				), // This may cause errors
+			),
+		);
+
+		// Insert new preferential votes
+		await db.insert(preferentialCandidateVoteTable).values(
+			votes.map(({ candidateId, rank }) => ({
+				candidateId,
+				voterId: userId,
 				rank,
-				candidate: e.select(e.QuestionCandidate, () => ({
-					filter_single: { id: candidateId },
-				})),
-				voter: e.select(e.RoomUser, () => ({ filter_single: { id: userId } })),
-			})
-			.unlessConflict((preferentialCandidateVote) => ({
-				on: e.tuple([
-					preferentialCandidateVote.candidate,
-					preferentialCandidateVote.voter,
-					preferentialCandidateVote.rank,
-				]),
-				else: e.update(preferentialCandidateVote, () => ({
-					set: {
-						rank,
-					},
-				})),
 			})),
-	);
+		); // Work out onConflictDoUpdate later
 
-	const question = e.select(e.Question, () => ({
-		...questionQueryFields,
-		filter_single: { id: questionId },
-	}));
-
-	return e
-		.with([isPreferentialVoteQuestion, resetAndInteract, ...inserted], question)
-		.run(dbClient);
+		// Mark user as having interacted with the question
+		await tx
+			.insert(userQuestionInteractionTable)
+			.values({
+				questionId,
+				userId,
+			})
+			.onConflictDoUpdate({
+				target: [
+					userQuestionInteractionTable.questionId,
+					userQuestionInteractionTable.userId,
+				],
+				set: {
+					lastInteractedAt: new Date(),
+				},
+			});
+	});
 }
 
 interface DbSingleVoteQuestionDetails {
@@ -389,70 +315,67 @@ interface DbPreferentialVoteQuestionDetails {
 	candidates: string[];
 }
 
-async function addQuestionToRoom(question: DbQuestionData, roomId: string) {
-	await e
-		.update(e.Room, () => ({
-			filter_single: { id: roomId },
-			set: {
-				questions: {
-					"+=": e.select(e.Question, () => ({
-						filter_single: { id: question.id },
-					})),
-				},
-			},
-		}))
-		.run(dbClient);
-}
-
 export async function dbCreateSingleVoteQuestion(
 	details: DbSingleVoteQuestionDetails,
 ) {
-	const questionInsert = e.insert(e.Question, {
-		format: e.QuestionFormat.SingleVote,
-		closed: false,
-		question: details.question,
-		candidates: e.for(e.set(...details.candidates), (candidate) =>
-			e.insert(e.QuestionCandidate, { name: candidate }),
-		),
-		createdAt: e.datetime_of_statement(),
-		votersPresentAtEnd: 0,
+	return db.transaction(async (tx) => {
+		const [questionInsert] = await tx
+			.insert(questionTable)
+			.values({
+				format: "SingleVote",
+				closed: false,
+				question: details.question,
+				roomId: details.roomId,
+			})
+			.returning();
+
+		if (!questionInsert?.id) {
+			tx.rollback();
+			throw new Error("Failed to create question");
+		}
+
+		await tx
+			.insert(questionCandidateTable)
+			.values(
+				details.candidates.map((candidate) => ({
+					name: candidate,
+					questionId: questionInsert.id,
+				})),
+			)
+			.returning();
 	});
-
-	const questionResult = await e
-		.select(questionInsert, () => ({
-			...questionQueryFields,
-		}))
-		.run(dbClient);
-
-	await addQuestionToRoom(questionResult, details.roomId);
-
-	return questionResult;
 }
 
 export async function dbCreatePreferentialVoteQuestion(
 	details: DbPreferentialVoteQuestionDetails,
 ) {
-	const questionInsert = e.insert(e.Question, {
-		format: e.QuestionFormat.PreferentialVote,
-		closed: false,
-		question: details.question,
-		candidates: e.for(e.set(...details.candidates), (candidate) =>
-			e.insert(e.QuestionCandidate, { name: candidate }),
-		),
-		createdAt: e.datetime_of_statement(),
-		votersPresentAtEnd: 0,
-		maxElected: details.maxElected,
+	return db.transaction(async (tx) => {
+		const [questionInsert] = await tx
+			.insert(questionTable)
+			.values({
+				format: "PreferentialVote",
+				closed: false,
+				question: details.question,
+				roomId: details.roomId,
+				maxElected: details.maxElected,
+			})
+			.returning();
+
+		if (!questionInsert?.id) {
+			tx.rollback();
+			throw new Error("Failed to create question");
+		}
+
+		await tx
+			.insert(questionCandidateTable)
+			.values(
+				details.candidates.map((candidate) => ({
+					name: candidate,
+					questionId: questionInsert.id,
+				})),
+			)
+			.returning();
 	});
-
-	const questionResult = await e
-		.select(questionInsert, () => ({
-			...questionQueryFields,
-		}))
-		.run(dbClient);
-
-	await addQuestionToRoom(questionResult, details.roomId);
-
-	return questionResult;
 }
 
 export interface CloseQuestionDetails {
@@ -463,21 +386,24 @@ export async function dbCloseQuestion(
 	questionId: string,
 	details: CloseQuestionDetails,
 ) {
-	const questionClosed = e.assert_exists(
-		e.update(e.Question, () => ({
-			set: {
-				closed: true,
-				votersPresentAtEnd: details.votersPresentAtEnd,
-			},
-			filter_single: { id: questionId },
-		})),
-	);
+	const question = await db.query.questionTable.findFirst({
+		where: (table) => eq(table.id, questionId),
+		columns: {
+			id: true,
+		},
+	});
 
-	const question = await e
-		.select(questionClosed, () => ({
-			...questionQueryFields,
-		}))
-		.run(dbClient);
+	if (!question) {
+		throw new Error("Question not found");
+	}
+
+	await db
+		.update(questionTable)
+		.set({
+			closed: true,
+			votersPresentAtEnd: details.votersPresentAtEnd,
+		})
+		.where(eq(questionTable.id, questionId));
 
 	return question;
 }

@@ -1,4 +1,4 @@
-import type { QuestionFormat } from "../dbschema/interfaces";
+import type { QuestionFormatEnum } from "@/db/types";
 
 export interface RoomPublicInfo {
 	id: string;
@@ -13,11 +13,11 @@ export type RoomAdminInfo = RoomPublicInfo & {
 };
 
 export interface SingleVoteQuestionFormat {
-	type: Extract<QuestionFormat, "SingleVote">;
+	type: Extract<QuestionFormatEnum, "SingleVote">;
 }
 
 export interface PreferentialVoteQuestionFormat {
-	type: Extract<QuestionFormat, "PreferentialVote">;
+	type: Extract<QuestionFormatEnum, "PreferentialVote">;
 	maxElected: number;
 }
 

@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import type { RoomUserSelect, UserLocationEnum } from "@/db/types";
 import type { UserLocation, WaitingState } from "../../../dbschema/interfaces";
 import {
 	UserNotAVoter,
@@ -8,7 +9,6 @@ import {
 import type { GetStatesUnion } from "../../../state";
 import { makeStates, state } from "../../../state";
 import { UnreachableError } from "../../../unreachableError";
-import type { DbRoomUser, RoomUserDetails } from "./queries";
 import {
 	dbCreateUser,
 	dbGetAllRoomUsers,
@@ -36,7 +36,7 @@ export interface WaitingRoomUser {
 }
 
 export interface RoomUserWithDetails extends WithUserId {
-	details: RoomUserDetails;
+	location: UserLocationEnum;
 }
 
 export interface RoomVoterWithDetails extends RoomUserWithDetails {
@@ -74,7 +74,7 @@ export interface RoomUsersListWithvotingKeys {
 	admitted: RoomVoterWithDetails[];
 }
 
-function getRoomStateFromUser(user: DbRoomUser): RoomUserState {
+function getRoomStateFromUser(user: RoomUserSelect): RoomUserState {
 	switch (user.state) {
 		case "Waiting":
 			return RoomUserState.waiting({

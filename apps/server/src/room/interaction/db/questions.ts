@@ -6,7 +6,7 @@ import type { QuestionResponse, ResultsView } from "../../../live/question";
 import type { VotingCandidate } from "../../../live/states";
 import { UnreachableError } from "../../../unreachableError";
 import type { CreateQuestionParams, QuestionFormatDetails } from "../../types";
-import type { CloseQuestionDetails, DbQuestionData } from "./queries";
+import type { CloseQuestionDetails } from "./queries";
 import {
 	dbCloseQuestion,
 	dbCreatePreferentialVoteQuestion,
@@ -28,8 +28,6 @@ export interface RoomQuestion {
 	candidates: VotingCandidate[];
 	interactedVoters: string[];
 	results: ResultsView;
-
-	originalDbQuestionDataObject: DbQuestionData;
 }
 
 function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
@@ -116,7 +114,7 @@ function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
 					type: "PreferentialVote",
 					results: [],
 					abstained: abstainCount,
-				}
+				};
 			}
 			default:
 				throw new UnreachableError(question.format);
