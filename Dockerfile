@@ -5,7 +5,7 @@ RUN curl -fsSL https://bun.com/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 WORKDIR /app
 
-
+# Dependancy layer, for caching
 FROM base AS install
 
 # Development dependencies
@@ -20,7 +20,8 @@ COPY apps/server/package.json /temp/prod/apps/server/
 COPY apps/client/package.json /temp/prod/apps/client/
 RUN cd /temp/prod && bun install --frozen-lockfile --production --filter "server"
 
-FROM base as prerelease
+# Build frontend and backend
+FROM base AS prerelease
 COPY --from=install /temp/dev/node_modules node_modules
 COPY --from=install /temp/dev/apps/server/node_modules apps/server/node_modules
 COPY --from=install /temp/dev/apps/client/node_modules apps/client/node_modules

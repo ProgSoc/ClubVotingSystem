@@ -26,7 +26,7 @@ jobs:
           bun-version: latest
 
       - name: init gel
-        run: cd apps/server && bunx gel project init --non-interactive
+        run: cd apps/server && bun x gel project init --non-interactive
 
       - name: Docker Meta Release
         id: meta-release

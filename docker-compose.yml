@@ -1,21 +1,31 @@
-version: '3.1'
-
 services:
   voting:
     build: .
     restart: unless-stopped
     ports:
       - 8080:8080
+    links:
+      - gel
     environment:
       PORT: 8080
       GEL_DSN: gel://gel
       GEL_CLIENT_TLS_SECURITY: insecure
 
-    # volumes:
-
   gel:
     image: geldata/gel:6.4
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5656/server/status/ready"]
+      start_interval: 10s
+      start_period: 30s
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - gel_data:/var/lib/gel/data
     environment:
       GEL_SERVER_TLS_CERT_MODE: generate_self_signed
       GEL_SERVER_SECURITY: insecure_dev_mode
+
+volumes:
+  gel_data:

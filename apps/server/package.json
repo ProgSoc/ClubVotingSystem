@@ -8,7 +8,7 @@
 		"build": "bun tsdown",
 		"start": "node ./dist/main.js",
 		"migrate": "gel migration create && gel migrate && bun generate",
-		"generate": "bunx @gel/generate interfaces && bunx @gel/generate edgeql-js --target esm"
+		"generate": "bun x @gel/generate interfaces && bun x @gel/generate edgeql-js --target esm"
 	},
 	"types": "./dist/main.d.ts",
 	"main": "./dist/main.js",

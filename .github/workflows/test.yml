@@ -17,7 +17,7 @@ jobs:
           bun-version: latest
 
       - name: init gel
-        run: cd apps/server && bunx gel project init --non-interactive
+        run: cd apps/server && bun x gel project init --non-interactive
 
       - name: generate gel schema types
         run: bun run --filter server generate
