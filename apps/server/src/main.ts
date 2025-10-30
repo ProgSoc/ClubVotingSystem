@@ -1,5 +1,3 @@
-import cors from "@fastify/cors";
-import ws from "@fastify/websocket";
 import {
 	type FastifyTRPCPluginOptions,
 	fastifyTRPCPlugin,
@@ -31,7 +29,7 @@ const server = fastify({
 	trustProxy: env.TRUSTED_PROXIES,
 });
 
-await server.register(ws, {
+await server.register(import("@fastify/websocket"), {
 	preClose(done) {
 		console.log("Broadcasting reconnect to clients before shutdown");
 		const response: TRPCReconnectNotification = {
@@ -64,7 +62,7 @@ server.websocketServer.on("connection", (ws, req) => {
 
 // Allow CORS for dev
 if (process.env.NODE_ENV !== "production") {
-	await server.register(cors, {
+	await server.register(import("@fastify/cors"), {
 		origin: "*",
 		credentials: true,
 	});
