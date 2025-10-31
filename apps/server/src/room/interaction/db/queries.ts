@@ -378,6 +378,26 @@ export async function dbCreatePreferentialVoteQuestion(
 	});
 }
 
+export async function getQuestionResponseByVoterId(
+	questionId: string,
+	voterId: string,
+) {
+	// Get the voter's current responses for the question
+	const questionCandidates = await db.query.questionCandidateTable.findMany({
+		where: eq(questionCandidateTable.questionId, questionId),
+		with: {
+			preferentialCandidateVotes: {
+				where: (table) => eq(table.voterId, voterId),
+			},
+			singleCandidateVotes: {
+				where: (table) => eq(table.voterId, voterId),
+			},
+		},
+	});
+
+	return questionCandidates;
+}
+
 export interface CloseQuestionDetails {
 	votersPresentAtEnd: number;
 }

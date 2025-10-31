@@ -16,6 +16,7 @@ import {
 	dbInsertQuestionPreferentialVote,
 	dbInsertQuestionSingleVote,
 	dbQuestionAbstain,
+	getQuestionResponseByVoterId,
 } from "./queries";
 
 export interface RoomQuestion {
@@ -30,118 +31,118 @@ export interface RoomQuestion {
 	results: ResultsView;
 }
 
-function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
-	// Count the number of unique voters by inserting them into a set
-	const uniqueVoters = new Set<string>();
-	question.candidates.forEach((candidate) => {
-		candidate.singleCandidateVotes.forEach((vote) => {
-			uniqueVoters.add(vote.voter.id);
-		});
-		candidate.preferentialCandidateVotes.forEach((vote) => {
-			uniqueVoters.add(vote.voter.id);
-		});
-	});
+// function mapDbQuestionData(question: DbQuestionData): RoomQuestion {
+// 	// Count the number of unique voters by inserting them into a set
+// 	const uniqueVoters = new Set<string>();
+// 	question.candidates.forEach((candidate) => {
+// 		candidate.singleCandidateVotes.forEach((vote) => {
+// 			uniqueVoters.add(vote.voter.id);
+// 		});
+// 		candidate.preferentialCandidateVotes.forEach((vote) => {
+// 			uniqueVoters.add(vote.voter.id);
+// 		});
+// 	});
 
-	const votesWithoutAbstain = uniqueVoters.size;
-	const votesWithAbstain = question.interactedUsers.length;
+// 	const votesWithoutAbstain = uniqueVoters.size;
+// 	const votesWithAbstain = question.interactedUsers.length;
 
-	// The abstain count includes both people explicitly selecting abstain and people who haven't interacted with the question
-	const abstainCount = Math.max(
-		0,
-		question.votersPresentAtEnd - votesWithoutAbstain,
-	);
+// 	// The abstain count includes both people explicitly selecting abstain and people who haven't interacted with the question
+// 	const abstainCount = Math.max(
+// 		0,
+// 		question.votersPresentAtEnd - votesWithoutAbstain,
+// 	);
 
-	const makeDetails = (): QuestionFormatDetails => {
-		switch (question.format) {
-			case "SingleVote":
-				return {
-					type: "SingleVote",
-				};
-			case "PreferentialVote":
-				return {
-					type: "PreferentialVote",
-					maxElected: question.maxElected,
-				};
-			default:
-				throw new UnreachableError(question.format);
-		}
-	};
+// 	const makeDetails = (): QuestionFormatDetails => {
+// 		switch (question.format) {
+// 			case "SingleVote":
+// 				return {
+// 					type: "SingleVote",
+// 				};
+// 			case "PreferentialVote":
+// 				return {
+// 					type: "PreferentialVote",
+// 					maxElected: question.maxElected,
+// 				};
+// 			default:
+// 				throw new UnreachableError(question.format);
+// 		}
+// 	};
 
-	const makeResults = (): ResultsView => {
-		switch (question.format) {
-			case "SingleVote":
-				return {
-					type: "SingleVote",
-					results: question.candidates.map((candidate) => ({
-						id: candidate.id,
-						name: candidate.name,
-						votes: candidate.singleCandidateVotes.length,
-					})),
-					abstained: abstainCount,
-				};
-			case "PreferentialVote": {
-				const candidateWithVotes = question.candidates.flatMap((candidate) =>
-					candidate.preferentialCandidateVotes.map((vote) => ({
-						voterId: vote.voter.id,
-						candidateId: candidate.id,
-						rank: vote.rank,
-					})),
-				);
+// 	const makeResults = (): ResultsView => {
+// 		switch (question.format) {
+// 			case "SingleVote":
+// 				return {
+// 					type: "SingleVote",
+// 					results: question.candidates.map((candidate) => ({
+// 						id: candidate.id,
+// 						name: candidate.name,
+// 						votes: candidate.singleCandidateVotes.length,
+// 					})),
+// 					abstained: abstainCount,
+// 				};
+// 			case "PreferentialVote": {
+// 				const candidateWithVotes = question.candidates.flatMap((candidate) =>
+// 					candidate.preferentialCandidateVotes.map((vote) => ({
+// 						voterId: vote.voter.id,
+// 						candidateId: candidate.id,
+// 						rank: vote.rank,
+// 					})),
+// 				);
 
-				const voterAndCandidateRank: Record<
-					string,
-					{ candidateId: string; rank: number }[]
-				> = {};
+// 				const voterAndCandidateRank: Record<
+// 					string,
+// 					{ candidateId: string; rank: number }[]
+// 				> = {};
 
-				for (const vote of candidateWithVotes) {
-					if (!voterAndCandidateRank[vote.voterId]) {
-						voterAndCandidateRank[vote.voterId] = [];
-					}
-					voterAndCandidateRank[vote.voterId]?.push({
-						candidateId: vote.candidateId,
-						rank: vote.rank,
-					});
-				}
+// 				for (const vote of candidateWithVotes) {
+// 					if (!voterAndCandidateRank[vote.voterId]) {
+// 						voterAndCandidateRank[vote.voterId] = [];
+// 					}
+// 					voterAndCandidateRank[vote.voterId]?.push({
+// 						candidateId: vote.candidateId,
+// 						rank: vote.rank,
+// 					});
+// 				}
 
-				const _votingPreferences = Object.entries(voterAndCandidateRank).map(
-					([_voterId, votes]) => {
-						const sortedVotes = votes.sort((a, b) => a.rank - b.rank); // sort by preference
-						return sortedVotes.map((vote) => vote.candidateId);
-					},
-				);
+// 				const _votingPreferences = Object.entries(voterAndCandidateRank).map(
+// 					([_voterId, votes]) => {
+// 						const sortedVotes = votes.sort((a, b) => a.rank - b.rank); // sort by preference
+// 						return sortedVotes.map((vote) => vote.candidateId);
+// 					},
+// 				);
 
-				return {
-					type: "PreferentialVote",
-					results: [],
-					abstained: abstainCount,
-				};
-			}
-			default:
-				throw new UnreachableError(question.format);
-		}
-	};
+// 				return {
+// 					type: "PreferentialVote",
+// 					results: [],
+// 					abstained: abstainCount,
+// 				};
+// 			}
+// 			default:
+// 				throw new UnreachableError(question.format);
+// 		}
+// 	};
 
-	return {
-		id: question.id,
-		createdAt: question.createdAt,
-		question: question.question,
-		closed: question.closed,
+// 	return {
+// 		id: question.id,
+// 		createdAt: question.createdAt,
+// 		question: question.question,
+// 		closed: question.closed,
 
-		details: makeDetails(),
-		results: makeResults(),
+// 		details: makeDetails(),
+// 		results: makeResults(),
 
-		interactedVoters: question.interactedUsers.map(
-			(interaction) => interaction.id,
-		),
-		totalVoters: votesWithAbstain,
-		candidates: question.candidates.map((candidate) => ({
-			id: candidate.id,
-			name: candidate.name,
-		})),
+// 		interactedVoters: question.interactedUsers.map(
+// 			(interaction) => interaction.id,
+// 		),
+// 		totalVoters: votesWithAbstain,
+// 		candidates: question.candidates.map((candidate) => ({
+// 			id: candidate.id,
+// 			name: candidate.name,
+// 		})),
 
-		originalDbQuestionDataObject: question,
-	};
-}
+// 		originalDbQuestionDataObject: question,
+// 	};
+// }
 
 /**
  * Create a new question in the database
@@ -186,71 +187,79 @@ export async function closeQuestion(
 	return dbCloseQuestion(questionId, details);
 }
 
-export function makeQuestionModificationFunctions(roomId: string) {
-	let currentQuestionPromise: Promise<RoomQuestion | null> | null = null;
+export async function fetchCurrentQuestion(roomId: string) {
+	const question = await dbFetchCurrentQuestionData(roomId);
 
-	async function fetchCurrentQuestion() {
-		const question = await dbFetchCurrentQuestionData(roomId);
-
-		if (!question) {
-			return null;
-		}
-
-		return mapDbQuestionData(question);
+	if (!question) {
+		return null;
 	}
 
+	return question;
+}
+
+export async function fetchAllQuestions(roomId: string) {
+	const questions = await dbFetchAllQuestionsData(roomId);
+	return questions;
+}
+
+export async function voteForQuestion(
+	roomId: string,
+	questionId: string,
+	questionResponse: QuestionResponse,
+) {
+	const currentQuestion = await fetchCurrentQuestion(roomId);
+
+	if (!currentQuestion) {
+		throw new NoQuestionOpenError();
+	}
+
+	if (currentQuestion.id !== questionId) {
+		throw new QuestionAlreadyClosedError();
+	}
+
+	switch (questionResponse.type) {
+		case "Abstain":
+			await dbQuestionAbstain(questionId, roomId);
+			break;
+		case "SingleVote":
+			await dbInsertQuestionSingleVote(
+				questionId,
+				roomId,
+				questionResponse.candidateId,
+			);
+			break;
+		case "PreferentialVote":
+			await dbInsertQuestionPreferentialVote(
+				questionId,
+				roomId,
+				questionResponse.votes,
+			);
+			break;
+		default:
+			throw new UnreachableError(questionResponse);
+	}
+}
+
+export async function getQuestionVote(
+	roomId: string,
+	userId: string,
+): Promise<QuestionResponse> {
+	const questionData = await fetchCurrentQuestion(roomId);
+
+	if (!questionData) {
+		throw new NoQuestionOpenError();
+	}
+
+	const questionResponse = getQuestionResponseByVoterId(
+		questionData.id,
+		userId,
+	);
+}
+
+export function makeQuestionModificationFunctions(roomId: string) {
+	const currentQuestionPromise: Promise<RoomQuestion | null> | null = null;
+
 	const fns = {
-		currentQuestion: () => {
-			if (!currentQuestionPromise) {
-				currentQuestionPromise = fetchCurrentQuestion();
-			}
-			return currentQuestionPromise;
-		},
-		allQuestions: async () => {
-			const questions = await dbFetchAllQuestionsData(roomId);
-			const mapped = questions.map((q) => mapDbQuestionData(q));
-			return mapped;
-		},
-
-		async voteForQuestion(
-			questionId: string,
-			userId: string,
-			response: QuestionResponse,
-		) {
-			const question = await fns.currentQuestion();
-
-			if (!question) {
-				throw new NoQuestionOpenError();
-			}
-
-			if (question.id !== questionId) {
-				throw new QuestionAlreadyClosedError();
-			}
-			switch (response.type) {
-				case "Abstain":
-					await dbQuestionAbstain(questionId, userId);
-					break;
-				case "SingleVote":
-					await dbInsertQuestionSingleVote(
-						questionId,
-						userId,
-						response.candidateId,
-					);
-					break;
-				case "PreferentialVote":
-					await dbInsertQuestionPreferentialVote(
-						questionId,
-						userId,
-						response.votes,
-					);
-					break;
-				default:
-					throw new UnreachableError(response);
-			}
-
-			currentQuestionPromise = null;
-		},
-
 		async getQuestionVote(
 			questionId: string,
 			votingKey: string,

@@ -1,10 +1,10 @@
 import type { TypeOf } from "zod";
 import { z } from "zod";
-import type { QuestionFormat } from "../dbschema/interfaces";
+import type { QuestionFormatEnum } from "@/db/types";
 
-const singleVoteType = "SingleVote" satisfies QuestionFormat;
+const singleVoteType = "SingleVote" satisfies QuestionFormatEnum;
 
-const preferentialVoteType = "PreferentialVote" satisfies QuestionFormat;
+const preferentialVoteType = "PreferentialVote" satisfies QuestionFormatEnum;
 
 export interface SingleVoteQuestionFormat {
 	type: typeof singleVoteType;
